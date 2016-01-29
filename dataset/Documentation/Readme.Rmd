@@ -125,10 +125,16 @@ Get the CRSP daily and monthly data (adjusted returns, closing prices, shares ou
 **Step 5: Get the BE related, ME related, and other data from Compustat**
 
 We use Compustat to get the annual BE/ME ratios of the firm as described in Appendix 1 of 
-*Disappearing dividends: changing firm characteristics or lower propensity to pay?, Fama-French, JFE 2001*:
+[Disappearing dividends: changing firm characteristics or lower propensity to pay?, Fama-French, JFE 2001](http://www.ulb.ac.be/cours/solvay/farber/Ofin/Reading%206%20Disappearing%20dividend.pdf):
  
 The Preferred Stock and Book Equity equation variables (except the Post Retirement Asset which we get from the *Compustat Monthly Updates - Pension Annual Database*) correspond to the following variables in the CRSP/Compustat Merged - Fundamentals Annual database, in the same order as they appear in the equation: 
 
+![Preferred Stock and Book Equity equation variables ](fig3.png)
+
+The Preferred Stock and Book Equity equation variables (except the Post Retirement Asset which we get from the Compustat Monthly Updates - Pension Annual Database) correspond to the following variables in the CRSP/Compustat Merged - Fundamentals Annual database, in the same order as they appear in the equation: 
+
+![Preferred Stock and Book Equity equation variables Selected](fig2.png)
+ 
  
 We use two databases in this step:
 
@@ -209,6 +215,15 @@ All standardise_data.R files in the respective datasets' directories need to out
 **THESE ARE THE STANDARDIZED FEATURES ALL EVENTS DATASETS NEED TO HAVE BEFORE** *process_code/get_crsp_data.R* in *create_dataset.R*:
 
 Note:  Some of these variables that come from Compustat are from a year or more before the event. See *get_compustat_data.R* and *merge_dataset.R* for more information.
+
+![(Draft) List of Dataset Variables](fig1.png)
+
+At the end we have the following variables (for buybacks and issuers):
+
+![(Draft) List of Dataset Variables](buybacks.png)
+
+![(Draft) List of Dataset Variables](issuers.png)
+
 
 <hr>
 
