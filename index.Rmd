@@ -1,0 +1,353 @@
+---
+title: "Share Buyback and Equity Issue Anomalies Revisited: Interactive Tool"
+author: "Theodoros Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, and Theo Vermaelen"
+output:  
+  html_document:
+    fig_width: 6
+    fig_height: 2.5
+    fig_align: center
+runtime: shiny
+---
+
+
+
+
+```{r, eval=TRUE, echo = FALSE}
+#load("bb_issuersALL.Rdata")
+load("bb_issuersTOOL.Rdata")
+
+#library(googleVis)
+#library("shiny")
+#library("reshape2")  
+#library("ggplot2")
+# Why are these not found when deployed?!
+library("stringr")
+library("RcppArmadillo")
+library("gtools")
+library("timeDate")
+source("lib/lib_helpers_shiny.R")
+source("lib/Paper_global_parameters.R")
+source("lib/heatmapOutput.R")
+source("lib/plots.R")
+
+DATASET = BUYBACK_DATA$DATASET
+
+```
+
+This is an interactive tool for the article **Share Buyback and Equity Issue Anomalies Revisited**. Users can explore the effects of various parameters as well as data sampling choices. For any given choice, users can generate and download a new *customized* version of the paper by clicking the button below at any time:**
+<br>
+<br>
+
+```{r, fig.width=6, fig.height=5,echo=FALSE}
+downloadHandler(
+  filename = "report.pdf",
+  content = function(file) {
+    src <- normalizePath('BBtool_pdf.Rmd')
+    # temporarily switch to the temp dir, in case you do not have write
+    # permission to the current working directory
+    #owd <- setwd(tempdir())
+    #on.exit(setwd(owd))
+    #file.copy(src, 'ExerciseSet2v2pdf.Rmd')
+    #library(rmarkdown)
+    out <- render('BBtool_pdf.Rmd', pdf_document(),envir=environment())
+    file.rename(out, file)
+  }
+)
+```
+
+<hr>
+
+### Descriptive Statistics
+
+This tool allows the user to explore descriptive statistics of some of the key firm characteristics. When the name of the firm characteristics ends with ".Score" it is  either the 1-5 score relative to the Fama-French breakpoints (for Size, Prior returns, and BE/ME ratio) or the percentile relative to all firms in the CRSP universe at the time of the buyback announcement, as discussed in the paper. Otherwise it is the raw values of the firm characteristic. 
+
+
+
+```{r, eval=TRUE, echo = FALSE}
+acceptaple_features = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index","Industry", "Market.Cap",          "Percent.Shares", "Purpose.Code","Source.of.funds","Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio", "Year")
+
+fluidPage(
+  selectInput("characteristic", "Select Firm Characteristic:", choices = acceptaple_features,selected = acceptaple_features[1]),
+  mainPanel(
+    tabsetPanel("Example",
+                tabPanel("Histogram",
+                         renderPlot({
+                           feature = BUYBACK_DATA$DATASET$SDC[[which(names(BUYBACK_DATA$DATASET$SDC) == input$characteristic)]]
+                           feature = feature[!is.na(feature)]
+                           if (!is.numeric(feature))
+                             feature = 1
+                           hist(feature, density = 100, breaks = 100)
+                         })),
+                tabPanel("Summary Statistics",
+                         renderDataTable({
+                           feature = BUYBACK_DATA$DATASET$SDC[[which(names(BUYBACK_DATA$DATASET$SDC) == input$characteristic)]]
+                           #feature = feature[!is.na(feature)]
+                           if (length(unique(feature)) > 20 & is.numeric(feature)){
+                             res = t(as.matrix(summary(feature)))
+                             colnames(res) <- c("Minimum", "1st Quantile", "Median", "Mean", "3rd Quantile", "Max")
+                           }
+                           if (is.character(feature) | length(unique(feature)) <= 20){
+                             tmp = table(feature)
+                             res = t(as.matrix(tmp))
+                           }
+                           as.data.frame(res)
+                           #m1<-gvisTable(show_data,options=list(showRowNumber=TRUE,width=1220, height=min(400,27*(nrow(show_data)+1)),allowHTML=TRUE,page='disable'))
+                           #print(m1,'chart')
+                         })
+                )
+    ),style='width: 100%;'))
+```
+
+
+### Robustness Analysis
+
+Two types of robustness analysis has been considered in the paper: over different time periods, and across industries. This tool allows a more detailed robustness analysis along the lines of the results presented in the paper:
+
+
+
+<hr>
+
+### Buybacks and Firm Characteristics
+
+The article relates 5 firm characteristics (pre-buyback-announcement returns, idiosyncratic volatility, and volatility, as well as BE/ME and Firm Size). This tool allows the user to study the effects of combining any of these firm characteristics, as well as some other ones not studied in the paper for simplicity. 
+
+```{r, eval=TRUE, echo = FALSE}
+acceptaple_features1 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio")
+
+selectInput("characteristic_irats", "Select Firm Characteristic to Define High/Low Firms:", choices = acceptaple_features1,selected = acceptaple_features1[1])
+
+selectInput("quantile_used","Enter the quantile to use to define High and Low Firms:", choices = 0.02*(1:20), selected = "0.2")
+
+feature_IRATStable <- reactive({
+  thefeature = DATASET$SDC[[which(names(DATASET$SDC) == input$characteristic_irats)]]  
+  High_feature_events = which(scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
+  Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
+  res = round(cbind(
+    car_table(DATASET$returns_by_event_monthly[,Low_feature_events], DATASET$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
+    car_table(DATASET$returns_by_event_monthly[,High_feature_events], DATASET$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
+  ),2)[reported_times,]
+  colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
+  res
+})
+
+High_feature_Hedged_react <- reactive({
+  thefeature = DATASET$SDC[[which(names(DATASET$SDC) == input$characteristic_irats)]]  
+  High_feature_events = which(scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
+  High_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
+  remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
+})
+
+Low_feature_Hedged_react <- reactive({
+  thefeature = DATASET$SDC[[which(names(DATASET$SDC) == input$characteristic_irats)]]  
+  Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
+  Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
+  remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
+})
+
+```
+
+
+```{r, eval=TRUE, echo = FALSE}
+fluidPage(
+  mainPanel(
+    tabsetPanel("Example",
+                tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
+                         renderTable({
+                           feature_IRATStable()
+                         })),
+                tabPanel("Cumulative Abnormal Returns,High, 12m hold",
+                         renderDygraph({
+                           pnl_plot_interactive(High_feature_Hedged_react())
+                         })),
+                tabPanel("Monthly and Yearly Returns, High, 12m hold",
+                         renderUI({
+                           renderHeatmapX(pnl_matrix(High_feature_Hedged_react()))
+                         })
+                )
+    ),style='width: 100%;'))
+```
+
+
+
+
+### Customizable Buyback Index
+
+Must like the EU-index in the paper, one can create other indices by combining different firm characteristics as needed. 
+
+
+```{r, eval=TRUE, echo = FALSE}
+acceptaple_features2 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","None")
+```
+
+<br>
+```{r, eval=TRUE, echo = FALSE}
+selectInput("characteristic_irats1", "Select First Firm Characteristic for your new index:", choices = acceptaple_features2,selected = acceptaple_features2[1], width = "1000px")
+```
+
+<br>
+```{r, eval=TRUE, echo = FALSE}
+
+selectInput("characteristic_irats2", "Select Second Firm Characteristic for your new index:", choices = acceptaple_features2,selected ="None", width = "1000px")
+```
+
+<br>
+```{r, eval=TRUE, echo = FALSE}
+
+selectInput("characteristic_irats3", "Select Third Firm Characteristic for your new index:", choices = acceptaple_features2,selected = "None", width = "1000px")
+```
+
+<br>
+```{r, eval=TRUE, echo = FALSE}
+
+selectInput("characteristic_irats4", "Select Fourth Firm Characteristic for your new index:", choices = acceptaple_features2,selected = "None", width = "1000px")
+```
+
+<br>
+```{r, eval=TRUE, echo = FALSE}
+
+selectInput("characteristic_irats5", "Select Fifth Firm Characteristic for your new index:", choices = acceptaple_features2,selected = "None", width = "1000px")
+```
+
+<br>
+```{r, eval=TRUE, echo = FALSE}
+
+selectInput("characteristic_irats6", "Select Sixth Firm Characteristic for your new index:", choices = acceptaple_features2,selected = "None", width = "1000px")
+```
+
+<br>
+```{r, eval=TRUE, echo = FALSE}
+
+selectInput("quantile_used_ind","Enter the quantile to use to define the 0 (Low), 1 (middle), 2 (High) scores for each of the selected characteristics:", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
+```
+
+<br>
+```{r, eval=TRUE, echo = FALSE}
+
+selectInput("quantile_used_all","Enter the quantile to use to define High and Low Firms for the total index created (sum of the scores of the firm characteristics selected):", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
+```
+
+```{r, eval=TRUE, echo = FALSE}
+selected_features = reactive({
+  paste(setdiff(unique(c(input$characteristic_irats1,input$characteristic_irats2,input$characteristic_irats3,input$characteristic_irats4,input$characteristic_irats5,input$characteristic_irats6)), "None"), sep=",")
+})
+
+```
+
+<br>
+
+<br> 
+Here are the results for your new index:
+
+<br>
+```{r, eval=TRUE, echo = FALSE}
+
+
+Index_Score_rect <- reactive({
+  
+  thefeature = DATASET$SDC[[which(names(DATASET$SDC) == input$characteristic_irats1)]]  
+  High_feature_events1 = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+  Low_feature_events1 = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+  
+  High_feature_events2 <- High_feature_events3 <- High_feature_events4 <- High_feature_events5 <- High_feature_events6 <- rep(FALSE,length(High_feature_events1))
+  Low_feature_events2 <- Low_feature_events3 <- Low_feature_events4 <- Low_feature_events5 <- Low_feature_events6 <- 
+    rep(FALSE,length(Low_feature_events1))
+  
+  if (input$characteristic_irats2 != "None"){
+    thefeature = DATASET$SDC[[which(names(DATASET$SDC) == input$characteristic_irats2)]]  
+    High_feature_events2 = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+    Low_feature_events2 = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+  }
+  if (input$characteristic_irats3 != "None"){
+    thefeature = DATASET$SDC[[which(names(DATASET$SDC) == input$characteristic_irats3)]]  
+    High_feature_events3 = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+    Low_feature_events3 = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+  }
+  if (input$characteristic_irats4 != "None"){
+    thefeature = DATASET$SDC[[which(names(DATASET$SDC) == input$characteristic_irats4)]]  
+    High_feature_events4 = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+    Low_feature_events4 = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+  }
+  if (input$characteristic_irats5 != "None"){
+    thefeature = DATASET$SDC[[which(names(DATASET$SDC) == input$characteristic_irats5)]]  
+    High_feature_events5 = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+    Low_feature_events5 = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+  }
+  if (input$characteristic_irats6 != "None"){
+    thefeature = DATASET$SDC[[which(names(DATASET$SDC) == input$characteristic_irats6)]]  
+    High_feature_events6 = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+    Low_feature_events6 = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature))
+  }
+  
+  Index_score = 
+    2*High_feature_events1 + 1*(!High_feature_events1 & !Low_feature_events1) + 
+    (input$characteristic_irats2 != "None")*(2*High_feature_events2 + 1*(!High_feature_events2 & !Low_feature_events2) ) + 
+    (input$characteristic_irats3 != "None")*(2*High_feature_events3 + 1*(!High_feature_events3 & !Low_feature_events3) ) + 
+    (input$characteristic_irats4 != "None")*(2*High_feature_events4 + 1*(!High_feature_events4 & !Low_feature_events4) ) + 
+    (input$characteristic_irats5 != "None")*(2*High_feature_events5 + 1*(!High_feature_events5 & !Low_feature_events5) ) + 
+    (input$characteristic_irats6 != "None")*(2*High_feature_events6 + 1*(!High_feature_events6 & !Low_feature_events6) ) 
+  
+  Index_score
+  
+})
+
+feature_IRATStable_index <- reactive({
+  
+  thefeature = Index_Score_rect()
+  
+  High_feature_events = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_all)) & !is.na(thefeature))
+  Low_feature_events = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_all)) & !is.na(thefeature))
+  
+  res = round(cbind(
+    car_table(DATASET$returns_by_event_monthly[,Low_feature_events], DATASET$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
+    car_table(DATASET$returns_by_event_monthly[,High_feature_events], DATASET$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
+  ),2)[reported_times,]
+  colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
+  res
+})
+
+High_feature_Hedged_react_index <- reactive({
+  thefeature = Index_Score_rect()
+  High_feature_events = which(scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_all)) & !is.na(thefeature))
+  High_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
+  remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
+})
+
+Low_feature_Hedged_react_index <- reactive({
+  thefeature = Index_Score_rect()
+  Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_all)) & !is.na(thefeature))
+  Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
+  remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
+})
+
+```
+
+
+```{r, eval=TRUE, echo = FALSE}
+fluidPage(
+  mainPanel(
+    tabsetPanel("Example",
+                tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
+                         renderTable({
+                           feature_IRATStable_index()
+                         })),
+                tabPanel("Histogram of the New Index",
+                         renderPlot({
+                           feature = Index_Score_rect()
+                           feature = feature[!is.na(feature)]
+                           if (!is.numeric(feature))
+                             feature = 1
+                           hist(feature, density = 100, breaks = 100)
+                         })),
+                tabPanel("Cumulative Abnormal Returns,High, 12m hold",
+                         renderDygraph({
+                           pnl_plot_interactive(High_feature_Hedged_react_index())
+                         })),
+                tabPanel("Monthly and Yearly Returns, High, 12m hold",
+                         renderUI({
+                           renderHeatmapX(pnl_matrix(High_feature_Hedged_react_index()))
+                         })
+                )
+    ),style='width: 100%;'))
+```
+
+
