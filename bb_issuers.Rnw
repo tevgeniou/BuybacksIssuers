@@ -6,10 +6,10 @@
 #dir.create("tmpfiles") # need to comment this if the directory already exists
 
 #load("tmpfiles/bb_issuersALL.Rdata")
-reload_data = 1
+reload_data = 0
 
 # Then to make it into Word: 
-# pandoc -s bb_issuers.tex --bibliography=bibliography.bib --number-sections --reference-links -o wordfilename.docx
+# pandoc -s bb_issuers.tex --bibliography=bibliography.bib --number-sections --reference-links -o theo.docx
 
 generate_all_data = 0 # set this to 1 if the data need to be re-generated from the csv's even though they already exist as .Rdata. 
 # TIME ALIGNMENT IS KEY, SO WE HAVE A SEPARATE PART OF THE CODE FOR THIS
@@ -142,31 +142,25 @@ knit_hooks$set(inline = function(x) {
 
 \begin{document}
 
-%Blind title page
-\begin{titlepage}
-\begin{center}
+%%Blind title page
+%\begin{titlepage}
+%\begin{center}
 %  \centering
-\vskip 60pt
-\LARGE Share Buyback and Equity Issue Anomalies Revisited \par
-\vskip 1.5em
-\normalsize  \today
-\noindent \\ 
-\begin{abstract}
-\noindent We re-examine the behavior of stock returns after share buyback and equity issuance announcements using the five-factor model proposed by \cite{FamaFrench2015a}. We confirm the findings of \cite{FamaFrench2015b} that the equity issue anomaly, i.e., the fact that equity issues are followed by negative long-term excess returns, disappears after replacing the \cite{FamaFrench1993} three-factor model with the five-factor model. However, long term positive excess returns after buyback announcements, first reported by Ikenberrry, Lakonishok and Vermaelen (1995), remain economically and statistically significant. Moreover, the Undervaluation Index proposed by \cite{PeyerVermaelen2009} remains a useful proxy for the likelihood that the buyback is driven by undervaluation. The buyback anomaly is robust over time and across sectors. Firms with low correlations with the market seem to be better at market timing, which is consistent with the hypothesis that the repurchase is driven by superior company-specific information. Firms with high pre-announce stock returns volatility also have higher abnormal returns, which is consistent with the hypothesis that a repurchase authorization is an option to take advantage of undervaluation as argued by Ikenberry and Vermaelen (1996). Finally, based on these findings, we develop an enhanced Undervaluation Index that improves abnormal returns relative to the index developed by \cite{PeyerVermaelen2009}.
-\end{abstract}
-
-\vspace{2cm}
-
-\end{center}
-
-\medskip
-
-\noindent \textit{JEL classification}: G35
-
-\medskip
-\noindent \textit{Keywords}: Share Buybacks, Seasoned Equity Offerings
-
-\end{titlepage}
+%\vskip 60pt
+%\LARGE Share Buyback and Equity Issue Anomalies Revisited \par
+%\vskip 1.5em
+%\normalsize  \today
+%\noindent \\ 
+%\begin{abstract}
+%\noindent We re-examine the behavior of stock returns after share buyback and equity issuance announcements using the five-factor model proposed by \cite{FamaFrench2015a}. We confirm the findings of \cite{FamaFrench2015b} that the equity issue anomaly, i.e., the fact that equity issues are followed by negative long-term excess returns, disappears after replacing the \cite{FamaFrench1993} three-factor model with the five-factor model. However, long term positive excess returns after buyback announcements, first reported by \cite{IkenberryLakonishokVermaelen1995}, remain economically and statistically significant. Moreover, the Undervaluation Index proposed by \cite{PeyerVermaelen2009} remains a useful proxy for the likelihood that the buyback is driven by undervaluation. The buyback anomaly is robust over time and across sectors. Firms with low correlations with the market seem to be better at market timing, which is consistent with the hypothesis that the repurchase is driven by superior company-specific information. Firms with high pre-announce stock returns volatility also have higher abnormal returns, which is consistent with the hypothesis that a repurchase authorization is an option to take advantage of undervaluation as argued by \cite{IkenberryVermaelen1996}. This result is also consistent with \cite{Stambaugh2015} who find a positive relation between stock returns and idiosyncratic volatility for undervalued stocks, unlike the well-known low volatility anomaly across all stocks. Finally, based on these findings, we develop an enhanced Undervaluation Index that improves abnormal returns relative to the index developed by \cite{PeyerVermaelen2009}.
+%\end{abstract}
+%\vspace{2cm}
+%\end{center}
+%\medskip
+%\noindent \textit{JEL classification}: G35
+%\medskip
+%\noindent \textit{Keywords}: Share Buybacks, Seasoned Equity Offerings
+%\end{titlepage}
 
 \setlist{noitemsep}  % Reduce space between list items (itemize, enumerate, etc.)
 %\onehalfspacing      % Use 1.5 spacing
@@ -189,7 +183,7 @@ Nick Nassuphis$^{**}$, and Theo Vermaelen\thanks{INSEAD, Bd de Constance, 77300 
 
 \vspace{-.2in}
 \begin{abstract}
-\noindent We re-examine the behavior of stock returns after share buyback and equity issuance announcements using the five-factor model proposed by \cite{FamaFrench2015a}. We confirm the findings of \cite{FamaFrench2015b} that the equity issue anomaly, i.e., the fact that equity issues are followed by negative long-term excess returns, disappears after replacing the \cite{FamaFrench1993} three-factor model with the five-factor model. However, long term positive excess returns after buyback announcements, first reported by Ikenberrry, Lakonishok and Vermaelen (1995), remain economically and statistically significant. Moreover, the Undervaluation Index proposed by \cite{PeyerVermaelen2009} remains a useful proxy for the likelihood that the buyback is driven by undervaluation. The buyback anomaly is robust over time and across sectors. Firms with low correlations with the market seem to be better at market timing, which is consistent with the hypothesis that the repurchase is driven by superior company-specific information. Firms with high pre-announce stock returns volatility also have higher abnormal returns, which is consistent with the hypothesis that a repurchase authorization is an option to take advantage of undervaluation as argued by Ikenberry and Vermaelen (1996). Finally, based on these findings, we develop an enhanced Undervaluation Index that improves abnormal returns relative to the index developed by \cite{PeyerVermaelen2009}.
+\noindent We re-examine the behavior of stock returns after share buyback and equity issuance announcements using the five-factor model proposed by \cite{FamaFrench2015a}. We confirm the findings of \cite{FamaFrench2015b} that the equity issue anomaly, i.e., the fact that equity issues are followed by negative long-term excess returns, disappears after replacing the \cite{FamaFrench1993} three-factor model with the five-factor model. However, long term positive excess returns after buyback announcements, first reported by \cite{IkenberryLakonishokVermaelen1995}, remain economically and statistically significant. Moreover, the Undervaluation Index proposed by \cite{PeyerVermaelen2009} remains a useful proxy for the likelihood that the buyback is driven by undervaluation. The buyback anomaly is robust over time and across sectors. Firms with low correlations with the market seem to be better at market timing, which is consistent with the hypothesis that the repurchase is driven by superior company-specific information. Firms with high pre-announce stock returns volatility also have higher abnormal returns, which is consistent with the hypothesis that a repurchase authorization is an option to take advantage of undervaluation as argued by \cite{IkenberryVermaelen1996}. This result is also consistent with \cite{Stambaugh2015} who find a positive relation between stock returns and idiosyncratic volatility for undervalued stocks, unlike the well-known low volatility anomaly across all stocks. Finally, based on these findings, we develop an enhanced Undervaluation Index that improves abnormal returns relative to the index developed by \cite{PeyerVermaelen2009}.
 
 
 \end{abstract}
@@ -223,12 +217,15 @@ One straightforward explanation is that they are not really anomalous returns bu
 
 A second possible reason for the funds' lack of interest in the buyback anomaly is that event studies aggregate returns over a very long horizon. The fact that buying shares after a buyback announcement generates positive excess returns during for example 1990-2014 does not mean that, if one starts a fund in 2016, one can expect to beat the market during the next 3 years. In other words, the anomaly may be time dependent, and investor patience may not extend beyond 3 years. Moreover, because of the growth of institutional investors and the reduction in trading costs markets may have become more efficient in recent years as argued by \cite{FuHuang2015}. The anomaly may also be industry-specific so that an investor who follows a buyback strategy may end up with a highly undiversified portfolio.
 
-Finally, the long-term event studies do not give much guidance about when to sell after a buyback or cover after shorting an equity issue. Trading strategies, such as $M\&A$ arbitrage (\cite{MitchellPulvino2001}), often have ``natural'' exit decision points (e.g., at $M\&A$ deal completion or termination), but the literature does not provide clear guidance about when to exit a buyback position.  Empirical studies tend to show that, on average, excess returns continue for up to 3 or 4 years after a buyback authorization, but there is no reason why such a horizon is optimal. The passive nature of the strategy may also give the impression that the strategy is too simple to justify management fees. One straightforward ``early'' selling strategy that we study is to combine the buyback and equity issuance anomalies by selling buyback stocks after the firm announces an equity issue. Note that the fact that equity issues in general are followed by negative abnormal returns does not necessarily imply that equity issues after buybacks should generate the same result. Given our focus on buybacks and equity issuance, we do not study other possible exit signals, such as missing analysts' estimates (e.g., \cite{PeyerVermaelen2009}), take over bids (e.g., \cite{Linetal2014}), or other company events.
+The long-term event studies also do not give much guidance about when to sell after a buyback or cover after shorting an equity issue. Trading strategies, such as $M\&A$ arbitrage (\cite{MitchellPulvino2001}), often have ``natural'' exit decision points (e.g., at $M\&A$ deal completion or termination), but the literature does not provide clear guidance about when to exit a buyback position.  Empirical studies tend to show that, on average, excess returns continue for up to 3 or 4 years after a buyback authorization, but there is no reason why such a horizon is optimal. One straightforward ``early'' selling strategy that we study is to combine the buyback and equity issuance anomalies by selling buyback stocks after the firm announces an equity issue. Note that the fact that equity issues in general are followed by negative abnormal returns does not necessarily imply that equity issues after buybacks should generate the same result. 
 
-The purpose of this paper is to explore these concerns by studying the robustness of the buybacks and issuance anomalies over the 30 year period starting in January \Sexpr{firstyear} and ending in December \Sexpr{lastyear}, using the \cite{FamaFrench2015a} five-factor model. Although there are other models of market equilibrium proposed to explain excess returns after buyback authorizations (i.e. \cite{Linetal2014}) our focus is on the \cite{FamaFrench2015a} challenge. We are also agnostic on the source of misvaluation, e.g., undervaluing cash flows or overestimating risk (\cite{GrullonMichaely2004}). We confirm the \cite{FamaFrench2015b} conclusion that the five-factor model makes the equity issue anomaly disappear, but the buyback anomaly remains statistically and economically significant. Even though we find that equity issues are not followed by significant negative excess returns in general, it turns out that using a SEO announcement as a sell signal improves the performance of a buyback portfolio. The interpretation is that firms that are timing the market by buying back shares when they are cheap are also successful timing the market when stocks are expensive. 
+Finally, the results from event studies which use either Ibbotson RATS or the Calendar Time method estimate excess returns and risks contemporaneously. Investors, such as hedge funds, who would like to exploit the anomaly and hedge market risk need however to estimate the factor betas using historical information. If the buyback signals a change in risk (\cite{GrullonMichaely2004}) hedging market risk may be complicated. That is why in this paper we also simulate hedged investment strategies where we estimate risk {\it before} forming the portfolios.  
 
-We also confirm that the Undervaluation Index developed by \cite{PeyerVermaelen2009} is a good predictor of excess returns and that the anomaly does not disappear if we exclude specific industries.  Moreover, the predictive capacity can be significantly enhanced if we incorporate two additional indicators that are expected to be correlated with misvaluation. First,  idiosyncratic risk, which measures to what extent stock prices are driven by company-specific information. Unlike \cite{Ang2006}, who find a negative relation between idiosyncratic volatility and future returns, and \cite{FamaFrench2015b}, who show similar evidence for small firms, we find  
-a positive relation for buyback stocks. This is consistent with \cite{Stambaugh2015} who find a positive relation for undervalued\footnote{They  define undervaluation on the basis of a combination of 11 return anomalies reported in the literature, including net equity issuance.}  stocks. The second indicator to be correlated with misvaluation is  volatility. The argument is that a repurchase authorization is an option to take advantage of undervaluation and this option should be more valuable for high volatility stocks (\cite{IkenberryVermaelen1996}). Combining these new measures with the Peyer-Vermaelen (2009) Undervaluation Index into an Enhanced Undervaluation Index, improves the predictability of excess returns. In particular, during the four years following the buyback announcement, the high Enhanced Undervaluation Index portfolio generates an excess return of \Sexpr{round(EU_CALtable_bb["+48",13+6],2)}$\%$ per month with the Calendar Time event study method. Using the IRATS method the cumulative excess return reaches \Sexpr{round(EU_IRATStable_bb["+48",19],2)}$\%$ after 48 months. 
+The purpose of this paper is to explore these concerns by studying the robustness of the buybacks and issuance anomalies over the 30 year period starting in January \Sexpr{firstyear} and ending in December \Sexpr{lastyear}, using the \cite{FamaFrench2015a} five-factor model. Although there are other models of market equilibrium proposed to explain excess returns after buyback authorizations (i.e. \cite{Linetal2014}) our focus is on the \cite{FamaFrench2015a} challenge.  We confirm the \cite{FamaFrench2015b} conclusion that the five-factor model makes the equity issue anomaly disappear, but the buyback anomaly remains statistically and economically significant. Even though we find that equity issues are not followed by significant negative excess returns in general, it turns out that using a SEO announcement as a sell signal improves the performance of a buyback portfolio. The interpretation is that firms that are timing the market by buying back shares when they are cheap are also successful timing the market when stocks are expensive. We also confirm that the Undervaluation Index developed by \cite{PeyerVermaelen2009} is a good predictor of excess returns, although it emphasizes smaller firms, and that the anomaly does not disappear if we exclude specific industries.
+
+We also test whether the buyback anomaly is related to the even better known {\it low volatility anomaly}: that (idiosyncratic) volatility is negatively related to future returns. For example, \cite{Ang2006} find negative alphas for high volatility and high idiosyncratic volatility stocks, using the 3 factor \cite{FamaFrench1993} model. Moreover, \cite{FamaFrench2015b} show that, using the 5-factor model, this anomaly persists for small firms. However, in our buyback sample we find a significant positive relation between excess returns, using  the Fama-French 5-factor model as a benchmark. This is consistent with the {\it information advantage hypothesis}: in firms with high idiosyncratic risk volatility is largely driven by company-specific information, and for such firms it is more likely that management is better informed than the market. The result is also consistent with \cite{Stambaugh2015} who find a positive relation between stock returns and idiosyncratic volatility for undervalued\footnote{They  define undervaluation on the basis of a combination of 11 return anomalies reported in the literature, including net equity issuance.}  stocks. 
+
+Turning to total volatility we also find that buyback authorizations of high risk stocks are followed by larger excess returns. This is consistent with the {\it option hypothesis}:  a repurchase authorization is an option to take advantage of undervaluation and this option should be more valuable for high volatility stocks (\cite{IkenberryVermaelen1996}). If markets underestimate the value of this option at the time of the buyback authorization, excess returns should be positively correlated with volatility.  Combining idiosyncratic risk and total volatility  with the \cite{PeyerVermaelen2009} Undervaluation Index into an Enhanced Undervaluation Index, improves the predictability of excess returns. In particular, during the four years following the buyback announcement, the high Enhanced Undervaluation Index portfolio generates an excess return of \Sexpr{round(EU_CALtable_bb["+48",13+6],2)}$\%$ per month with the Calendar Time event study method. Using the IRATS method the cumulative excess return reaches \Sexpr{round(EU_IRATStable_bb["+48",19],2)}$\%$ after 48 months. 
 
 
 This paper is organized as follows. In section 2 we describe our data. In section 3 we test whether buyback and equity issue anomalies survive when we use the \cite{FamaFrench2015a} five-factor model. We also compare firms that buy back stock and issue equity within 48 months of a buyback announcement with firms that do not issue stock subsequently. In section 4 we test whether the buyback anomaly is robust across time, investment horizon and industry. In section 5 we test whether idiosyncratic risk as well as volatility can improve the predictability of excess returns, relative to simply using the Undervaluation Index proposed by \cite{PeyerVermaelen2009}. Section 6 concludes. 
@@ -311,8 +308,12 @@ Table~\ref{tbl:PastFindingsTimeBB} shows that, regardless of the time period cho
 
 Table~\ref{tbl:PastFindingsTimeUnderBB} re-examines whether the U-index of \cite{PeyerVermaelen2009} predicts the five factor excess returns for different time periods. The first two columns show the IRATS results and the last two columns show the Calendar Time results. Regardless of the method to compute excess returns, the U-index is an excellent predictor: except for the very short 1985-1990 period, buybacks announced by high U-index firms are followed by significantly larger returns than buybacks announced by low U-index firms.  There is also no evidence that the U-index is losing its predictive power over time: for example, in the 2001-2014 period the difference between high U-index and low index firms (after 48 months, IRATS) was \Sexpr{BBtable_undertime["+48",31]-BBtable_undertime["+48",34]}$\%$, while in the most recent 2008-2014 period high U-index firms had \Sexpr{BBtable_undertime["+48",43]-BBtable_undertime["+48",46]}$\%$ larger abnormal returns than low U-index firms.
 
+\subsection{Robustness with respect to estimation of factor betas}
+\label{sec:robustbeta}
 
-To further study the robustness of the buyback anomaly over time, we simulate a portfolio investment strategy starting in \Sexpr{firstyear}. The strategy uses past data to estimate the factor betas and measures the abnormal returns of buyback portfolios over different investment horizons. While this is not an accurate measure of the returns of a buyback fund - as we do not consider transaction costs, turnover issues, or other operational issues (see for example \cite{MitchellPulvino2001}) - it provides us with an estimate of what would have happened to an investor who starts investing in \Sexpr{firstyear} in an equally weighted portfolio of buyback stocks and holds them over various horizons.
+Note that both event study methods measure alpha (excess return) and betas jointly. In other words, we do not use prior (to investing) information to estimate risk. An investor who wants to exploit the anomaly, however, may want to hedge market (and other) risk and would need to estimate betas using past data. If the buyback signals a change in risk (\cite{GrullonMichaely2004}) it is not obvious that such a hedged strategy would work. 
+
+To further study the robustness of the buyback anomaly, we simulate a portfolio investment strategy starting in \Sexpr{firstyear}. The strategy uses past data to estimate the factor betas and measures the abnormal returns of buyback portfolios over different investment horizons. While this is not an accurate measure of the returns of a buyback fund - as we do not consider transaction costs, turnover issues, or other operational issues (see for example \cite{MitchellPulvino2001}) - it provides us with an estimate of what would have happened to an investor who starts investing in \Sexpr{firstyear} in an equally weighted portfolio of buyback stocks and holds them over various horizons.
 
 << fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
 tmp = pnl_matrix(remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade))
@@ -323,9 +324,6 @@ expost_betas_unhedged = beta_expost(ri,Risk_Factors_Monthly[,pnl_hedge_factors])
 @
 
 Specifically, we consider the following trading strategy: construct the first day of every month an equally weighted portfolio of all companies that announced buybacks during the previous $N$ months, for a given holding period of length $N$ (which can be chosen). Thus, once a company makes an announcement, it enters the portfolio on the first day of the following month and remains there for $N$ months. Note that the portfolio is re-balanced (the first day of) each month. This ``unhedged'' strategy generates a time series of returns. Each month (when we re-balance the portfolio) we also use the previous \Sexpr{hedge_months}  monthly returns of this time series    to calculate the (portfolio level) time series betas of all five factors. This allows an investor to determine the betas for the factor risks using data available at the time of portfolio formation. 
-
-Note that, as there is no hindsight and all betas are estimated every month using past data, the portfolio used to estimate the betas may consist of firms that are different from those of the (newly created) portfolio that is hedged - as we do not know when companies will announce a buyback. On the other hand, note that unlike this strategy, both the IRATs and calendar event study results use hindsight to estimate risk. However, despite using pre-portfolio formation data to estimate the betas, the returns of the overall strategy have very low betas with the five factors.\footnote{For example for the $N =12$ months holding period discussed below, the betas for the five factors Market, SMB, HML, RMW, and CMA are respectively \Sexpr{round(expost_betas[2,1],3)}, \Sexpr{round(expost_betas[3,1],3)}, \Sexpr{round(expost_betas[4,1],3)}, \Sexpr{round(expost_betas[5,1],3)} and \Sexpr{round(expost_betas[6,1],3)}. The corresponding betas for the ``unhedged'' strategy are \Sexpr{round(expost_betas_unhedged[2,1],3)}, \Sexpr{round(expost_betas_unhedged[3,1],3)}, \Sexpr{round(expost_betas_unhedged[4,1],3)}, \Sexpr{round(expost_betas_unhedged[5,1],3)} and \Sexpr{round(expost_betas_unhedged[6,1],3)}. This also indicates that the returns shown in Figure~\ref{fig:ReturnsBB} and Table~\ref{tbl:allhedgedBB} are close to excess returns. Getting pure excess returns in practice requires more detailed hedging (without hindsight). }
-
 
 << fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
 months1 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all1mshort_risk_factors,min_date=FirstTrade))
@@ -340,6 +338,8 @@ months48 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all48mshort_r
 
 We report the returns of such a portfolio strategy for different holding months $N$ = 1, 3, 6, 12, 24, 36, 48 in Figure~\ref{fig:ReturnsBB}.\footnote{Results for other holding periods, as in Figure~\ref{fig:ReturnsBB}, are available upon request.} The basic conclusion is that the shorter the investment horizon the larger the excess returns. Specifically, at the end of \Sexpr{lastyear} the cumulative returns from the 1 month, 6 month, 12 month, 24 month, 36 month and 48 month holding periods are respectively equal to \Sexpr{round(tail(months1,1),1)}$\%$, \Sexpr{round(tail(months3,1),1)}$\%$, \Sexpr{round(tail(months6,1),1)}$\%$, \Sexpr{round(tail(months12,1),1)}$\%$, \Sexpr{round(tail(months24,1),1)}$\%$, \Sexpr{round(tail(months36,1),1)}$\%$ and \Sexpr{round(tail(months48,1),1)}$\%$. This is not surprising as the Calendar Time results in Table~\ref{tbl:priorBuybacks} show that the monthly excess returns decline when the investment horizon becomes longer. However, Figure~\ref{fig:ReturnsBB} allows us to verify that the excess returns are not simply the result of outperformance during a particular time period. Table~\ref{tbl:allhedgedBB} shows the monthly and yearly returns of this five-factors hedged strategy for N=12.  The table shows that in \Sexpr{sum(tmp[,13] > 0)} of \Sexpr{sum(tmp[,13] != 0)} years the returns are positive, with a large \Sexpr{round(max(tmp[,13]),1)}$\%$ excess return in  \Sexpr{rownames(tmp)[which.max(tmp[,13])]}. In only one year (\Sexpr{rownames(tmp)[which.min(tmp[,13])]}) the strategy generates an abnormal loss larger than \Sexpr{round(abs(sort(tmp[,13])[2]),1)}$\%$.
 
+Despite using pre-portfolio formation data to estimate the betas, unlike both the IRATs and Calendar Time methods that use hindsight to estimate risk, the hedged portfolio has very low betas with the five factors. For example for the $N =12$ months holding period, the betas for the five factors Market, SMB, HML, RMW, and CMA are respectively \Sexpr{round(expost_betas[2,1],3)}, \Sexpr{round(expost_betas[3,1],3)}, \Sexpr{round(expost_betas[4,1],3)}, \Sexpr{round(expost_betas[5,1],3)} and \Sexpr{round(expost_betas[6,1],3)}. The corresponding betas for the ``unhedged'' strategy are \Sexpr{round(expost_betas_unhedged[2,1],3)}, \Sexpr{round(expost_betas_unhedged[3,1],3)}, \Sexpr{round(expost_betas_unhedged[4,1],3)}, \Sexpr{round(expost_betas_unhedged[5,1],3)} and \Sexpr{round(expost_betas_unhedged[6,1],3)}. This also indicates that the returns shown in Figure~\ref{fig:ReturnsBB} and Table~\ref{tbl:allhedgedBB} are close to ``excess'' returns, i.e. returns that have basically eliminated all factors risk. This is also consistent with the hypothesis that the buyback announcement itself does not materially change the risk of the repurchasing firms (in the short term). 
+
 
 \subsection{Robustness across Sectors}
 \label{sec:AllIndustries}
@@ -352,40 +352,38 @@ Figure~\ref{fig:industryeventsBB} shows the number of buyback events per industr
 
 
 
-\section{Enhancing the U-index: \\
-Idiosyncratic Risk and Volatility}
+\section{Excess returns and volatility}
 \label{sec:infoassymetry}
+
+There exists a large literature on volatility and stock returns. One of the most puzzling findings is the fact that total volatility and idiosyncratic volatility are negatively correlated with future abnormal returns, when expected returns are calculated using the 3 factor \cite{FamaFrench1993} model  (see e.g. \cite{Ang2006} (Table VII)). This volatility anomaly also survives after using the \cite{FamaFrench2015a} 5-factor model, at least for small firms.  Perhaps the buyback and the volatility anomaly are related: are the buyback firms with the largest excess returns also firms with the smallest (idiosyncratic) risk?  Or can we make arguments that the opposite is true, if we accept the fundamental proposition of this paper, i.e. that excess returns are a result of the fact that managers are on average successful in taking advantage of an undervalued stock price?      
 
 
 \subsection{Idiosyncratic Risk}
 \label{sec:idiorisk}
 
-The main ``theory'' behind the buyback anomaly is that firms may have superior {\it company-specific} information. Such situations are more likely in industries or companies where the value is driven less by market wide factors, i.e., by highly ``idiosyncratic'' companies.  To test this hypothesis, for each event we measure the five-factor regression $R^2$ using the 6-months daily returns just before the event announcement.\footnote{Using shorter time windows, e.g., 1 month, or using the idiosyncratic volatility as in \cite{Ang2006}, leads to the same conclusions - results available upon request. However, as we want to differentiate between ``idiosyncratic'' companies and ``high volatility'' ones, to consider both the effects of company specific information and of the option value of a buyback announcement, we separately study the relations with $R^2$ and volatility. See also \cite{Lietal2014} for a discussion on this issue.} We define two types of events: ``low idiosyncratic'' (high $R^2$) and ``high idiosyncratic'' (low $R^2$) events, depending on whether the five-factor regression $R^2$ was in the top or bottom \Sexpr{round(100*quantile_R2,2)}$\%$ of the $R^2$ of all CRSP companies: each month we use the daily returns of all CRSP stocks for the previous 6 months until the one before last day of the previous month to calculate all companies' five-factor regression $R^2$. We also define the idiosyncratic score of a firm to be the percentile of its $1-R^2$ across all CRSP firms that month. Note that we do not need to  define 20 breakpoints as Fama-French do, and for simplicity we focus on the two extreme quantiles only. Table~\ref{tbl:industriesR2Vol}, columns (1) and (2) show the percentage of high and low idiosyncratic risk events across all industries for which we have at least 100 buyback events in our sample. The healthcare industry has the largest percentage of firms classified as ``high idiosyncratic'', while cyclical industries such as steel, construction and chemicals contain a large number of ``low idiosyncratic'' firms. 
+The main ``theory'' behind the buyback anomaly is that firms may have superior {\it company-specific} information. Such situations are more likely in industries or companies where the value is driven less by market wide factors, i.e., by highly ``idiosyncratic'' companies.  So if buybacks are driven by market timing this superior information hypothesis predicts that there should be a positive relation between idiosyncratic returns and volatility.  To test this hypothesis, for each event we measure the five-factor regression $R^2$ using the 6-months daily returns just before the event announcement.\footnote{Using shorter time windows, e.g., 1 month, or using the idiosyncratic volatility as in \cite{Ang2006}, leads to the same conclusions - results available upon request. However, as we want to differentiate between ``idiosyncratic'' companies and ``high volatility'' ones, to consider both the effects of company specific information and of the option value of a buyback announcement, we separately study the relations with $R^2$ and volatility. See also \cite{Lietal2014} for a discussion on this issue.} We define two types of events: ``low idiosyncratic'' (high $R^2$) and ``high idiosyncratic'' (low $R^2$) events, depending on whether the five-factor regression $R^2$ was in the top or bottom \Sexpr{round(100*quantile_R2,2)}$\%$ of the $R^2$ of all CRSP companies: each month we use the daily returns of all CRSP stocks for the previous 6 months until the one before last day of the previous month to calculate all companies' five-factor regression $R^2$. We also define the idiosyncratic score of a firm to be the percentile of its $1-R^2$ across all CRSP firms that month. Note that we do not need to  define 20 breakpoints as Fama-French do, and for simplicity we focus on the two extreme quantiles only. Table~\ref{tbl:industriesR2Vol}, columns (1) and (2) show the percentage of high and low idiosyncratic risk events across all industries for which we have at least 100 buyback events in our sample. The healthcare industry has the largest percentage of firms classified as ``high idiosyncratic'', while cyclical industries such as steel, construction and chemicals contain a large number of ``low idiosyncratic'' firms. 
 
-Figure~\ref{fig:badpreviousR2}  shows the results of a strategy similar to the strategy of Figure~\ref{fig:ReturnsBB} (Panel~B): starting in \Sexpr{firstyear} we form a portfolio of all stocks that announced a buyback during the previous N months and hold the stock for $N$ months. The graph shows two strategies, one for a short holding period ($N=12$) and one for a very long holding period ($N=48$). In both cases the excess returns for high idiosyncratic companies are higher.  Specifically, high idiosyncratic companies earn cumulative excess returns of  \Sexpr{round(tail(cumsum(100*High_Idiosyncr_BB_Hedged),1),1)}$\%$ (\Sexpr{round(tail(cumsum(100*High_Idiosyncr_BB_Hedged48m),1),1)}$\%$) for the 12 (48) month holding strategy. These excess returns are higher than the \Sexpr{round(tail(cumsum(100*Low_Idiosyncr_BB_Hedged),1),1)}$\%$ (\Sexpr{round(tail(cumsum(100*Low_Idiosyncr_BB_Hedged48m),1),1)}$\%$) of the corresponding low idiosyncratic sample.
 
-Table~\ref{tbl:IdiosyncraticunderBB}  confirms this result in a more systematic way. It shows the IRATS and Calendar Time abnormal returns for high and low idiosyncratic buyback events-companies. Focusing on IRATS, high idiosyncratic buyback stocks earn \Sexpr{R2_IRATStableBB["+48","High Idiosync.: CAR"]}$\%$  after 48 months, more than three times the excess returns of the low idiosyncratic announcements. The results using the Calendar Time method confirm these findings. 
 
-Table~\ref{tbl:IdiosyncraticunderBB} also tests whether adjusting for idiosyncratic risk improves the predictive power of the U-index. Regardless of the time horizon and the event study method, the U-index works only for idiosyncratic companies. After 48 months, based on the IRATS methods, high U-index high idiosyncratic companies earn \Sexpr{R2_IRATStable_underBB["+48","High Idiosync.: U CAR"]}$\%$ (t=\Sexpr{R2_IRATStable_underBB["+48",8]}). Low idiosyncratic high U-index firms have only an insignificant excess return of \Sexpr{R2_IRATStable_underBB["+48",1]}$\%$ (t=\Sexpr{R2_IRATStable_underBB["+48",2]}), while for low idiosyncratic firms the low U-index IRATS excess returns are significant (\Sexpr{R2_IRATStable_underBB["+48",4]}$\%$, t=\Sexpr{R2_IRATStable_underBB["+48",5]}).  Note however that we only have few events in low idiosyncratic, high U-index (\Sexpr{R2_IRATStable_underBB["Observations",1]} events) and high idiosyncratic, low U-index (\Sexpr{R2_IRATStable_underBB["Observations",10]} events) categories. The Calendar Time results provide the same picture: only for the high idiosyncratic, high U-index firms we obtain significant (t=\Sexpr{R2_IRATStable_underBB_cal["+48",8]}) monthly excess returns of \Sexpr{R2_IRATStable_underBB_cal["+48",7]}$\%$. The high idiosyncratic and low U-index firms have  non-significant (t=\Sexpr{R2_IRATStable_underBB_cal["+48",11]}) monthly excess returns of \Sexpr{R2_IRATStable_underBB_cal["+48",10]}$\%$.
+Table~\ref{tbl:IdiosyncraticunderBB} shows the IRATS and Calendar Time abnormal returns for high and low idiosyncratic buyback events-companies. Focusing on IRATS, high idiosyncratic buyback stocks earn \Sexpr{R2_IRATStableBB["+48","High Idiosync.: CAR"]}$\%$  after 48 months, more than three times the excess returns of the low idiosyncratic announcements. The results using the Calendar Time method confirm these findings. Table~\ref{tbl:IdiosyncraticunderBB} also tests whether adjusting for idiosyncratic risk improves the predictive power of the U-index. Regardless of the time horizon and the event study method, the U-index works only for idiosyncratic companies. After 48 months, based on the IRATS methods, high U-index high idiosyncratic companies earn \Sexpr{R2_IRATStable_underBB["+48","High Idiosync.: U CAR"]}$\%$ (t=\Sexpr{R2_IRATStable_underBB["+48",8]}). Low idiosyncratic high U-index firms have only an insignificant excess return of \Sexpr{R2_IRATStable_underBB["+48",1]}$\%$ (t=\Sexpr{R2_IRATStable_underBB["+48",2]}), while for low idiosyncratic firms the low U-index IRATS excess returns are significant (\Sexpr{R2_IRATStable_underBB["+48",4]}$\%$, t=\Sexpr{R2_IRATStable_underBB["+48",5]}).  Note however that we only have few events in low idiosyncratic, high U-index (\Sexpr{R2_IRATStable_underBB["Observations",1]} events) and high idiosyncratic, low U-index (\Sexpr{R2_IRATStable_underBB["Observations",10]} events) categories. The Calendar Time results provide the same picture: only for the high idiosyncratic, high U-index firms we obtain significant (t=\Sexpr{R2_IRATStable_underBB_cal["+48",8]}) monthly excess returns of \Sexpr{R2_IRATStable_underBB_cal["+48",7]}$\%$. The high idiosyncratic and low U-index firms have  non-significant (t=\Sexpr{R2_IRATStable_underBB_cal["+48",11]}) monthly excess returns of \Sexpr{R2_IRATStable_underBB_cal["+48",10]}$\%$.\footnote{We also calculated the returns of a hedged strategy similar to Figure~\ref{fig:ReturnsBB} (Panel~B). Starting in \Sexpr{firstyear} we form a portfolio of all stocks that announced a buyback during the previous $N$ months and hold the stock for $N$ months. High idiosyncratic companies earn cumulative excess returns of  \Sexpr{round(tail(cumsum(100*High_Idiosyncr_BB_Hedged),1),1)}$\%$ (\Sexpr{round(tail(cumsum(100*High_Idiosyncr_BB_Hedged48m),1),1)}$\%$) for the 12 (48) month holding strategy. These excess returns are higher than the \Sexpr{round(tail(cumsum(100*Low_Idiosyncr_BB_Hedged),1),1)}$\%$ (\Sexpr{round(tail(cumsum(100*Low_Idiosyncr_BB_Hedged48m),1),1)}$\%$) of the corresponding low idiosyncratic sample.}
+
 
 Figure \ref{fig:pastallidio} summarizes our results.  It shows the CAR based on IRATS (Panel~A for the high U-index firms, B for the low U-index firms, and C for all firms). In agreement with Table~\ref{tbl:IdiosyncraticunderBB}, the striking result (Panel~A) is that the U-index is not a good predictor of excess returns for stocks largely driven by market factors (low idiosyncratic firms). This is strong evidence that excess returns after buybacks are driven by superior company-specific information of the management.
 
-The finding that $1-R^2$ and idiosyncratic volatility (IVOL in \cite{Ang2006}, measured as the standard deviation of the residuals of the factor model regression) are positively related to future excess returns is inconsistent with \cite{Ang2006} who find a negative relation between IVOL and expected returns. This is commonly referred to as the volatility puzzle. However, \cite{Stambaugh2015} argue that the relationship between IVOL and returns becomes positive for undervalued stocks. Their argument is that IVOL represents risk that deters arbitrage and therefore creates mispricing. Using a proxy for mispricing based on 11 anomalies they find indeed a positive relation between IVOL and future returns for undervalued stocks.  Their most under-priced high IVOL stocks earn monthly excess returns (relative to the Fama-French three-factor model) of 0.56$\%$ per month which is quite similar to the \Sexpr{R2_IRATStableBB_cal["+48","High Idiosync.: CAL"]}$\%$ per month reported in our Table~\ref{tbl:IdiosyncraticunderBB} Panel B (using the five-factor model).  
+The finding that $1-R^2$ and idiosyncratic volatility (IVOL in \cite{Ang2006}, measured as the standard deviation of the residuals of the factor model regression) are positively related to future excess returns is inconsistent with \cite{Ang2006} who find a negative relation between IVOL and expected returns. However, \cite{Stambaugh2015} argue that the relationship between IVOL and returns becomes positive for undervalued stocks. Their argument is that IVOL represents risk that deters arbitrage and therefore creates mispricing. Using a proxy for mispricing based on 11 anomalies they find indeed a positive relation between IVOL and future returns for undervalued stocks.  Their most under-priced high IVOL stocks earn monthly excess returns (relative to the Fama-French three-factor model) of 0.56$\%$ per month which is quite similar to the \Sexpr{R2_IRATStableBB_cal["+48","High Idiosync.: CAL"]}$\%$ per month reported in our Table~\ref{tbl:IdiosyncraticunderBB} Panel B (using the five-factor model).  
 
 \subsection{Volatility}
 \label{sec:volbuybacks}
 
-The announcement of a buyback program is not a firm commitment, but an option to buy back stock. Ikenberry and Vermaelen (1996) model this flexibility as an exchange option in which the market price of the stock is exchanged for the true value of the stock. They predict that, as with all options, the value increases with the volatility. The intuition is that the larger the volatility, the larger the probability that the market price may deviate from the true value. This enhances the timing ability of the manager-insider. Hence, perhaps total volatility is a better prediction of excess returns than idiosyncratic volatility or the U-index.  Or perhaps volatility can be an additional, next to the U-index and idiosyncratic volatility, indicator of the likelihood that the buyback is driven by undervaluation.  
+The announcement of a buyback program is not a firm commitment, but an option to buy back stock. Ikenberry and Vermaelen (1996) model this flexibility as an exchange option in which the market price of the stock is exchanged for the true value of the stock. They predict that, as with all options, the value increases with the volatility. The intuition is that the larger the volatility, the larger the probability that the market price may deviate from the true value. This enhances the timing ability of the manager-insider.  They show that this option can have a lot of value, something that may not be realized at the time of the announcement of the buyback authorization.  Hence, perhaps total volatility is a better prediction of excess returns than idiosyncratic volatility or the U-index.  Or perhaps volatility can be an additional, next to the U-index and idiosyncratic volatility, indicator of the likelihood that the buyback is driven by undervaluation.  
 
 For each event we measure their pre-announce returns volatility with the standard deviation of their daily stock returns over the 6 months prior to the buyback announcement. We define two types of events: ``low volatility'' and ``high volatility'' events, depending on whether volatility was in the top or bottom \Sexpr{round(100*quantile_VOL,2)}$\%$ of the volatilities of all CRSP companies, as we did for $R^2$ above:
 each month we use the daily returns of all CRSP stocks for the previous 6 months until the one before last day of the previous month to calculate all companies' daily returns volatilities. We also define the volatility score of a firm to be the percentile of its volatility across all CRSP firms that month. Note that, again, we do not need to  define 20 breakpoints as Fama-French do, and for simplicity we focus on the two extreme quantiles only.  In total we have \Sexpr{length(High_VOL_eventsBB)} ``high volatility'' buybacks-events and \Sexpr{length(Low_VOL_eventsBB)} ``low volatility'' ones. Table~\ref{tbl:industriesR2Vol}, columns (3) and (4)  show the percentage of high and low volatility events across all industries for which we have at least 100 buyback events in our sample.
 
 
-Figure~\ref{fig:badpreviousVOL} shows the results of a strategy similar to the strategy of Figure~\ref{fig:ReturnsBB}: starting in \Sexpr{firstyear} we form a portfolio of all stocks that announced a buyback during the previous $N$ months and hold the stock for $N$ months. The graph shows two strategies, one for a short holding period ($N=12$) and one for a very long holding period ($N=48$). In both cases the excess returns for high volatility companies is higher. Specifically, high volatility companies earn cumulative excess returns of  \Sexpr{round(tail(cumsum(100*High_VOL_BB_Hedged),1),1)}$\%$ (\Sexpr{round(tail(cumsum(100*High_VOL_BB_Hedged48m),1),1)}$\%$) for the 12 (48) month holding strategy, which are higher than the \Sexpr{round(tail(cumsum(100*Low_VOL_BB_Hedged),1),1)}$\%$ (\Sexpr{round(tail(cumsum(100*Low_VOL_BB_Hedged48m),1),1)}$\%$) of the corresponding low volatility sample.
+Table~\ref{tbl:VOLunderBB} shows the IRATS and Calendar Time abnormal returns for high and low volatility buybacks events-companies. Focusing on IRATS, high volatility buyback stocks earn \Sexpr{VOL_IRATStableBB["+48","High Vol: CAR"]}$\%$  after 48 months, while low volatility events have non significant abnormal returns for any period. The results using the Calendar Time method confirm these findings.\footnote{We also calculated the returns of a hedged strategy similar to Figure~\ref{fig:ReturnsBB} (Panel~B). Starting in \Sexpr{firstyear} we form a portfolio of all stocks that announced a buyback during the previous $N$ months and hold the stock for $N$ months. High volatility companies earn cumulative excess returns of  \Sexpr{round(tail(cumsum(100*High_VOL_BB_Hedged),1),1)}$\%$ (\Sexpr{round(tail(cumsum(100*High_VOL_BB_Hedged48m),1),1)}$\%$) for the 12 (48) month holding strategy, which are higher than the \Sexpr{round(tail(cumsum(100*Low_VOL_BB_Hedged),1),1)}$\%$ (\Sexpr{round(tail(cumsum(100*Low_VOL_BB_Hedged48m),1),1)}$\%$) of the corresponding low volatility sample.}
 
-Table~\ref{tbl:VOLunderBB} confirms this result in a more systematic way. It shows the IRATS and Calendar Time abnormal returns for high and low volatility buybacks events-companies. Focusing on IRATS, high volatility buyback stocks earn \Sexpr{VOL_IRATStableBB["+48","High Vol: CAR"]}$\%$  after 48 months, while low volatility events have non significant abnormal returns for any period. The results using the Calendar Time method confirm these findings. 
-
-Table~\ref{tbl:VOLunderBB} also tests whether the U-index is valid for high volatility events, as well as whether adjusting for volatility improves the predictive power of the U-index. Regardless of the time horizon and the event study method, the U-index works for high volatile companies. After 48 months, based on the IRATS methods, high U-index high volatility companies earn \Sexpr{VOL_IRATStable_underBB["+48","High Vol: U CAR"]}$\%$ (t = \Sexpr{VOL_IRATStable_underBB["+48",8]}). Low U-index high volatility companies earn \Sexpr{VOL_IRATStable_underBB["+48",10]}$\%$ (t = \Sexpr{VOL_IRATStable_underBB["+48",11]}). The Calendar Time results provide the same picture. Figure~\ref{fig:badpreviousVOL} summarizes the results for the total sample and the high and low U-index sample. The main difference with Figure~\ref{fig:badpreviousR2} is that now also low volatility/high U-index firms earn significant excess returns of 15.3$\%$ after 48 months.
+Table~\ref{tbl:VOLunderBB} also tests whether the U-index is valid for high volatility events, as well as whether adjusting for volatility improves the predictive power of the U-index. Regardless of the time horizon and the event study method, the U-index works for high volatile companies. After 48 months, based on the IRATS methods, high U-index high volatility companies earn \Sexpr{VOL_IRATStable_underBB["+48","High Vol: U CAR"]}$\%$ (t = \Sexpr{VOL_IRATStable_underBB["+48",8]}). Low U-index high volatility companies earn \Sexpr{VOL_IRATStable_underBB["+48",10]}$\%$ (t = \Sexpr{VOL_IRATStable_underBB["+48",11]}). The Calendar Time results provide the same picture. Figure~\ref{fig:pastallVOL} summarizes the results for the total sample and the high and low U-index sample. The main difference with Figure~\ref{fig:pastallidio} is that now also low volatility/high U-index firms earn significant excess returns of \Sexpr{VOL_IRATStable_underBB["+48",1]}$\%$ after 48 months.
 
 \subsection{An Enhanced U-index for Buybacks}
 \label{sec:newindex}
@@ -396,7 +394,7 @@ colnames(EU_index_features) <- c("Idiosyncratic Score", "Volatility Score", "U-I
 Under_IdioBB_cor = cor(EU_index_features)
 @
 
-Table~\ref{tbl:underidioallBB} shows how the high/low U-index  low/high idiosyncratic risk, and low/high volatility buyback events overlap, while Table~\ref{tbl:underidioallBBcor} shows the correlations between the idiosyncratic, volatility, and U-index scores. Overall we see that although high U-index firms tend to have high idiosyncratic risk and highly volatility, and high idiosyncratic risk firms tend to also have high volatility the overlap is not very high: for example from Table~\ref{tbl:underidioallBB} we learn that  only \Sexpr{round(Under_IdioBB["High Vol.","H Idiosync."],1)}$\%$ of the high volatility stocks that are classified as having either high or low idiosyncratic risk - note that we only consider the  \Sexpr{round(100*quantile_R2,2)}$\%$ tails - have high idiosyncratic risk. From Table~\ref{tbl:underidioallBBcor} we infer that the correlation between idiosyncratic risk and volatility is only \Sexpr{round(Under_IdioBB_cor["Volatility Score","Idiosyncratic Score"]*100,1)}$\%$.  A natural question is therefore whether one can further enhance the \cite{PeyerVermaelen2009} U-index by incorporating information about the firms pre-announce idiosyncratic risk and volatility. We consider one such combination where we simply take an equal-weighted combination of the 4 criteria into one ``Enhanced Undervaluation Index'' (EU-index). Specifically, in the spirit of the U-index of \cite{PeyerVermaelen2009}, we calculate the EU-index simply as the sum of three numbers: high U-index firms get a score of 2, low get a 0; high idiosyncratic firms get a score of 2, low get a 0; and high volatility firms get a score of 2, low get a 0. Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores.
+Table~\ref{tbl:underidioallBB} shows how the high/low U-index  low/high idiosyncratic risk, and low/high volatility buyback events overlap, while Table~\ref{tbl:underidioallBBcor} shows the correlations between the idiosyncratic, volatility, and U-index scores. Overall we see that although high U-index firms tend to have high idiosyncratic risk and high volatility, while high idiosyncratic risk firms tend to also have high volatility, the overlap is not very high. For example from Table~\ref{tbl:underidioallBB} we learn that  only \Sexpr{round(Under_IdioBB["High Vol.","H Idiosync."],1)}$\%$ of the high volatility stocks that are classified as having either high or low idiosyncratic risk - note that we only consider the  \Sexpr{round(100*quantile_R2,2)}$\%$ tails - have high idiosyncratic risk. From Table~\ref{tbl:underidioallBBcor} we infer that the correlation between idiosyncratic risk and volatility is only \Sexpr{round(Under_IdioBB_cor["Volatility Score","Idiosyncratic Score"]*100,1)}$\%$.  A natural question is therefore whether one can further enhance the \cite{PeyerVermaelen2009} U-index by incorporating information about the firms pre-announce idiosyncratic risk and volatility. We consider one such combination where we simply take an equal-weighted combination of the 4 criteria into one ``Enhanced Undervaluation Index'' (EU-index). Specifically, in the spirit of the U-index of \cite{PeyerVermaelen2009}, we calculate the EU-index simply as the sum of three numbers: high U-index firms get a score of 2, low get a 0; high idiosyncratic firms get a score of 2, low get a 0; and high volatility firms get a score of 2, low get a 0. Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores.
 
 
 Figure~\ref{fig:Eundervaluationindex} shows the distribution of the EU-index. The index has a symmetric distribution with a mean of \Sexpr{round(mean(EUindex_bb),2)}. Table~\ref{tbl:EUrelations} shows how the EU-index relates to a number of firm characteristics. Firm leverage, based on data the year before announcement, is defined as the ratio $debt/(debt+equity)$\footnote{We use the definitions from \url{http://www.ivo-welch.info/professional/leverage.placebo/}{Ivo Welch's website} following  \url{http://www.ivo-welch.info/professional/leverage.placebo/r-sourcecode/mksane.R}. Debt is the sum of the Compustat variables $dlc+ dltt$, where $dlc$ is ``Debt in Current Liabilities'' and $dltt$ is ``Long Term Debt - Total''. Equity is the Compustat variable $seq$ which is ``Total Parent Stockholders' Equity''. We use the most recent data pre-announce, and make the winsorization and other adjustments as in the websites above. Note that we followed the same steps as in these websites to handle negative book value of equity (in the BE/ME calculations) and any other Compustat data issues.}. ``Missed (beat) EPS'' measures the percentage of firms in the specific EU index category that missed (beat) the last EPS consensus analyst forecast before the buyback announcement. ``ISS later'' measures the percentage of firms that announced an equity issue within 48 months after the buyback announcement. Next, we measure the percentage of buybacks financed with cash (CASH) when the data is available\footnote{As this SDC data was not available for many events, we did not consider the in the U-index calculation} (this data was available only for \Sexpr{sum(!(BUYBACK_DATA$DATASET$SDC$Source...of..Funds..Code == ""))} of the events) and whether the reported purpose (available only for \Sexpr{sum(!(BUYBACK_DATA$DATASET$SDC$Purpose.Code == ""))} events) included the term ``Undervalued'', or ``Enhance Shareholder Value'' or ``stock option plan''.
@@ -408,11 +406,7 @@ tmp_market_cap = round(non_zero_mean(BUYBACK_DATA$DATASET$SDC$Market.Cap[EUindex
 
 First there is a striking negative relation between the EU index and financial leverage. This makes sense according to the static trade-off theory of optimal capital structure: high risky firms have more financial distress and should have less debt. Second, the high EU index firms are more likely to miss earnings forecasts. To the extent that analysts base their recommendations on these earnings misses, stock prices may become undervalued. Evidence that analyst extrapolation forecast errors are a partial explanation for the buyback anomaly is documented by \cite{PeyerVermaelen2009}.  High EU index firms are more likely to mention ``undervaluation'' as a motivation for the buyback.  High EU index firms tend to have more cash. This could of course be related to the fact that risky firms should have more cash holdings.  They also tend to follow up with equity offerings after the buyback which suggests that they are more likely to be in the ``market timing'' business. The table also shows a strong negative relation between market-to-book ratios and market capitalization and the EU index, which is not surprising as these are components of the index. It should be noted that the EU 6 portfolio is composed of very small stocks with an average market capitalization of \$\Sexpr{round(EU_relations["Market Cap.","EU6"],1)} million. The average market capitalization of portfolios with long term (after 48 months) monthly excess return of larger than 0.3$\%$ (i.e. portfolios EU4 through EU6 in Table~\ref{tbl:EUunderBBcal}) is \$\Sexpr{tmp_market_cap} billion (not indicated in the Table). So the buyback anomaly is to some extent a small cap anomaly, although portfolio EU3 for which the average market capitalization of its \Sexpr{sum(EUindex_bb==3)} firms is \$\Sexpr{round(non_zero_mean(BUYBACK_DATA$DATASET$SDC$Market.Cap[EUindex_bb ==3])/1000,1)} billion still has significant abnormal returns. 
 
-
-Figure~\ref{fig:badpreviousEU} shows the results of a strategy similar to the strategy of Figure~\ref{fig:ReturnsBB}: starting in \Sexpr{firstyear} we form a portfolio of all stocks that announced a buyback during the previous $N$ months and hold the stock for $N$ months. The graph shows two strategies, one for a short holding period ($N=12$) and one for a very long holding period ($N=48$). In both cases the excess returns for high EU-index companies is significantly higher than for low EU-index companies. We define low EU-index firms those for which the EU-index is 0-1, and high for which it is 5-6 (note that the index takes values from 0 to 6). Specifically, the 12-month holding period high EU-index portfolio has average annual abnormal returns of \Sexpr{round(pnl_stats(High_EU_BB_Hedged)[1],1)}$\%$, while the low EU-index one earns only \Sexpr{round(pnl_stats(Low_EU_BB_Hedged)[1],1)}$\%$ annual excess returns. For the 48-month holding periods the high and low EU-index portfolio earn annual excess returns of  respectively, \Sexpr{round(pnl_stats(High_EU_BB_Hedged48m)[1],1)}$\%$ and \Sexpr{round(pnl_stats(Low_EU_BB_Hedged48m)[1],1)}$\%$.
-
-
-Tables  \ref{tbl:EUunderBB} and \ref{tbl:EUunderBBcal} show respectively the IRATS and Calendar Time monthly abnormal returns for all values of the EU-index. Focusing on IRATS, as the EU-index increases, the long term abnormal returns increase (from \Sexpr{round(EU_IRATStable_bb["+48",1],1)}$\%$ to \Sexpr{round(EU_IRATStable_bb["+48",19],1)}$\%$). Figure~\ref{fig:Epastall} show the same results over time for each EU-index. Long-term cumulative excess returns after 48 months are becoming statistically significantly positive at EU-index levels of 3 and higher, and then steadily increase from \Sexpr{round(EU_IRATStable_bb["+48",10],1)}$\%$ to \Sexpr{round(EU_IRATStable_bb["+48",19],1)}$\%$. The Calendar Time results are similar although they only show significance starting at EU-index levels of 4.  Investing in the very high EU index firms (EU=6) generates alphas of \Sexpr{round(EU_CALtable_bb["+48",19],2)}$\%$ per month for 48 months. 
+Tables  \ref{tbl:EUunderBB} and \ref{tbl:EUunderBBcal} show respectively the IRATS and Calendar Time monthly abnormal returns for all values of the EU-index. Focusing on IRATS, as the EU-index increases, the long term abnormal returns increase (from \Sexpr{round(EU_IRATStable_bb["+48",1],1)}$\%$ to \Sexpr{round(EU_IRATStable_bb["+48",19],1)}$\%$). Figure~\ref{fig:Epastall} show the same results over time for each EU-index. Long-term cumulative excess returns after 48 months are becoming statistically significantly positive at EU-index levels of 3 and higher, and then steadily increase from \Sexpr{round(EU_IRATStable_bb["+48",10],1)}$\%$ to \Sexpr{round(EU_IRATStable_bb["+48",19],1)}$\%$. The Calendar Time results are similar although they only show significance starting at EU-index levels of 4.  Investing in the very high EU index firms (EU=6) generates alphas of \Sexpr{round(EU_CALtable_bb["+48",19],2)}$\%$ per month for 48 months.\footnote{We also calculated the returns of a hedged strategy similar to Figure~\ref{fig:ReturnsBB} (Panel~B). Starting in \Sexpr{firstyear} we form a portfolio of all stocks that announced a buyback during the previous $N$ months and hold the stock for $N$ months. The 12-month holding period high EU-index portfolio has average annual abnormal returns of \Sexpr{round(pnl_stats(High_EU_BB_Hedged)[1],1)}$\%$, while the low EU-index one earns only \Sexpr{round(pnl_stats(Low_EU_BB_Hedged)[1],1)}$\%$ annual excess returns. For the 48-month holding periods the high and low EU-index portfolio earn annual excess returns of  respectively, \Sexpr{round(pnl_stats(High_EU_BB_Hedged48m)[1],1)}$\%$ and \Sexpr{round(pnl_stats(Low_EU_BB_Hedged48m)[1],1)}$\%$.} 
 
 The bottom line is that combining volatility, idiosyncratic risk and the U-index in one EU- index generates a more selective predictor of excess returns than each of the indicators separately. Indeed, high U-index stocks, stocks with high idiosyncratic risk, and high volatile stocks generate cumulative excess returns of respectively \Sexpr{IRATS_table_all_bb_undervaluation["+48","U:CAR5F"]}$\%$ (Table~\ref{tbl:priorBuybacks}), \Sexpr{R2_IRATStableBB["+48","High Idiosync.: CAR"]}$\%$ (Table~\ref{tbl:IdiosyncraticunderBB}) and \Sexpr{VOL_IRATStableBB["+48","High Vol: CAR"]}$\%$ (Table~\ref{tbl:VOLunderBB}).      
 
@@ -429,7 +423,7 @@ tmp1 = pnl_matrix(remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_
 
 @
 
-Finally, Table~\ref{tbl:EUhedgedBB}, like Table~\ref{tbl:allhedgedBB}, shows the monthly and yearly returns of a five-factors hedged strategy investing only in the high EU-index repurchase events.  The table shows the robustness of the abnormal returns over time. Specifically, in \Sexpr{sum(tmp[,13] > 0)} out of the \Sexpr{sum(tmp[,13] != 0)} years the hedged strategy generates positive excess returns. As in Table~\ref{tbl:allhedgedBB},  \Sexpr{rownames(tmp)[which.min(tmp1[,13])]} has a large a loss of \Sexpr{tmp[which.min(tmp1[,13]),13]}$\%$ and the best year is \Sexpr{rownames(tmp)[which.max(tmp[,13])]} with an impressive \Sexpr{tmp[which.max(tmp[,13]),13]}$\%$. 
+%Finally, Table~\ref{tbl:EUhedgedBB}, like Table~\ref{tbl:allhedgedBB}, shows the monthly and yearly returns of a five-factors hedged strategy investing only in the high EU-index repurchase events.  The table shows the robustness of the abnormal returns over time. Specifically, in \Sexpr{sum(tmp[,13] > 0)} out of the \Sexpr{sum(tmp[,13] != 0)} years the hedged strategy generates positive excess returns. As in Table~\ref{tbl:allhedgedBB},  \Sexpr{rownames(tmp)[which.min(tmp1[,13])]} has a large a loss of \Sexpr{tmp[which.min(tmp1[,13]),13]}$\%$ and the best year is \Sexpr{rownames(tmp)[which.max(tmp[,13])]} with an impressive \Sexpr{tmp[which.max(tmp[,13]),13]}$\%$. 
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -981,7 +975,7 @@ printLatexTable2(
   EU_CALtable_bb[reported_times,13:(3*7)],
   columns = c("EU-index 0", "EU-index 1","EU-index 2","EU-index 3"),
   columns2 = c("EU-index 4","EU-index 5","EU-index 6"),
-  title="Buyback announcements Calendar for all EU-index Values",
+  title="Buyback announcements Calendar Time for all EU-index Values",
   caption="IRATS five factor cumulative abnormal returns after open market repurchase announcements for each Enhanced Undervaluation Index value from 0 to 6.
  We calculate the EU-index simply as the sum of three numbers:  high Peyer and Vermaelen (2009) U-index terms get a score of 2, low get a 0; high idiosyncratic terms get a score of 2, low get a 0; and high volatility terms get a score of 2, low get a 0.  Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores. For each EU-index value, we report the monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the \\cite{FamaFrench2015a} five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors (the difference between the risk-free rate and the return on the equally weighted CRSP index, the monthly return on the size, book-to-market factor, profitability factor and investment factor in month) as the independent variables. The significance levels are indicated by * and ** and correspond to a significance level of $5\\%$ and $1\\%$ respectively, using a two-tailed test.",
  label = "tbl:EUunderBBcal",
@@ -1040,19 +1034,20 @@ printLatexTable2(
 \clearpage
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-
-latex_render_data_frame(
-  pnl_matrix(remove_initialization_time(High_EU_BB_Hedged,min_date=FirstTrade)), 
-  title = "Monthly and Yearly Five Factor Abnormal Rerurns of a strategy investing in all high EU-index buybacks",
-  caption="Monthly and yearly  five-factor rolling hedged abnormal returns of an equally weighted (with monthly rebalancing) portfolio of all high EU-index buybacks only. Holding period for each buyback is 12 months per event.",
-  label="tbl:EUhedgedBB", 
-  columns=NULL,
-  bigtitleontop = T,
-  show_rownames=TRUE,
-  scale = 0.9,
-  digits=1,
-  lastSpecial=F,dorotate=F
-)
+if (0){
+  latex_render_data_frame(
+    pnl_matrix(remove_initialization_time(High_EU_BB_Hedged,min_date=FirstTrade)), 
+    title = "Monthly and Yearly Five Factor Abnormal Rerurns of a strategy investing in all high EU-index buybacks",
+    caption="Monthly and yearly  five-factor rolling hedged abnormal returns of an equally weighted (with monthly rebalancing) portfolio of all high EU-index buybacks only. Holding period for each buyback is 12 months per event.",
+    label="tbl:EUhedgedBB", 
+    columns=NULL,
+    bigtitleontop = T,
+    show_rownames=TRUE,
+    scale = 0.9,
+    digits=1,
+    lastSpecial=F,dorotate=F
+  )
+}
 @
 
 %\clearpage
@@ -1544,50 +1539,51 @@ if (0){
 
 %\clearpage
 
-\begin{figure}[H]
-\centering
+%\begin{figure}[H]
+%\centering
 << badpreviousR2, fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
 #par(mfrow=c(2,1),mar=c(2.3,4,2.3,4))
-
-plot(cumsum(100*High_Idiosyncr_BB_Hedged),type="l",ylab="CAR", xlab = "Time",main = "",  lwd=2, axes = FALSE, 
-     ylim=c(min(c(cumsum(100*High_Idiosyncr_BB_Hedged),cumsum(100*Low_Idiosyncr_BB_Hedged),cumsum(100*High_Idiosyncr_BB_Hedged48m),cumsum(100*Low_Idiosyncr_BB_Hedged48m))), 
-            max(c(cumsum(100*High_Idiosyncr_BB_Hedged),cumsum(100*Low_Idiosyncr_BB_Hedged),cumsum(100*High_Idiosyncr_BB_Hedged48m),cumsum(100*Low_Idiosyncr_BB_Hedged48m)))), cex.lab=1.1)
-axis(1,at=seq(1,length(High_Idiosyncr_BB_Hedged),length.out=10),labels=str_sub(names(High_Idiosyncr_BB_Hedged)[seq(1,length(High_Idiosyncr_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
-axis(2,cex.axis=1.1)
-lines(cumsum(100*Low_Idiosyncr_BB_Hedged),lty="dotted", lwd=2)
-lines(cumsum(100*High_Idiosyncr_BB_Hedged48m),lty="dashed", lwd=2)
-lines(cumsum(100*Low_Idiosyncr_BB_Hedged48m),lty="dotdash", lwd=2)
-for (iter in 1:floor(100*max(c(cumsum(High_Idiosyncr_BB_Hedged),cumsum(Low_Idiosyncr_BB_Hedged)))/50))
-  abline(h = 50*iter)
-abline(h = 200)
-#plot_crisis_dates(High_Idiosyncr_BB_Hedged)
-legend(x="topleft",
-       c("12 Month High Idiosyncratic","12 Month Low Idiosyncratic","48 Month High Idiosyncratic","48 Month Low Idiosyncratic"),
-       lty=c("solid","dotted","dashed","dotdash"),
-       lwd=c(2,2,2,2),
-       cex=1,bg="white",inset=0.01)
-
 if (0){
-  plot(cumsum(100*High_Idiosyncr_ISS_Hedged),type="l",ylab="CAR", xlab = "Time",main = "SEOs", axes = FALSE, 
-       ylim=c(min(c(cumsum(100*High_Idiosyncr_ISS_Hedged),cumsum(100*Low_Idiosyncr_ISS_Hedged),cumsum(100*High_Idiosyncr_ISS_Hedged48m),cumsum(100*Low_Idiosyncr_ISS_Hedged48m))), 
-              max(c(cumsum(100*High_Idiosyncr_ISS_Hedged),cumsum(100*Low_Idiosyncr_ISS_Hedged),cumsum(100*High_Idiosyncr_ISS_Hedged48m),cumsum(100*Low_Idiosyncr_ISS_Hedged48m)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(High_Idiosyncr_ISS_Hedged),length.out=10),labels=str_sub(names(High_Idiosyncr_ISS_Hedged)[seq(1,length(High_Idiosyncr_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
+  plot(cumsum(100*High_Idiosyncr_BB_Hedged),type="l",ylab="CAR", xlab = "Time",main = "",  lwd=2, axes = FALSE, 
+       ylim=c(min(c(cumsum(100*High_Idiosyncr_BB_Hedged),cumsum(100*Low_Idiosyncr_BB_Hedged),cumsum(100*High_Idiosyncr_BB_Hedged48m),cumsum(100*Low_Idiosyncr_BB_Hedged48m))), 
+              max(c(cumsum(100*High_Idiosyncr_BB_Hedged),cumsum(100*Low_Idiosyncr_BB_Hedged),cumsum(100*High_Idiosyncr_BB_Hedged48m),cumsum(100*Low_Idiosyncr_BB_Hedged48m)))), cex.lab=1.1)
+  axis(1,at=seq(1,length(High_Idiosyncr_BB_Hedged),length.out=10),labels=str_sub(names(High_Idiosyncr_BB_Hedged)[seq(1,length(High_Idiosyncr_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
   axis(2,cex.axis=1.1)
-  lines(cumsum(100*Low_Idiosyncr_ISS_Hedged), col="red")
-  lines(cumsum(100*High_Idiosyncr_ISS_Hedged48m), col="blue")
-  lines(cumsum(100*Low_Idiosyncr_ISS_Hedged48m), col="green")
-  for (iter in 1:floor(100*max(c(cumsum(High_Idiosyncr_ISS_Hedged),cumsum(Low_Idiosyncr_ISS_Hedged)))/50))
+  lines(cumsum(100*Low_Idiosyncr_BB_Hedged),lty="dotted", lwd=2)
+  lines(cumsum(100*High_Idiosyncr_BB_Hedged48m),lty="dashed", lwd=2)
+  lines(cumsum(100*Low_Idiosyncr_BB_Hedged48m),lty="dotdash", lwd=2)
+  for (iter in 1:floor(100*max(c(cumsum(High_Idiosyncr_BB_Hedged),cumsum(Low_Idiosyncr_BB_Hedged)))/50))
     abline(h = 50*iter)
-  #plot_crisis_dates(High_Idiosyncr_ISS_Hedged)
+  abline(h = 200)
+  #plot_crisis_dates(High_Idiosyncr_BB_Hedged)
+  legend(x="topleft",
+         c("12 Month High Idiosyncratic","12 Month Low Idiosyncratic","48 Month High Idiosyncratic","48 Month Low Idiosyncratic"),
+         lty=c("solid","dotted","dashed","dotdash"),
+         lwd=c(2,2,2,2),
+         cex=1,bg="white",inset=0.01)
+  
+  if (0){
+    plot(cumsum(100*High_Idiosyncr_ISS_Hedged),type="l",ylab="CAR", xlab = "Time",main = "SEOs", axes = FALSE, 
+         ylim=c(min(c(cumsum(100*High_Idiosyncr_ISS_Hedged),cumsum(100*Low_Idiosyncr_ISS_Hedged),cumsum(100*High_Idiosyncr_ISS_Hedged48m),cumsum(100*Low_Idiosyncr_ISS_Hedged48m))), 
+                max(c(cumsum(100*High_Idiosyncr_ISS_Hedged),cumsum(100*Low_Idiosyncr_ISS_Hedged),cumsum(100*High_Idiosyncr_ISS_Hedged48m),cumsum(100*Low_Idiosyncr_ISS_Hedged48m)))), cex.lab=1.1)
+    axis(1,at=seq(1,length(High_Idiosyncr_ISS_Hedged),length.out=10),labels=str_sub(names(High_Idiosyncr_ISS_Hedged)[seq(1,length(High_Idiosyncr_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
+    axis(2,cex.axis=1.1)
+    lines(cumsum(100*Low_Idiosyncr_ISS_Hedged), col="red")
+    lines(cumsum(100*High_Idiosyncr_ISS_Hedged48m), col="blue")
+    lines(cumsum(100*Low_Idiosyncr_ISS_Hedged48m), col="green")
+    for (iter in 1:floor(100*max(c(cumsum(High_Idiosyncr_ISS_Hedged),cumsum(Low_Idiosyncr_ISS_Hedged)))/50))
+      abline(h = 50*iter)
+    #plot_crisis_dates(High_Idiosyncr_ISS_Hedged)
+  }
 }
 @
-\caption{Buybacks: High versus Low Idiosyncratic Events. Returns of five-factor rolling hedged portfolio for only the buyback events for high and low idiosyncratic company. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio; dashed line is ``high'' and a 48-months holding portfolio, dotted-dash line is ``low'' and a 48-months portfolio. 
+%\caption{Buybacks: High versus Low Idiosyncratic Events. Returns of five-factor rolling hedged portfolio for only the buyback events for high and low idiosyncratic company. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio; dashed line is ``high'' and a 48-months holding portfolio, dotted-dash line is ``low'' and a 48-months portfolio. 
 %Red line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_Idiosyncr_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_Idiosyncr_BB_Hedged)[3],1)}. Black line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_Idiosyncr_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_Idiosyncr_BB_Hedged)[3],1)}. Green line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_Idiosyncr_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_Idiosyncr_BB_Hedged48m)[3],1)}. Blue line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_Idiosyncr_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_Idiosyncr_BB_Hedged48m)[3],1)}. 
-We assume we enter each position \Sexpr{trading_day_after_announce} day after the corresponding event announcement. 
+%We assume we enter each position \Sexpr{trading_day_after_announce} day after the corresponding event announcement. 
 %Vertical lines indicate \Sexpr{BEAR_YEARS_text$dotcom[1]}, \Sexpr{BEAR_YEARS_text$dotcom[2]}, \Sexpr{BEAR_YEARS_text$financial1[1]}, and \Sexpr{BEAR_YEARS_text$financial1[2]}. 
-}
-\label{fig:badpreviousR2}
-\end{figure}
+%}
+%\label{fig:badpreviousR2}
+%\end{figure}
 
 
 \begin{figure}[H]
@@ -1698,49 +1694,50 @@ if (0){
 %\end{figure}
 
 
-\begin{figure}[H]
-\centering
+%\begin{figure}[H]
+%\centering
 << badpreviousVOL, fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
 #par(mfrow=c(2,1),mar=c(2.3,4,2.3,4))
-
-plot(cumsum(100*High_VOL_BB_Hedged),type="l",ylab="CAR", xlab = "Time",main = "", lwd=2, axes = FALSE, 
-     ylim=c(min(c(cumsum(100*High_VOL_BB_Hedged),cumsum(100*Low_VOL_BB_Hedged),cumsum(100*High_VOL_BB_Hedged48m),cumsum(100*Low_VOL_BB_Hedged48m))), 
-            max(c(cumsum(100*High_VOL_BB_Hedged),cumsum(100*Low_VOL_BB_Hedged),cumsum(100*High_VOL_BB_Hedged48m),cumsum(100*Low_VOL_BB_Hedged48m)))), cex.lab=1.1)
-axis(1,at=seq(1,length(High_VOL_BB_Hedged),length.out=10),labels=str_sub(names(High_VOL_BB_Hedged)[seq(1,length(High_VOL_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
-axis(2,cex.axis=1.1)
-lines(cumsum(100*Low_VOL_BB_Hedged),lty="dotted", lwd=2)
-lines(cumsum(100*High_VOL_BB_Hedged48m),lty="dashed", lwd=2)
-lines(cumsum(100*Low_VOL_BB_Hedged48m),lty="dotdash", lwd=2)
-for (iter in 1:floor(100*max(c(cumsum(High_VOL_BB_Hedged),cumsum(Low_VOL_BB_Hedged)))/50))
-  abline(h = 50*iter)
-#plot_crisis_dates(High_VOL_BB_Hedged)
-legend(x="topleft",
-       c("12 Month High Volatility","12 Month Low Volatility","48 Month High Volatility","48 Month Low Volatility"),
-       lty=c("solid","dotted","dashed","dotdash"),
-       lwd=c(2,2,2,2),
-       cex=1,bg="white",inset=0.01)
-
 if (0){
-  plot(cumsum(100*High_VOL_ISS_Hedged),type="l",ylab="CAR", xlab = "Time",main = "SEOs", lwd=2, axes = FALSE, 
-       ylim=c(min(c(cumsum(100*High_VOL_ISS_Hedged),cumsum(100*Low_VOL_ISS_Hedged),cumsum(100*High_VOL_ISS_Hedged48m),cumsum(100*Low_VOL_ISS_Hedged48m))), 
-              max(c(cumsum(100*High_VOL_ISS_Hedged),cumsum(100*Low_VOL_ISS_Hedged),cumsum(100*High_VOL_ISS_Hedged48m),cumsum(100*Low_VOL_ISS_Hedged48m)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(High_VOL_ISS_Hedged),length.out=10),labels=str_sub(names(High_VOL_ISS_Hedged)[seq(1,length(High_VOL_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
+  plot(cumsum(100*High_VOL_BB_Hedged),type="l",ylab="CAR", xlab = "Time",main = "", lwd=2, axes = FALSE, 
+       ylim=c(min(c(cumsum(100*High_VOL_BB_Hedged),cumsum(100*Low_VOL_BB_Hedged),cumsum(100*High_VOL_BB_Hedged48m),cumsum(100*Low_VOL_BB_Hedged48m))), 
+              max(c(cumsum(100*High_VOL_BB_Hedged),cumsum(100*Low_VOL_BB_Hedged),cumsum(100*High_VOL_BB_Hedged48m),cumsum(100*Low_VOL_BB_Hedged48m)))), cex.lab=1.1)
+  axis(1,at=seq(1,length(High_VOL_BB_Hedged),length.out=10),labels=str_sub(names(High_VOL_BB_Hedged)[seq(1,length(High_VOL_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
   axis(2,cex.axis=1.1)
-  lines(cumsum(100*Low_VOL_ISS_Hedged),lty="dotted", lwd=2)
-  lines(cumsum(100*High_VOL_ISS_Hedged48m),lty="dashed", lwd=2)
-  lines(cumsum(100*Low_VOL_ISS_Hedged48m),lty="dotdash", lwd=2)
-  for (iter in 1:floor(100*max(c(cumsum(High_VOL_ISS_Hedged),cumsum(Low_VOL_ISS_Hedged)))/50))
+  lines(cumsum(100*Low_VOL_BB_Hedged),lty="dotted", lwd=2)
+  lines(cumsum(100*High_VOL_BB_Hedged48m),lty="dashed", lwd=2)
+  lines(cumsum(100*Low_VOL_BB_Hedged48m),lty="dotdash", lwd=2)
+  for (iter in 1:floor(100*max(c(cumsum(High_VOL_BB_Hedged),cumsum(Low_VOL_BB_Hedged)))/50))
     abline(h = 50*iter)
-  #plot_crisis_dates(High_VOL_ISS_Hedged)
+  #plot_crisis_dates(High_VOL_BB_Hedged)
+  legend(x="topleft",
+         c("12 Month High Volatility","12 Month Low Volatility","48 Month High Volatility","48 Month Low Volatility"),
+         lty=c("solid","dotted","dashed","dotdash"),
+         lwd=c(2,2,2,2),
+         cex=1,bg="white",inset=0.01)
+  
+  if (0){
+    plot(cumsum(100*High_VOL_ISS_Hedged),type="l",ylab="CAR", xlab = "Time",main = "SEOs", lwd=2, axes = FALSE, 
+         ylim=c(min(c(cumsum(100*High_VOL_ISS_Hedged),cumsum(100*Low_VOL_ISS_Hedged),cumsum(100*High_VOL_ISS_Hedged48m),cumsum(100*Low_VOL_ISS_Hedged48m))), 
+                max(c(cumsum(100*High_VOL_ISS_Hedged),cumsum(100*Low_VOL_ISS_Hedged),cumsum(100*High_VOL_ISS_Hedged48m),cumsum(100*Low_VOL_ISS_Hedged48m)))), cex.lab=1.1)
+    axis(1,at=seq(1,length(High_VOL_ISS_Hedged),length.out=10),labels=str_sub(names(High_VOL_ISS_Hedged)[seq(1,length(High_VOL_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
+    axis(2,cex.axis=1.1)
+    lines(cumsum(100*Low_VOL_ISS_Hedged),lty="dotted", lwd=2)
+    lines(cumsum(100*High_VOL_ISS_Hedged48m),lty="dashed", lwd=2)
+    lines(cumsum(100*Low_VOL_ISS_Hedged48m),lty="dotdash", lwd=2)
+    for (iter in 1:floor(100*max(c(cumsum(High_VOL_ISS_Hedged),cumsum(Low_VOL_ISS_Hedged)))/50))
+      abline(h = 50*iter)
+    #plot_crisis_dates(High_VOL_ISS_Hedged)
+  }
 }
 @
-\caption{Buybacks: High vs Low Volatility Events. Returns of five-factor rolling hedged portfolio for only the buyback events for high and low volatility company. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio; dashed line is ``high'' and a 48-months holding portfolio, dotted-dash line is ``low'' and a 48-months portfolio. 
+%\caption{Buybacks: High vs Low Volatility Events. Returns of five-factor rolling hedged portfolio for only the buyback events for high and low volatility company. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio; dashed line is ``high'' and a 48-months holding portfolio, dotted-dash line is ``low'' and a 48-months portfolio. 
 %Red line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_VOL_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_VOL_BB_Hedged)[3],1)}. Black line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_VOL_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_VOL_BB_Hedged)[3],1)}. Green line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_VOL_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_VOL_BB_Hedged48m)[3],1)}. Blue line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_VOL_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_VOL_BB_Hedged48m)[3],1)}. 
-We assume we enter each position \Sexpr{trading_day_after_announce} day after the corresponding event announcement. 
+%We assume we enter each position \Sexpr{trading_day_after_announce} day after the corresponding event announcement. 
 %Vertical lines indicate \Sexpr{BEAR_YEARS_text$dotcom[1]}, \Sexpr{BEAR_YEARS_text$dotcom[2]}, \Sexpr{BEAR_YEARS_text$financial1[1]}, and \Sexpr{BEAR_YEARS_text$financial1[2]}. 
-}
-\label{fig:badpreviousVOL}
-\end{figure}
+%}
+%\label{fig:badpreviousVOL}
+%\end{figure}
 
 
 \begin{figure}[H]
@@ -1820,48 +1817,50 @@ rm("tmp")
 \end{figure}
 
 
-\begin{figure}[H]
-\centering
+%\begin{figure}[H]
+%\centering
 << badpreviousEU, fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
-#par(mfrow=c(2,1),mar=c(2.3,4,2.3,4))
-plot(cumsum(100*High_EU_BB_Hedged),type="l",ylab="CAR", xlab = "Time",main = "", lwd=2, axes = FALSE, 
-     ylim=c(min(c(cumsum(100*High_EU_BB_Hedged),cumsum(100*Low_EU_BB_Hedged),cumsum(100*High_EU_BB_Hedged48m),cumsum(100*Low_EU_BB_Hedged48m))), 
-            max(c(cumsum(100*High_EU_BB_Hedged),cumsum(100*Low_EU_BB_Hedged),cumsum(100*High_EU_BB_Hedged48m),cumsum(100*Low_EU_BB_Hedged48m)))), cex.lab=1.1)
-axis(1,at=seq(1,length(High_EU_BB_Hedged),length.out=10),labels=str_sub(names(High_EU_BB_Hedged)[seq(1,length(High_EU_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
-axis(2,cex.axis=1.1)
-lines(cumsum(100*Low_EU_BB_Hedged),lty="dotted", lwd=2)
-lines(cumsum(100*High_EU_BB_Hedged48m),lty="dashed", lwd=2)
-lines(cumsum(100*Low_EU_BB_Hedged48m),lty="dotdash", lwd=2)
-for (iter in 1:floor(100*max(c(cumsum(High_EU_BB_Hedged),cumsum(Low_EU_BB_Hedged)))/50))
-  abline(h = 50*iter)
-#plot_crisis_dates(High_EU_BB_Hedged)
-legend(x="topleft",
-       c("12 Month High EU","12 Month Low EU","48 Month High EU","48 Month Low EU"),
-       lty=c("solid","dotted","dashed","dotdash"),
-       lwd=c(2,2,2,2),
-       cex=1,bg="white",inset=0.01)
-
 if (0){
-  plot(cumsum(100*High_EU_ISS_Hedged),type="l",ylab="CAR", xlab = "Time",main = "SEOs", axes = FALSE, 
-       ylim=c(min(c(cumsum(100*High_EU_ISS_Hedged),cumsum(100*Low_EU_ISS_Hedged),cumsum(100*High_EU_ISS_Hedged48m),cumsum(100*Low_EU_ISS_Hedged48m))), 
-              max(c(cumsum(100*High_EU_ISS_Hedged),cumsum(100*Low_EU_ISS_Hedged),cumsum(100*High_EU_ISS_Hedged48m),cumsum(100*Low_EU_ISS_Hedged48m)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(High_EU_ISS_Hedged),length.out=10),labels=str_sub(names(High_EU_ISS_Hedged)[seq(1,length(High_EU_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
+  #par(mfrow=c(2,1),mar=c(2.3,4,2.3,4))
+  plot(cumsum(100*High_EU_BB_Hedged),type="l",ylab="CAR", xlab = "Time",main = "", lwd=2, axes = FALSE, 
+       ylim=c(min(c(cumsum(100*High_EU_BB_Hedged),cumsum(100*Low_EU_BB_Hedged),cumsum(100*High_EU_BB_Hedged48m),cumsum(100*Low_EU_BB_Hedged48m))), 
+              max(c(cumsum(100*High_EU_BB_Hedged),cumsum(100*Low_EU_BB_Hedged),cumsum(100*High_EU_BB_Hedged48m),cumsum(100*Low_EU_BB_Hedged48m)))), cex.lab=1.1)
+  axis(1,at=seq(1,length(High_EU_BB_Hedged),length.out=10),labels=str_sub(names(High_EU_BB_Hedged)[seq(1,length(High_EU_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
   axis(2,cex.axis=1.1)
-  lines(cumsum(100*Low_EU_ISS_Hedged), col="red")
-  lines(cumsum(100*High_EU_ISS_Hedged48m), col="blue")
-  lines(cumsum(100*Low_EU_ISS_Hedged48m), col="green")
-  for (iter in 1:floor(100*max(c(cumsum(High_EU_ISS_Hedged),cumsum(Low_VOL_ISS_Hedged)))/50))
+  lines(cumsum(100*Low_EU_BB_Hedged),lty="dotted", lwd=2)
+  lines(cumsum(100*High_EU_BB_Hedged48m),lty="dashed", lwd=2)
+  lines(cumsum(100*Low_EU_BB_Hedged48m),lty="dotdash", lwd=2)
+  for (iter in 1:floor(100*max(c(cumsum(High_EU_BB_Hedged),cumsum(Low_EU_BB_Hedged)))/50))
     abline(h = 50*iter)
-  #plot_crisis_dates(High_VOL_ISS_Hedged)
+  #plot_crisis_dates(High_EU_BB_Hedged)
+  legend(x="topleft",
+         c("12 Month High EU","12 Month Low EU","48 Month High EU","48 Month Low EU"),
+         lty=c("solid","dotted","dashed","dotdash"),
+         lwd=c(2,2,2,2),
+         cex=1,bg="white",inset=0.01)
+  
+  if (0){
+    plot(cumsum(100*High_EU_ISS_Hedged),type="l",ylab="CAR", xlab = "Time",main = "SEOs", axes = FALSE, 
+         ylim=c(min(c(cumsum(100*High_EU_ISS_Hedged),cumsum(100*Low_EU_ISS_Hedged),cumsum(100*High_EU_ISS_Hedged48m),cumsum(100*Low_EU_ISS_Hedged48m))), 
+                max(c(cumsum(100*High_EU_ISS_Hedged),cumsum(100*Low_EU_ISS_Hedged),cumsum(100*High_EU_ISS_Hedged48m),cumsum(100*Low_EU_ISS_Hedged48m)))), cex.lab=1.1)
+    axis(1,at=seq(1,length(High_EU_ISS_Hedged),length.out=10),labels=str_sub(names(High_EU_ISS_Hedged)[seq(1,length(High_EU_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
+    axis(2,cex.axis=1.1)
+    lines(cumsum(100*Low_EU_ISS_Hedged), col="red")
+    lines(cumsum(100*High_EU_ISS_Hedged48m), col="blue")
+    lines(cumsum(100*Low_EU_ISS_Hedged48m), col="green")
+    for (iter in 1:floor(100*max(c(cumsum(High_EU_ISS_Hedged),cumsum(Low_VOL_ISS_Hedged)))/50))
+      abline(h = 50*iter)
+    #plot_crisis_dates(High_VOL_ISS_Hedged)
+  }
 }
 @
-\caption{Buybacks: High vs Low EU-index Events. Returns of five-factor rolling hedged portfolio for only the buyback events for high and low EU-index companies.  We define low EU-index firms those for which the EU-index is 0-1, and high for which it is 5-6 (note that the index takes values from 0 to 6).  Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio; dashed line is ``high'' and a 48-months holding portfolio, dotted-dash line is ``low'' and a 48-months portfolio.
+%\caption{Buybacks: High vs Low EU-index Events. Returns of five-factor rolling hedged portfolio for only the buyback events for high and low EU-index companies.  We define low EU-index firms those for which the EU-index is 0-1, and high for which it is 5-6 (note that the index takes values from 0 to 6).  Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio; dashed line is ``high'' and a 48-months holding portfolio, dotted-dash line is ``low'' and a 48-months portfolio.
 %Red line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_EU_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_EU_BB_Hedged)[3],1)}. Black line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_EU_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_EU_BB_Hedged)[3],1)}. Green line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_EU_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_EU_BB_Hedged48m)[3],1)}. Blue line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_EU_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_EU_BB_Hedged48m)[3],1)}. 
-We assume we enter each position \Sexpr{trading_day_after_announce} day after the corresponding event announcement. 
+%We assume we enter each position \Sexpr{trading_day_after_announce} day after the corresponding event announcement. 
 %Vertical lines indicate \Sexpr{BEAR_YEARS_text$dotcom[1]}, \Sexpr{BEAR_YEARS_text$dotcom[2]}, \Sexpr{BEAR_YEARS_text$financial1[1]}, and \Sexpr{BEAR_YEARS_text$financial1[2]}. 
-}
-\label{fig:badpreviousEU}
-\end{figure}
+%}
+%\label{fig:badpreviousEU}
+%\end{figure}
 
 \begin{figure}[H]
 \centering

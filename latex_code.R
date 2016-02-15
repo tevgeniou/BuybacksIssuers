@@ -158,7 +158,7 @@ latex_render_data_frame<-function(x,y=NULL, title="",caption="",label="",columns
 
 
 #Work in progress, generic latex printer
-printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",bigtitleontop = F, titleontop=F, metric1="CAR",metric2="AR",label="",rowcolumn="",columns=NULL,columns2=NULL,scale=1,lastSpecial=F,dorotate=F) {
+printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",bigtitleontop = F, titleontop=F, metric1="CAR",metric2="AR",label="",rowcolumn="",columns=NULL,columns2=NULL,scale=1,lastSpecial=F,dorotate=F,returntext=F) {
   #Helper functions
   p <- function(...){paste(...)}
   pn <- function(...){paste(...,"\n")} #print newline
@@ -202,7 +202,7 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
   #############################################
   # TABLE 1 NOW
   #############################################
-  #convert input
+  #convertprintLatexTable2 input
   pval   <- df1[,3* (1:(ncol(df1)/3))]
   tstat  <- df1[,3* (1:(ncol(df1)/3))-1]
   df     <- df1[,3* (1:(ncol(df1)/3))-2]
@@ -392,6 +392,8 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
   if(dorotate) #{
     l <- pn(l,"\\end{landscape}") 
   
+  if(returntext)
+    return(l)
   cat(l)
 }  
 

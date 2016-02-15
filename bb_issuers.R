@@ -75,98 +75,6 @@ if (rerun_issuers_data_code) {
   source("report_data.R"); rm("report_data","filename_to_save")
 } 
 
-##################################################################
-# First get the quantiles for the pre-announce performance and any cross-event data we need (no more for now)
-##################################################################
-if (get_crossevent_data*0){ # THIS IS OLD STUFF. NOT USED ANY MORE. keeping it here for now just in case (a bit slow to rewrite/run)
-  
-  load("tmpfiles/report_dataBuybacks.Rdata")
-  report_dataBB = report_data
-  permnosBB = report_data$DATASET$SDC$permno
-  returnsBB = report_data$DATASET$returns_by_event
-  returnsBBabn = report_data$DATASET$Abn_returns
-  BBdates = report_data$DATASET$SDC$Event.Date
-  
-  load("tmpfiles/report_dataIssuers.Rdata")
-  report_dataISS = report_data
-  permnosISS = report_data$DATASET$SDC$permno
-  returnsISS = report_data$DATASET$returns_by_event
-  returnsISSabn = report_data$DATASET$Abn_returns
-  ISSdates = report_data$DATASET$SDC$Event.Date  
-  
-  # Get the cross-events stats now. first the raw returns
-  useonly = intersect(rownames(returnsBB), rownames(returnsISS))
-  tmp = cbind(returnsBB[useonly,],returnsISS[useonly,])
-  colnames(tmp) <- str_sub(colnames(tmp), start = 1, end = 5)
-  colnames(returnsBB) <- str_sub(colnames(returnsBB), start = 1, end = 5)    
-  colnames(returnsISS) <- str_sub(colnames(returnsISS), start = 1, end = 5)    
-  tmp = tmp[,unique(colnames(tmp))]
-  allreturns_nonzero = apply(tmp!=0,2,function(r) ms(r,prior_performance_period_days))
-  allreturns_rets = apply(tmp,2,function(r) ms(r,prior_performance_period_days))
-  allreturns_rets = shift(allreturns_rets,5)
-  rets_used = allreturns_rets*(allreturns_nonzero > 0.8*prior_performance_period_days) # just to avoid using cases where there are many 0 days
-  rets_used = shift(rets_used,5)
-  rownames(allreturns_rets) <- rownames(tmp)
-  rownames(rets_used) <- rownames(tmp)  
-  #now the abnormal returns
-  useonly = intersect(rownames(returnsBBabn), rownames(returnsISSabn))
-  tmp = cbind(returnsBBabn[useonly,],returnsISSabn[useonly,])
-  colnames(tmp) <- str_sub(colnames(tmp), start = 1, end = 5)
-  colnames(returnsBBabn) <- str_sub(colnames(returnsBBabn), start = 1, end = 5)  
-  colnames(returnsISSabn) <- str_sub(colnames(returnsISSabn), start = 1, end = 5)  
-  tmp = tmp[,unique(colnames(tmp))]
-  allreturns_abn_nonzero = apply(tmp!=0,2,function(r) ms(r,prior_performance_period_days))
-  allreturns_abn_rets = apply(tmp,2,function(r) ms(r,prior_performance_period_days))
-  allreturns_abn_rets = shift(allreturns_abn_rets,5)
-  abn_rets_used = allreturns_abn_rets*(allreturns_abn_nonzero > 0.8*prior_performance_period_days) # just to avoid using cases where there are many 0 days
-  abn_rets_used = shift(abn_rets_used,5)
-  rownames(allreturns_abn_rets) <- rownames(tmp)
-  rownames(abn_rets_used) <- rownames(tmp)  
-  
-  # check
-  cat(c(sum(!(permnosISS %in% colnames(allreturns_rets))), 
-        sum(!(permnosBB %in% colnames(allreturns_rets))), 
-        sum(!(permnosISS %in% colnames(rets_used))), 
-        sum(!(permnosBB %in% colnames(rets_used))), 
-        sum(!(permnosISS %in% colnames(allreturns_abn_rets))), 
-        sum(!(permnosBB %in% colnames(allreturns_abn_rets))), 
-        sum(!(permnosISS %in% colnames(abn_rets_used))), 
-        sum(!(permnosBB %in% colnames(abn_rets_used)))))
-  
-  # compute and save all now
-  charpermnos = as.character(permnosBB)
-  chardates = as.character(BBdates)
-  prior_returnsBB = sapply(1:length(chardates), function(i) allreturns_rets[chardates[i],charpermnos[i]])  
-  prior_returnsBBabn = sapply(1:length(chardates), function(i) allreturns_abn_rets[chardates[i],charpermnos[i]])  
-  buyback_performances = sapply(1:length(chardates), function(i) ecdf(rets_used[chardates[i],][rets_used[chardates[i],]!=0])(rets_used[chardates[i],charpermnos[i]]))
-  buyback_performances_abn = sapply(1:length(chardates), function(i) ecdf(abn_rets_used[chardates[i],][rets_used[chardates[i],]!=0])(abn_rets_used[chardates[i],charpermnos[i]]))
-  charpermnos = as.character(permnosISS)
-  chardates = as.character(ISSdates)
-  prior_returnsISS = sapply(1:length(chardates), function(i) allreturns_rets[chardates[i],charpermnos[i]])  
-  prior_returnsISSabn = sapply(1:length(chardates), function(i) allreturns_abn_rets[chardates[i],charpermnos[i]])  
-  issuers_performances = sapply(1:length(chardates), function(i) ecdf(rets_used[chardates[i],][rets_used[chardates[i],]!=0])(rets_used[chardates[i],charpermnos[i]]))
-  issuers_performances_abn = sapply(1:length(chardates), function(i) ecdf(abn_rets_used[chardates[i],][rets_used[chardates[i],]!=0])(abn_rets_used[chardates[i],charpermnos[i]]))
-  
-  ######
-  report_data = report_dataBB
-  report_data$DATASET$SDC$performanceU <- buyback_performances
-  report_data$DATASET$SDC$performanceUabn <- buyback_performances_abn
-  report_data$DATASET$SDC$prior_returns <- prior_returnsBB
-  report_data$DATASET$SDC$prior_returns_abn <- prior_returnsBBabn
-  save(report_data, file = "tmpfiles/report_dataBuybacks.Rdata")
-  
-  report_data = report_dataISS
-  report_data$DATASET$SDC$performanceU <- issuers_performances
-  report_data$DATASET$SDC$performanceUabn <- issuers_performances_abn
-  report_data$DATASET$SDC$prior_returns <- prior_returnsISS
-  report_data$DATASET$SDC$prior_returns_abn <- prior_returnsISSabn
-  save(report_data, file = "tmpfiles/report_dataIssuers.Rdata")
-  
-  rm("report_dataBB", "permnosBB", "returnsBB", "returnsBBabn", "BBdates", "report_dataISS", 
-     "permnosISS", "returnsISS", "returnsISSabn", "ISSdates", "useonly", "tmp", "allreturns_nonzero", 
-     "allreturns_rets", "rets_used", "allreturns_abn_nonzero", "allreturns_abn_rets", "abn_rets_used", 
-     "charpermnos", "chardates", "report_data") 
-}
 
 ##################################################################
 # Now get the data we need for the report
@@ -465,7 +373,7 @@ for (i in 1:length(ISSUERS_DATA$DATASET$SDC$permno)){
 
 # First the buybacks with issuance afterwards
 # find the related events. 
-# AND EXIT AT THE BEGINING OF THE NEXT MONTH!! (FOR FF TO WORK....)
+# AND EXIT AT THE BEGINING OF THE NEXT MONTH (FOR FF TO WORK....)
 
 tmp = exit_helper_rnw(BUYBACK_DATA,"Otherlater",holding_period_pnl = "Four.Years.After")
 BB_with_ISS_later = tmp$exit_events
@@ -637,7 +545,47 @@ get_feature_results <- function(DATASET,feature_name, company_subset_undervalued
 }
 
 ###############################################################################################
+# Now need to get the CRSP universe data to get the vol and R2 percentile score
+###############################################################################################
+
+non_na_mean <- function(x) { mean(x[!is.na(x) & x != 0]) }
+non_na_sd <- function(x) { sd(x[!is.na(x) & x != 0]) }
+vol_days= floor(5*VOLwindow/7) # NOTE THAT WE USE TRADING DAYS ONLY HERE WHILE VOLwindow IS CALENDAR DAYS
+
+# Get the data
+
+system.time(returns_data <- fread("dataset/universe/crsp_returns.csv", colClasses = c("integer","integer","integer","character","character")))
+returns_data$RET <- suppressWarnings(scrub(as.double(gsub(" ", "", returns_data$RET)))) # make sure we don't miss any spaces...
+returns_data$date <- as.Date(as.character(returns_data$date),format="%Y%m%d",origin="19700101")
+returns_daily= dcast(returns_data, date ~ PERMNO, value.var="RET")  
+tmp <-  returns_daily$date
+returns_daily$date <- as.numeric(returns_daily$date) # to avoid changing everything into characters
+returns_daily = as.matrix(returns_daily)
+returns_daily = returns_daily[,-c(which(colnames(returns_daily)=="date"))]
+rownames(returns_daily) <-  as.character(tmp)
+rm("returns_data")
+
+recent_vol_daily = rolling_variance_nonzero(scrub(returns_daily),vol_days)
+# Remove "new" companies 
+recent_vol_daily_daysused = apply(scrub(returns_daily)!=0,2, function(r) ms(r,vol_days))
+recent_vol_daily = recent_vol_daily*(recent_vol_daily_daysused > 0.7*vol_days) # remove cases with less than X% trading days
+rownames(recent_vol_daily) <- rownames(returns_daily)
+universe_vol_q1 = recent_vol_daily%-%function(r){
+  if (sum(!is.na(r) & r!=0)){
+    res = ifelse(!is.na(r) & r!=0, ecdf(r[!is.na(r) & r!=0])(r),NA)
+  } else {
+    res = r*0
+  }
+  res
+}
+rownames(universe_vol_q1) <- rownames(returns_daily)
+rm("recent_vol_daily_daysused", "recent_vol_daily")
+save(universe_vol_q1, file = "tmpfiles/vol_analysis.Rdata")
+
+###############################################################################################
 #<<  Idiosyncratic R2, eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
+###############################################################################################
+
 if (0){
   # This is how the R2 is calculated:
   Betas_PB6M <- Betas_lm("Six.Month.Before","One.Day.Before",BUYBACK_DATA$DATASET$Dates, BUYBACK_DATA$DATASET$returns_by_event, Risk_Factors)
@@ -651,11 +599,11 @@ if (0){
   BUYBACK_DATA$DATASET$SDC$minus_Rsq_returns <- -Betas_PB6M["Rsq",]
 }
 # Buybacks
-# OLD WAY!!
+# OLD WAY
 #BUYBACK_DATA$DATASET$SDC$minus_Rsq_returns = -BUYBACK_DATA$DATASET$SDC$Rsq_returns # Since higher is "low"
 #tmp = get_feature_results(BUYBACK_DATA$DATASET,"minus_Rsq_returns", company_subset_undervalued_bb, company_subset_overvalued_bb, quantile_R2,R2window)
 # NEW WAY:
-# universe_vol_q1 is from "tmpfiles/vol_analysis.Rdata" created from vol_analysis.R
+# universe_vol_q1 is from "tmpfiles/vol_analysis.Rdata" created above
 # Get the vol score the one-before-last day of the previous month (note that these scores already use the rolling vol window so we don't need to average them e.g. over all the previous month)
 #universe_R2_month <- read.csv("dataset/tmp_files/matrix_R2.csv", header=TRUE, sep=",", dec=".")
 if (0){
@@ -699,7 +647,6 @@ rm("tmp")
 #tmp = get_feature_results(ISSUERS_DATA$DATASET,"minus_Rsq_returns", company_subset_undervalued_iss, company_subset_overvalued_iss, quantile_R2,R2window)
 
 # NEW WAY:
-# universe_vol_q1 is from "tmpfiles/vol_analysis.Rdata" created from vol_analysis.R
 # Get the vol score the one-before-last day of the previous month (note that these scores already use the rolling vol window so we don't need to average them e.g. over all the previous month)
 ISSUERS_DATA$DATASET$SDC$minus_Rsq_returns <- sapply(1:length(ISSUERS_DATA$DATASET$SDC$Event.Date), function(i){
   #universe_R2_month[paste(str_sub(as.character(ISSUERS_DATA$DATASET$SDC$Event.Date[i]), start=1, end=7), "01",sep="-"), as.character(ISSUERS_DATA$DATASET$SDC$permno[i])]
@@ -727,11 +674,12 @@ rm("universe_R2_month","universe_R2_month_score")
 #<<  VOL analysis, eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 # Buybacks
 
-# OLD WAY!
+# OLD WAY
 #tmp = get_feature_results(BUYBACK_DATA$DATASET,"pre_vol", company_subset_undervalued_bb, company_subset_overvalued_bb, quantile_VOL,VOLwindow)
 # NEW WAY:
-# universe_vol_q1 is from "tmpfiles/vol_analysis.Rdata" created from vol_analysis.R
+# universe_vol_q1 is from "tmpfiles/vol_analysis.Rdata" created above
 # Get the vol score the one-before-last day of the previous month (note that these scores already use the rolling vol window so we don't need to average them e.g. over all the previous month)
+
 universe_vol_q1_bb = universe_vol_q1[,as.character(unique(BUYBACK_DATA$DATASET$SDC$permno))]
 month_date = paste(str_sub(rownames(universe_vol_q1_bb),start=1,end=7), "01", sep="-")
 universe_vol_q1_bb = scrub(universe_vol_q1_bb)
@@ -1557,6 +1505,10 @@ colnames(Under_IdioISS) <- c("H Idiosync.","L Idiosync.", "H Vol.","L Vol.","H L
 #####################################################################################################################
 #####################################################################################################################
 
+tmp = BUYBACK_DATA$DATASET$SDC$BEME_used + BUYBACK_DATA$DATASET$SDC$Performance_used
+company_subset_undervaluedNoSize_bb = ifelse(tmp <= quantile(tmp,0.2), 0, ifelse(tmp >= quantile(tmp,0.8),2,1))
+rm("tmp")
+
 # Buybacks 
 DATASET = BUYBACK_DATA$DATASET
 EUindex_bb = sapply(1:length(DATASET$SDC$Event.Date), function(i){
@@ -1564,8 +1516,19 @@ EUindex_bb = sapply(1:length(DATASET$SDC$Event.Date), function(i){
     ifelse(i %in% High_VOL_eventsBB, 2, ifelse(i %in% Low_VOL_eventsBB, 0, 1)) +
     #ifelse(i %in% High_EPS_eventsBB, 2, ifelse(i %in% Low_EPS_eventsBB, 0, 1)) +
     #ifelse(i %in% Low_LEV_eventsBB, 2, ifelse(i %in% High_LEV_eventsBB, 0, 1)) +
-    ifelse(company_subset_undervalued_bb[i], 2, ifelse(company_subset_overvalued_bb[i], 0, 1)) 
+    ifelse(company_subset_undervalued_bb[i], 2, ifelse(company_subset_overvalued_bb[i], 0, 1))
+  #company_subset_undervaluedNoSize_bb[i]
 })
+
+EUindex_bb_nosize = sapply(1:length(DATASET$SDC$Event.Date), function(i){
+  ifelse(i %in% High_Idiosyncr_eventsBB, 2, ifelse(i %in% Low_Idiosyncr_eventsBB, 0, 1)) +
+    ifelse(i %in% High_VOL_eventsBB, 2, ifelse(i %in% Low_VOL_eventsBB, 0, 1)) +
+    #ifelse(i %in% High_EPS_eventsBB, 2, ifelse(i %in% Low_EPS_eventsBB, 0, 1)) +
+    #ifelse(i %in% Low_LEV_eventsBB, 2, ifelse(i %in% High_LEV_eventsBB, 0, 1)) +
+    #ifelse(company_subset_undervalued_bb[i], 2, ifelse(company_subset_overvalued_bb[i], 0, 1))
+    company_subset_undervaluedNoSize_bb[i]
+})
+
 EU_long_bb = NULL
 EU_Hedged_bb = NULL
 EU_long48_bb = NULL
@@ -1767,10 +1730,6 @@ U_relations= t(apply(all_characteristics,2,function(r){
 colnames(U_relations) <- paste("U",0:(ncol(U_relations)-1),sep="")
 rownames(U_relations) <- gsub("_"," ", rownames(U_relations))
 
-################################################
-# Mitchell and Pulvino type regressions
-################################################
-
 
 ########################################################################################
 ## NOW SAVE ALL THESE VARIABLES SO THAT THE rnw RUNS FASTER
@@ -1778,388 +1737,3 @@ rownames(U_relations) <- gsub("_"," ", rownames(U_relations))
 
 # Keep all results ONLY IN THIS FILE just in case we need to rerun or add something... this is temporary
 save(list = setdiff(ls(all = TRUE),initial_vars), file = "tmpfiles/bb_issuersALL.Rdata")
-
-#THE END
-
-
-
-
-
-
-
-
-
-
-
-
-
-###############################################################################################
-###############################################################################################
-###############################################################################################
-###############################################################################################
-###############################################################################################
-###############################################################################################
-###############################################################################################
-# STUFF WE DON'T USE ANY MORE
-###############################################################################################
-###############################################################################################
-###############################################################################################
-###############################################################################################
-###############################################################################################
-###############################################################################################
-###############################################################################################
-
-
-if (0){
-  long_ptf = BUYBACK_DATA$pnl_returns_events_all_6M 
-  short_ptf = ISSUERS_DATA$pnl_returns_events_all_6M                                   
-  ###
-  longBB_shortISS_5050 = 0.5*long_ptf+0.5*short_ptf
-  names(longBB_shortISS_5050)<- names(long_ptf)
-  longBB_shortISS_5050_Hedged = suppressWarnings(scrub(alpha_lm(longBB_shortISS_5050,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months, trade=1)))
-  ###
-  rvolBB = shift(rolling_variance(matrix(long_ptf,ncol=1),rolling_vol_days),1)
-  rvolISS = shift(rolling_variance(matrix(short_ptf,ncol=1),rolling_vol_days),1)
-  longBB_shortISS_Volweighted = drop(ifelse(rvolBB+rvolISS, long_ptf*rvolISS/(rvolBB+rvolISS) + short_ptf*rvolBB/(rvolBB+rvolISS),0))
-  names(longBB_shortISS_Volweighted)<- names(long_ptf)
-  longBB_shortISS_Volweighted_Hedged = suppressWarnings(scrub(alpha_lm(longBB_shortISS_Volweighted,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months, trade = 1)))
-  ###
-  beta_tmp = shift(drop(rolling_beta(matrix(long_ptf,ncol=1),matrix(short_ptf,ncol=1),hedge_months)),2)
-  beta_tmp = beta_tmp*(beta_tmp>0)
-  longBB_shortISS_beta = ifelse(beta_tmp, long_ptf*1/(1+beta_tmp) + short_ptf*beta_tmp/(1+beta_tmp),0)
-  names(longBB_shortISS_beta) <- names(long_ptf)
-  longBB_shortISS_beta_Hedged = suppressWarnings(scrub(alpha_lm(longBB_shortISS_beta,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months, trade = 1)))
-  names(longBB_shortISS_beta_Hedged)<- names(long_ptf)
-  ###
-  longBB_shortISS_5050_Hedged  = remove_initialization_time(longBB_shortISS_5050_Hedged,min_date=FirstTrade)
-  longBB_shortISS_Volweighted_Hedged = remove_initialization_time(longBB_shortISS_Volweighted_Hedged,min_date=FirstTrade)
-  longBB_shortISS_beta_Hedged = remove_initialization_time(longBB_shortISS_beta_Hedged,min_date=FirstTrade)
-  ##
-  LongBB_ShortISS_pnl_stats = cbind(pnl_stats(longBB_shortISS_5050_Hedged),pnl_stats(longBB_shortISS_Volweighted_Hedged), pnl_stats(longBB_shortISS_beta_Hedged))
-  colnames(LongBB_ShortISS_pnl_stats)<- c("50-50, Hedged",  "Vol Weighted, Hedged", "Beta Weighted, Hedged")
-  
-  png("tmpfiles/BBISSptfs.png")
-  plot(cumsum(100*longBB_shortISS_5050_Hedged),type="l",ylab="Cumulative Returns", xlab = "Time",axes = FALSE, ylim=c(min(c(cumsum(100*longBB_shortISS_5050_Hedged),cumsum(100*longBB_shortISS_Volweighted_Hedged), cumsum(100*longBB_shortISS_beta_Hedged))), max(c(cumsum(100*longBB_shortISS_5050_Hedged),cumsum(100*longBB_shortISS_Volweighted_Hedged), cumsum(100*longBB_shortISS_beta_Hedged)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(longBB_shortISS_5050_Hedged),length.out=10),labels=str_sub(names(longBB_shortISS_5050_Hedged)[seq(1,length(longBB_shortISS_5050_Hedged),length.out=10)],start = 1, end=4),cex.axis=0.8,las=3)
-  axis(2,cex.axis=1.1)
-  lines(cumsum(100*longBB_shortISS_Volweighted_Hedged), col="blue")
-  lines(cumsum(100*longBB_shortISS_beta_Hedged),col="green")
-  for (iter in 1:floor(100*max(c(cumsum(longBB_shortISS_5050_Hedged),cumsum(longBB_shortISS_Volweighted_Hedged),cumsum(longBB_shortISS_beta_Hedged)))/50))
-    abline(h = 50*iter)
-  plot_crisis_dates(longBB_shortISS_5050_Hedged)
-  invisible(dev.off())
-  
-  rm("long_ptf", "short_ptf", "longBB_shortISS_5050", "longBB_shortISS_5050_Hedged", 
-     "rvolBB", "rvolISS", "longBB_shortISS_Volweighted", "longBB_shortISS_Volweighted_Hedged", 
-     "beta_tmp", "longBB_shortISS_beta", "longBB_shortISS_beta_Hedged")
-  
-  ###############################################################################################
-  ## EPS misses after announcement
-  ###############################################################################################
-  
-  ## First do the IRATS table for different number of EPS misses or beats
-  
-  event = BUYBACK_DATA
-  EPSmisses_Abn_table_BB  = Reduce(rbind,lapply(0:10, function(EPSmisses) {
-    #cat(EPSmisses,",")
-    event$DATASET$SDC$EPSmiss_tmp <- sapply(1:length(event$DATASET$SDC$Event.Date), function(i)
-      (length(event$DATASET$SDC$EPSmissesbeats[i][[1]]) > 4) & ifelse(EPSmisses == 10, 
-                                                                      sum(event$DATASET$SDC$EPSmissesbeats[i][[1]] < 0) >= EPSmisses,
-                                                                      sum(event$DATASET$SDC$EPSmissesbeats[i][[1]] < 0) == EPSmisses))
-    res = NULL
-    if (sum(event$DATASET$SDC$EPSmiss_tmp) > 200){
-      tmp = car_table(event$DATASET$returns_by_event_monthly[,event$DATASET$SDC$EPSmiss_tmp], event$DATASET$SDC$Event.Date[event$DATASET$SDC$EPSmiss_tmp], Risk_Factors_Monthly)
-      res = rbind(c(sum(event$DATASET$SDC$EPSmiss_tmp), 
-                    round(tmp[,1],2)),
-                  c(NA, round(tmp[,2],2)), c(NA, round(tmp[,3],2)))
-      rownames(res)<- c(paste(EPSmisses, " Misses"), "t-stat", "p-value")
-    }
-    res
-  }))
-  colnames(EPSmisses_Abn_table_BB) <- c("Obs.","+1","+3", "+6", "+12", "+24", "+36", "+48")
-  rownames(EPSmisses_Abn_table_BB)[nrow(EPSmisses_Abn_table_BB)-2] <- ">= 10 Misses"
-  
-  event = ISSUERS_DATA
-  EPSmisses_Abn_table_ISS  = Reduce(rbind,lapply(0:10, function(EPSmisses) {
-    #cat(EPSmisses,",")
-    event$DATASET$SDC$EPSmiss_tmp <- sapply(1:length(event$DATASET$SDC$Event.Date), function(i)
-      (length(event$DATASET$SDC$EPSmissesbeats[i][[1]]) > 4) & ifelse(EPSmisses == 10, 
-                                                                      sum(event$DATASET$SDC$EPSmissesbeats[i][[1]] < 0) >= EPSmisses,
-                                                                      sum(event$DATASET$SDC$EPSmissesbeats[i][[1]] < 0) == EPSmisses))
-    res = NULL
-    if (sum(event$DATASET$SDC$EPSmiss_tmp) > 200){
-      tmp = car_table(event$DATASET$returns_by_event_monthly[,event$DATASET$SDC$EPSmiss_tmp], event$DATASET$SDC$Event.Date[event$DATASET$SDC$EPSmiss_tmp], Risk_Factors_Monthly)
-      res = rbind(c(sum(event$DATASET$SDC$EPSmiss_tmp), 
-                    round(tmp[,1],2)),
-                  c(NA, round(tmp[,2],2)), c(NA, round(tmp[,3],2)))
-      rownames(res)<- c(paste(EPSmisses, " Misses"), "t-stat", "p-value")
-    }
-    res
-  }))
-  colnames(EPSmisses_Abn_table_ISS) <- c("Obs.","+1","+3", "+6", "+12", "+24", "+36", "+48")
-  rownames(EPSmisses_Abn_table_ISS)[nrow(EPSmisses_Abn_table_ISS)-2] <- ">= 10 Misses"
-  
-  png("tmpfiles/epsexitall.png")
-  #par(mfrow=c(2,1), mar=c(3.8,4,3.8,4))
-  plot(EPSmisses_Abn_table_BB[(1:nrow(EPSmisses_Abn_table_BB))%%3 == 1,"+48"],type="l",ylab="Returns", xlab = "EPS Misses", ylim=c(min(c(EPSmisses_Abn_table_BB[,"+48"],EPSmisses_Abn_table_ISS[,"+48"])), max(c(EPSmisses_Abn_table_BB[,"+48"],EPSmisses_Abn_table_ISS[,"+48"]))), cex.lab=1, lwd=3)
-  lines(EPSmisses_Abn_table_ISS[(1:nrow(EPSmisses_Abn_table_ISS))%%3 == 1,"+48"],col="red", lwd=3,lty="dashed")
-  #plot(EPSbeats_Abn_table_BB[(1:nrow(EPSbeats_Abn_table_BB))%%2 == 1,"+48"],type="l",ylab="Returns", xlab = "EPS Beats",ylim=c(min(c(EPSbeats_Abn_table_BB[,"+48"],EPSbeats_Abn_table_ISS[,"+48"])), max(c(EPSbeats_Abn_table_BB[,"+48"],EPSbeats_Abn_table_ISS[,"+48"]))), cex.lab=0.8, lwd=3)
-  #lines(EPSbeats_Abn_table_ISS[(1:nrow(EPSbeats_Abn_table_ISS))%%2 == 1,"+48"],col="red", lwd=3)
-  invisible(dev.off())
-  
-  rm("event")
-  
-  ##################################################################
-  # Now do the pnl plots for different numbers of EPSmiss
-  
-  buybacks_post_EPS_data = sapply(1:length(BUYBACK_DATA$DATASET$SDC$Event.Date), function(i) length(BUYBACK_DATA$DATASET$SDC$EPSmissesbeats[i][[1]]))
-  issuers_post_EPS_data = sapply(1:length(ISSUERS_DATA$DATASET$SDC$Event.Date), function(i) length(ISSUERS_DATA$DATASET$SDC$EPSmissesbeats[i][[1]]))
-  
-  event = BUYBACK_DATA 
-  png("tmpfiles/BBEPSexit.png")
-  
-  holding_period_pnl = "Four.Years.After"
-  pnl_Exit_Hedged_mat <- pnl_NoExit_Hedged_mat <- pnl_Exit_all_Hedged_mat <- pnl_NoExit_all_Hedged_mat <- NULL
-  
-  for (MIN_EPS_MISSES_POST_iter in c(1,2,5)){
-    cat(MIN_EPS_MISSES_POST_iter, ",")
-    event$DATASET$SDC$EPSmiss <- sapply(1:length(event$DATASET$SDC$Event.Date), function(i){
-      tmp = event$DATASET$SDC$EPSmissesbeats[i][[1]]
-      ifelse(length(tmp) < 4, "1900-01-01", ifelse(sum(tmp < 0) >= MIN_EPS_MISSES_POST_iter, names(tmp[tmp<0])[MIN_EPS_MISSES_POST_iter], "2100-01-01"))    
-    })
-    exit_date = event$DATASET$SDC$EPSmiss
-    event_returns_exit = event$DATASET$returns_by_event
-    event_returns_monthly_exit = event$DATASET$returns_by_event_monthly
-    
-    # Set to 0 all returns starting the month after the SEO event: we exit then, hence we don't need these returns
-    exit_events = which(exit_date != "2100-01-01" & exit_date != "1900-01-01")
-    
-    all_dates = as.Date(rownames(event_returns_exit))
-    all_dates_monthly = as.Date(rownames(event_returns_monthly_exit))
-    for (i in exit_events){
-      first_day_next_month = AddMonths(as.Date(timeFirstDayInMonth(exit_date[i])),1)
-      event_returns_exit[all_dates >= first_day_next_month,i] <- 0
-      event_returns_monthly_exit[all_dates_monthly >= first_day_next_month,i] <- 0
-    }
-    
-    pnl_Exit =  apply(PNL_matrix_BB(start_date_event,holding_period_pnl, exit_events,  event$DATASET$DatesMonth, event_returns_monthly_exit,event=1),1,non_zero_mean) 
-    pnl_noExit =  apply(PNL_matrix_BB(start_date_event,holding_period_pnl, exit_events,  event$DATASET$DatesMonth, event$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)   
-    pnl_Exit_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(pnl_Exit,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months, trade =1))),min_date=FirstTrade)
-    pnl_NoExit_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(pnl_noExit,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months, trade =1))),min_date=FirstTrade)
-    
-    pnl_Exit_Hedged_mat = rbind(pnl_Exit_Hedged_mat,pnl_Exit_Hedged)
-    pnl_NoExit_Hedged_mat = rbind(pnl_NoExit_Hedged_mat,pnl_NoExit_Hedged)
-  }
-  
-  
-  
-  ylimmat = c(min(c(min(apply(100*pnl_Exit_Hedged_mat, 1, cumsum)), min(apply(100*pnl_NoExit_Hedged_mat, 1, cumsum)))),
-              max(c(max(apply(100*pnl_Exit_Hedged_mat, 1, cumsum)), max(apply(100*pnl_NoExit_Hedged_mat, 1, cumsum)))))
-  plot(cumsum(100*pnl_NoExit_Hedged_mat[1,]),type="l",col="red",lty = 2,ylab="Cumulative Returns", xlab = "",axes = FALSE, ylim=ylimmat, cex.lab=1.1)
-  axis(1,at=seq(1,ncol(pnl_NoExit_Hedged_mat),length.out=10),labels=str_sub(colnames(pnl_NoExit_Hedged_mat)[seq(1,ncol(pnl_NoExit_Hedged_mat),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
-  axis(2,cex.axis=1.1)
-  lines(cumsum(100*pnl_NoExit_Hedged_mat[2,]), col="red",lty = 2)
-  lines(cumsum(100*pnl_NoExit_Hedged_mat[3,]), col="red",lty = 2)
-  
-  lines(cumsum(100*pnl_Exit_Hedged_mat[1,]))
-  lines(cumsum(100*pnl_Exit_Hedged_mat[2,]))
-  lines(cumsum(100*pnl_Exit_Hedged_mat[3,]))
-  for (iter in 1:floor(100*max(ylimmat)/50))
-    abline(h = 50*iter)
-  plot_crisis_dates(pnl_Exit_Hedged)
-  
-  invisible(dev.off())
-  
-  rm("holding_period_pnl","exit_date","exit_events",
-     "all_dates","first_day_next_month",
-     "event_returns_exit","pnl_Exit","pnl_noExit",
-     "pnl_Exit_Hedged","pnl_NoExit_Hedged", "pnl_Exit_Hedged_mat",
-     "pnl_NoExit_Hedged_mat", "event")
-  
-  
-  # Issuers now
-  event = ISSUERS_DATA
-  png("tmpfiles/ISSEPSexit.png")
-  
-  holding_period_pnl = "Four.Years.After"
-  pnl_Exit_Hedged_mat <- pnl_NoExit_Hedged_mat <- pnl_Exit_all_Hedged_mat <- pnl_NoExit_all_Hedged_mat <- NULL
-  
-  for (MIN_EPS_MISSES_POST_iter in c(1,2,5)){
-    cat(MIN_EPS_MISSES_POST_iter, ",")
-    event$DATASET$SDC$EPSmiss <- sapply(1:length(event$DATASET$SDC$Event.Date), function(i){
-      tmp = event$DATASET$SDC$EPSmissesbeats[i][[1]]
-      ifelse(length(tmp) < 4, "1900-01-01", ifelse(sum(tmp < 0) >= MIN_EPS_MISSES_POST_iter, names(tmp[tmp<0])[MIN_EPS_MISSES_POST_iter], "2100-01-01"))    
-    })
-    exit_date = event$DATASET$SDC$EPSmiss
-    event_returns_exit = event$DATASET$returns_by_event
-    event_returns_monthly_exit = event$DATASET$returns_by_event_monthly
-    
-    # Set to 0 all returns starting the month after the SEO event: we exit then, hence we don't need these returns
-    exit_events = which(exit_date != "2100-01-01" & exit_date != "1900-01-01")
-    
-    all_dates = as.Date(rownames(event_returns_exit))
-    all_dates_monthly = as.Date(rownames(event_returns_monthly_exit))
-    for (i in exit_events){
-      first_day_next_month = AddMonths(as.Date(timeFirstDayInMonth(exit_date[i])),1)
-      event_returns_exit[all_dates >= first_day_next_month,i] <- 0
-      event_returns_monthly_exit[all_dates_monthly >= first_day_next_month,i] <- 0
-    }
-    
-    pnl_Exit =  apply(PNL_matrix_BB(start_date_event,holding_period_pnl, exit_events,  event$DATASET$DatesMonth, event_returns_monthly_exit,event=1),1,non_zero_mean) 
-    pnl_noExit =  apply(PNL_matrix_BB(start_date_event,holding_period_pnl, exit_events,  event$DATASET$DatesMonth, event$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)   
-    pnl_Exit_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(pnl_Exit,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months, trade =1))),min_date=FirstTrade)
-    pnl_NoExit_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(pnl_noExit,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months, trade =1))),min_date=FirstTrade)
-    
-    pnl_Exit_Hedged_mat = rbind(pnl_Exit_Hedged_mat,pnl_Exit_Hedged)
-    pnl_NoExit_Hedged_mat = rbind(pnl_NoExit_Hedged_mat,pnl_NoExit_Hedged)
-  }
-  
-  ylimmat = c(min(c(min(apply(100*pnl_Exit_Hedged_mat, 1, cumsum)), min(apply(100*pnl_NoExit_Hedged_mat, 1, cumsum)))),
-              max(c(max(apply(100*pnl_Exit_Hedged_mat, 1, cumsum)), max(apply(100*pnl_NoExit_Hedged_mat, 1, cumsum)))))
-  plot(cumsum(100*pnl_NoExit_Hedged_mat[1,]),type="l",col="red",lty = 2,ylab="Cumulative Returns", xlab = "",axes = FALSE, ylim=ylimmat, cex.lab=1.1)
-  axis(1,at=seq(1,ncol(pnl_NoExit_Hedged_mat),length.out=10),labels=str_sub(colnames(pnl_NoExit_Hedged_mat)[seq(1,ncol(pnl_NoExit_Hedged_mat),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
-  axis(2,cex.axis=1.1)
-  lines(cumsum(100*pnl_NoExit_Hedged_mat[2,]), col="red",lty = 2)
-  lines(cumsum(100*pnl_NoExit_Hedged_mat[3,]), col="red",lty = 2)
-  
-  lines(cumsum(100*pnl_Exit_Hedged_mat[1,]))
-  lines(cumsum(100*pnl_Exit_Hedged_mat[2,]))
-  lines(cumsum(100*pnl_Exit_Hedged_mat[3,]))
-  for (iter in 1:floor(100*max(ylimmat)/50))
-    abline(h = 50*iter)
-  plot_crisis_dates(pnl_Exit_Hedged)
-  
-  invisible(dev.off())
-  
-  rm("holding_period_pnl","exit_date","exit_events",
-     "all_dates","first_day_next_month",
-     "event_returns_exit","pnl_Exit","pnl_noExit",
-     "pnl_Exit_Hedged","pnl_NoExit_Hedged", "pnl_Exit_Hedged_mat",
-     "pnl_NoExit_Hedged_mat", "event")
-  
-  
-  ###############################################################################################
-  ## New .Rnw chunk
-  ###############################################################################################
-  #<<  Earnings_previous, eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-  # First the buybacks
-  
-  bad_previous_EPS_eventsBB = which(BUYBACK_DATA$DATASET$SDC$EPS.Value < BUYBACK_DATA$DATASET$SDC$EPS.Forecast)
-  good_previous_EPS_eventsBB = which(BUYBACK_DATA$DATASET$SDC$EPS.Value >= BUYBACK_DATA$DATASET$SDC$EPS.Forecast)
-  #good_previous_EPS_eventsBB = which(BUYBACK_DATA$DATASET$SDC$EPS.Value < BUYBACK_DATA$DATASET$SDC$EPS.Forecast & BUYBACK_DATA$Abn_Performance_Table["APB6M",] > 0)
-  
-  bad_previous_EPS_BB <- apply(PNL_matrix_BB(start_date_event,"Six.Month.After", bad_previous_EPS_eventsBB,  BUYBACK_DATA$DATASET$DatesMonth, BUYBACK_DATA$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  good_previous_EPS_BB <- apply(PNL_matrix_BB(start_date_event,"Six.Month.After", good_previous_EPS_eventsBB,  BUYBACK_DATA$DATASET$DatesMonth, BUYBACK_DATA$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  bad_previous_EPS_BB_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(bad_previous_EPS_BB,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  good_previous_EPS_BB_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(good_previous_EPS_BB,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  
-  bad_previous_EPS_BB48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", bad_previous_EPS_eventsBB,  BUYBACK_DATA$DATASET$DatesMonth, BUYBACK_DATA$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  good_previous_EPS_BB48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", good_previous_EPS_eventsBB,  BUYBACK_DATA$DATASET$DatesMonth, BUYBACK_DATA$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  bad_previous_EPS_BB_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(bad_previous_EPS_BB48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  good_previous_EPS_BB_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(good_previous_EPS_BB48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  
-  ## Issuers now:
-  bad_previous_EPS_eventsISS = which(ISSUERS_DATA$DATASET$SDC$EPS.Value < ISSUERS_DATA$DATASET$SDC$EPS.Forecast)
-  good_previous_EPS_eventsISS = which(ISSUERS_DATA$DATASET$SDC$EPS.Value >= ISSUERS_DATA$DATASET$SDC$EPS.Forecast)
-  
-  bad_previous_EPS_ISS <- apply(PNL_matrix_BB(start_date_event,"Six.Month.After", bad_previous_EPS_eventsISS,  ISSUERS_DATA$DATASET$DatesMonth, ISSUERS_DATA$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  good_previous_EPS_ISS <- apply(PNL_matrix_BB(start_date_event,"Six.Month.After", good_previous_EPS_eventsISS,  ISSUERS_DATA$DATASET$DatesMonth, ISSUERS_DATA$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  bad_previous_EPS_ISS_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(bad_previous_EPS_ISS,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  good_previous_EPS_ISS_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(good_previous_EPS_ISS,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  
-  bad_previous_EPS_ISS48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", bad_previous_EPS_eventsISS,  ISSUERS_DATA$DATASET$DatesMonth, ISSUERS_DATA$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  good_previous_EPS_ISS48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", good_previous_EPS_eventsISS,  ISSUERS_DATA$DATASET$DatesMonth, ISSUERS_DATA$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  bad_previous_EPS_ISS_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(bad_previous_EPS_ISS48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  good_previous_EPS_ISS_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(good_previous_EPS_ISS48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  
-  png("tmpfiles/badpreviouseps.png")
-  par(mfrow=c(2,1),mar=c(2.3,4,2.3,4))
-  
-  plot(cumsum(100*bad_previous_EPS_BB_Hedged),type="l",ylab="Cumulative Returns", xlab = "Time",main = "Buybacks", axes = FALSE, 
-       ylim=c(min(c(cumsum(100*bad_previous_EPS_BB_Hedged),cumsum(100*good_previous_EPS_BB_Hedged),cumsum(100*bad_previous_EPS_BB_Hedged48m),cumsum(100*good_previous_EPS_BB_Hedged48m))), 
-              max(c(cumsum(100*bad_previous_EPS_BB_Hedged),cumsum(100*good_previous_EPS_BB_Hedged),cumsum(100*bad_previous_EPS_BB_Hedged48m),cumsum(100*good_previous_EPS_BB_Hedged48m)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(bad_previous_EPS_BB_Hedged),length.out=10),labels=str_sub(names(bad_previous_EPS_BB_Hedged)[seq(1,length(bad_previous_EPS_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
-  axis(2,cex.axis=1.1)
-  lines(cumsum(100*good_previous_EPS_BB_Hedged), col="red")
-  lines(cumsum(100*bad_previous_EPS_BB_Hedged48m), col="blue")
-  lines(cumsum(100*good_previous_EPS_BB_Hedged48m), col="green")
-  for (iter in 1:floor(100*max(c(cumsum(bad_previous_EPS_BB_Hedged),cumsum(good_previous_EPS_BB_Hedged)))/50))
-    abline(h = 50*iter)
-  plot_crisis_dates(bad_previous_EPS_BB_Hedged)
-  
-  plot(cumsum(100*bad_previous_EPS_ISS_Hedged),type="l",ylab="Cumulative Returns", xlab = "Time",main = "Issuers", axes = FALSE, 
-       ylim=c(min(c(cumsum(100*bad_previous_EPS_ISS_Hedged),cumsum(100*good_previous_EPS_ISS_Hedged),cumsum(100*bad_previous_EPS_ISS_Hedged48m),cumsum(100*good_previous_EPS_ISS_Hedged48m))), 
-              max(c(cumsum(100*bad_previous_EPS_ISS_Hedged),cumsum(100*good_previous_EPS_ISS_Hedged),cumsum(100*bad_previous_EPS_ISS_Hedged48m),cumsum(100*good_previous_EPS_ISS_Hedged48m)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(bad_previous_EPS_ISS_Hedged),length.out=10),labels=str_sub(names(bad_previous_EPS_ISS_Hedged)[seq(1,length(bad_previous_EPS_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
-  axis(2,cex.axis=1.1)
-  lines(cumsum(100*good_previous_EPS_ISS_Hedged), col="red")
-  lines(cumsum(100*bad_previous_EPS_ISS_Hedged48m), col="blue")
-  lines(cumsum(100*good_previous_EPS_ISS_Hedged48m), col="green")
-  for (iter in 1:floor(100*max(c(cumsum(bad_previous_EPS_ISS_Hedged),cumsum(good_previous_EPS_ISS_Hedged)))/50))
-    abline(h = 50*iter)
-  plot_crisis_dates(bad_previous_EPS_ISS_Hedged)
-  
-  invisible(dev.off())
-  
-  EPS_IRATStableBB = round(cbind(
-    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,good_previous_EPS_eventsBB], BUYBACK_DATA$DATASET$SDC$Event.Date[good_previous_EPS_eventsBB], Risk_Factors_Monthly)$results,
-    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,bad_previous_EPS_eventsBB], BUYBACK_DATA$DATASET$SDC$Event.Date[bad_previous_EPS_eventsBB], Risk_Factors_Monthly)$results
-  ),2)
-  colnames(EPS_IRATStableBB) <- c("Beat EPS: CAR", "t-stat","p-value", "Not Beat EPS: CAR", "t-stat","p-value")
-  rownames(EPS_IRATStableBB)[nrow(EPS_IRATStableBB)] <- "Observations"
-  
-  EPS_IRATStableISS = round(cbind(
-    car_table(ISSUERS_DATA$DATASET$returns_by_event_monthly[,good_previous_EPS_eventsISS], ISSUERS_DATA$DATASET$SDC$Event.Date[good_previous_EPS_eventsISS], Risk_Factors_Monthly)$results,
-    car_table(ISSUERS_DATA$DATASET$returns_by_event_monthly[,bad_previous_EPS_eventsISS], ISSUERS_DATA$DATASET$SDC$Event.Date[bad_previous_EPS_eventsISS], Risk_Factors_Monthly)$results
-  ),2)
-  colnames(EPS_IRATStableISS) <- c("Beat EPS: CAR", "t-stat","p-value", "Not Beat EPS: CAR", "t-stat","p-value")
-  rownames(EPS_IRATStableISS)[nrow(EPS_IRATStableISS)] <- "Observations"
-  
-  
-  # THE STRATEGY
-  companies_used = setdiff(union(which(crisis_events_BB),union(High_Idiosyncr_eventsBB, which(company_subset_undervalued_bb))), which(BUYBACK_DATA$DATASET$SDC$Industry %in% INDUSTRY_TO_EXCLUDE))
-  length(companies_used)
-  the_strategy_long <- apply(PNL_matrix_BB(start_date_event,end_date_event,companies_used, BUYBACK_DATA$DATASET$DatesMonth,BUYBACK_DATA$DATASET$returns_by_event_monthly, event=1),1,non_zero_mean)
-  the_strategy_long_short = suppressWarnings(scrub(alpha_lm(the_strategy_long,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1)))
-  pnl_plot(the_strategy_long_short)
-  pnl_matrix(the_strategy_long_short)
-  
-  # ... restricting the sample to those months with market returns more than three percent less than the risk-free rate
-  themarket = Market_Daily
-  theptf = long_all6m_bb
-  theptf = theptf[head(which(theptf!=0),1):tail(which(theptf!=0),1)]
-  useonly = intersect(rownames(Risk_Factors), intersect(names(themarket), names(theptf)))
-  themarket = themarket[useonly]
-  theptf = theptf[useonly]
-  data = Risk_Factors[useonly,]
-  data$ri = theptf
-  
-  the_linear_equation = "(ri - RF) ~ Delta + SMB + HML + RMW + CMA"
-  form  = as.formula(the_linear_equation)
-  
-  model_all = lm(form,data=data)
-  summary(model_all)
-  model_down = lm(form,data=data[themarket < -0.01,])
-  summary(model_down)
-  model_up = lm(form,data=data[themarket > 0.01,])
-  summary(model_up)
-  
-  # Monthly 
-  data = Risk_Factors[useonly,]
-  data$ri = theptf
-  #themonths = weekdays(as.Date(rownames(data))) == "Monday"
-  themonths = c(1,diff(as.numeric(format(as.Date(rownames(data)), "%m"))))!=0
-  datamonth = apply(data,2,cumsum)
-  datamonth = as.data.frame(apply(datamonth[which(themonths),], 2,  function(r) (tail(r,-1)-head(r,-1))))
-  themarketmonth=cumsum(themarket)
-  themarketmonth = tail(themarketmonth[which(themonths)],-1) - head(themarketmonth[which(themonths)],-1)
-  monthmodel_all = lm(form,data=datamonth)
-  summary(monthmodel_all)
-  monthmodel_down = lm(form,data=datamonth[themarketmonth < -0.04,])
-  summary(monthmodel_down)
-  monthmodel_up = lm(form,data=datamonth[themarketmonth > 0.02,])
-  summary(monthmodel_up)
-  
-  rm("data","themonths","themarketmonth","theptf","useonly","the_linear_equation","form")
-  
-}
