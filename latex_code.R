@@ -399,7 +399,7 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
 
 
 #Work in progress, generic latex printer
-printLatexTable <- function(df, title="",metric="CAR",caption="",label="",titleontop = F, rowcolumn="",columns=NULL,scale=1,close=T,open=T,lastSpecial=F) {
+printLatexTable <- function(df, title="",metric="CAR",caption="",label="",titleontop = F, rowcolumn="",columns=NULL,scale=1,close=T,open=T,lastSpecial=F,returntext=F) {
   #convert input
   pval   <- df[,3* (1:(ncol(df)/3))]
   tstat  <- df[,3* (1:(ncol(df)/3))-1]
@@ -539,6 +539,8 @@ printLatexTable <- function(df, title="",metric="CAR",caption="",label="",titleo
       l <- pn(l,"\\end{table}")
     }
   }
+  if(returntext)
+    return(l)
   cat(l)
 }
 

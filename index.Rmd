@@ -1,26 +1,33 @@
 ---
 title: "Share Buyback and Equity Issue Anomalies Revisited: Interactive Tool"
-author: "[Theodoros Evgeniou](http://faculty.insead.edu/theodoros-evgeniou/), [Enric Junque de Fortuny](ciri.be/), [Nick Nassuphis](https://www.linkedin.com/in/nick-nassuphis-8029372), and [Theo Vermaelen](http://faculty.insead.edu/theo-vermaelen/)"
+author: "[Theodoros Evgeniou](http://faculty.insead.edu/theodoros-evgeniou/), [Enric Junque de Fortuny](http://ciri.be/), [Nick Nassuphis](https://www.linkedin.com/in/nick-nassuphis-8029372), and [Theo Vermaelen](http://faculty.insead.edu/theo-vermaelen/)"
 output:  
-  html_document:
-    fig_width: 6
-    fig_height: 2.5
-    fig_align: center
+ html_document:
+ fig_width: 6
+ fig_height: 2.5
+ fig_align: center
+ in_header: header.html
+ runtime: shiny
 runtime: shiny
 ---
 
 
 
 
-```{r, eval=TRUE, echo = FALSE}
-#load("bb_issuersALL.Rdata")
+```{r, eval=TRUE, echo = FALSE,message=FALSE}
+# rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
+# source("create_tool_data.R")
 load("bb_issuersTOOL.Rdata")
+#load("tmpfiles/bb_issuersALL.Rdata")
 
 #library(googleVis)
 #library("shiny")
 #library("reshape2")  
 #library("ggplot2")
 # Why are these not found when deployed?!
+library("shiny") 
+library("shinysky") #  devtools::install_github("AnalytixWare/ShinySky")
+
 library("stringr")
 library("RcppArmadillo")
 library("gtools")
@@ -29,9 +36,21 @@ source("lib/lib_helpers_shiny.R")
 source("lib/Paper_global_parameters.R")
 source("lib/heatmapOutput.R")
 source("lib/plots.R")
+source("report_helpers.R")
 
 DATASET_INI = BUYBACK_DATA$DATASET
 DATASET_INI$SDC = as.data.frame(DATASET_INI$SDC)
+
+if(0) {
+  CACHE <- car_table_cache(DATASET_INI$returns_by_event_monthly,
+                           DATASET_INI$SDC$Event.Date,Risk_Factors_Monthly,formula_used = five_factor_model)
+  save("CACHE",file = "cache.Rdata")
+}else {
+  load("cache.Rdata")  
+}
+report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
+
+
 ```
 
 <br>
@@ -40,8 +59,12 @@ DATASET_INI$SDC = as.data.frame(DATASET_INI$SDC)
 
 <hr>
 
-This is an interactive tool for the article [Share Buyback and Equity Issue Anomalies Revisited](). Users can explore the effects of various parameters as well as data filtering choices. For any given choices, users can generate and download a new **customized pdf version of the paper** by clicking the button below at any time. Note that it may take a couple of minutes to create and download the new paper.
+This is an interactive tool for the article [Share Buyback and Equity Issue Anomalies Revisited](http://tevgeniou.github.io/BuybacksIssuers/). Users can explore the effects of various parameters as well as data filtering choices. For any given choices, users can generate and download a new **customized pdf version of the paper** by clicking the button below at any time. 
+
 <br>
+
+**Note that it takes a few minutes (possibly five) to create and download the new paper - work in progress.**
+
 <br>
 
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
@@ -122,7 +145,8 @@ DATASET_NEW <- reactive({
   list(
     returns_by_event_monthly = DATASET_INI$returns_by_event_monthly[,useonly_report],
     DatesMonth = DATASET_INI$DatesMonth[,useonly_report],
-    SDC = DATASET_INI$SDC[useonly_report,]
+    SDC = DATASET_INI$SDC[useonly_report,],
+    subset = useonly_report
     #returns_by_event_monthly = DATASET_INI$returns_by_event_monthly,
     #DatesMonth = DATASET_INI$DatesMonth,
     #SDC = DATASET_INI$SDC
@@ -141,13 +165,14 @@ This tool allows the user to explore descriptive statistics of some of the key f
 
 
 ```{r, eval=TRUE, echo = FALSE}
-acceptaple_features = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index","Industry", "Market.Cap",          "Percent.Shares", "Purpose.Code","Source.of.funds","Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio", "Year")
+acceptaple_features = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index","Industry", "Market.Cap",          "Percent.Shares", "Purpose.Code","Source.of.funds","Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio")
 
 fluidPage(
   selectInput("characteristic", "Select Firm Characteristic:", choices = acceptaple_features,selected = acceptaple_features[1]),
   mainPanel(
     tabsetPanel("Example",
                 tabPanel("Histogram",
+                         busyIndicator("Please wait while we load the data for you... This shouldn't take more than a few seconds...",wait = 0),
                          renderPlot({
                            feature = DATASET_NEW()$SDC[[which(names(DATASET_NEW()$SDC) == input$characteristic)]]
                            feature = feature[!is.na(feature)]
@@ -172,7 +197,8 @@ fluidPage(
                            #print(m1,'chart')
                          })
                 )
-    ),style='width: 100%;'))
+    ),
+    style='width: 100%;'))
 ```
 
 <hr>
@@ -197,8 +223,10 @@ checkboxGroupInput("industry", "Select Industries  to remove:", choices = unique
 feature_IRATStable_industry <- reactive({
   useonly_industry = !(DATASET_NEW()$SDC$Industry %in% input$industry) 
   res = round(cbind(
-    car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], DATASET_NEW()$SDC$Event.Date[useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], Risk_Factors_Monthly)$results,
-    car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued], DATASET_NEW()$SDC$Event.Date[useonly_industry& DATASET_NEW()$SDC$company_subset_undervalued], Risk_Factors_Monthly)$results
+    #car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], DATASET_NEW()$SDC$Event.Date[useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], Risk_Factors_Monthly)$results,
+    #car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued], DATASET_NEW()$SDC$Event.Date[useonly_industry& DATASET_NEW()$SDC$company_subset_undervalued], Risk_Factors_Monthly)$results
+    car_table_cached(CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued)$results,
+    car_table_cached(CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   as.data.frame(res)
@@ -207,8 +235,8 @@ feature_IRATStable_industry <- reactive({
 feature_CALtable_industry <- reactive({
   useonly_industry = !(DATASET_NEW()$SDC$Industry %in% input$industry) 
   res = round(cbind(
-    calendar_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], DATASET_NEW()$SDC$Event.Date[useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued], DATASET_NEW()$SDC$Event.Date[useonly_industry& DATASET_NEW()$SDC$company_subset_undervalued], Risk_Factors_Monthly)$results
+    calendar_table2(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], DATASET_NEW()$SDC$Event.Date[useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], Risk_Factors_Monthly,report_months_cal)$results,
+    calendar_table2(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued], DATASET_NEW()$SDC$Event.Date[useonly_industry& DATASET_NEW()$SDC$company_subset_undervalued], Risk_Factors_Monthly,report_months_cal)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
   as.data.frame(res)
@@ -218,10 +246,12 @@ fluidPage(
   mainPanel(
     tabsetPanel("Example",
                 tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderTable({
                            feature_IRATStable_industry()
                          })),
                 tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderTable({
                            feature_CALtable_industry()
                          }))    
@@ -252,8 +282,10 @@ feature_IRATStable <- reactive({
   High_feature_events = which(scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
   Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
   res = round(cbind(
-    car_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
-    car_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
+    #car_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
+    #car_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
+    car_table_cached(CACHE,Low_feature_events)$results,
+    car_table_cached(CACHE,High_feature_events)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   as.data.frame(res)
@@ -266,8 +298,8 @@ feature_CALtable <- reactive({
   High_feature_events = which(scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
   Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
   res = round(cbind(
-    calendar_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
+    calendar_table2(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly,report_months_cal)$results,
+    calendar_table2(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly,report_months_cal)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
   as.data.frame(res)
@@ -296,26 +328,32 @@ fluidPage(
   mainPanel(
     tabsetPanel("Example",
                 tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderTable({
                            feature_IRATStable()
                          })),
                 tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderTable({
                            feature_CALtable()
                          })),
                 tabPanel("Cumulative Abnormal Returns,High, 12m hold",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderDygraph({
                            pnl_plot_interactive(High_feature_Hedged_react())
                          })),
                 tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderDygraph({
                            pnl_plot_interactive(Low_feature_Hedged_react())
                          })),
                 tabPanel("Monthly and Yearly Returns, High, 12m hold",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderUI({
                            renderHeatmapX(pnl_matrix(High_feature_Hedged_react()))
                          })),
                 tabPanel("Monthly and Yearly Returns, Low, 12m hold",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderUI({
                            renderHeatmapX(pnl_matrix(Low_feature_Hedged_react()))
                          }))
@@ -458,8 +496,10 @@ feature_IRATStable_index <- reactive({
   High_feature_events = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_all)) & !is.na(thefeature))
   Low_feature_events = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_all)) & !is.na(thefeature))
   res = round(cbind(
-    car_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
-    car_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
+    #car_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
+    #car_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
+    car_table_cached(CACHE,Low_feature_events)$results,
+    car_table_cached(CACHE,High_feature_events)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   res
@@ -470,8 +510,8 @@ feature_CALtable_index <- reactive({
   High_feature_events = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used_all)) & !is.na(thefeature))
   Low_feature_events = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_all)) & !is.na(thefeature))
   res = round(cbind(
-    calendar_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
+    calendar_table2(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly,report_months_cal)$results,
+    calendar_table2(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly,report_months_cal)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
   res
@@ -499,14 +539,17 @@ fluidPage(
   mainPanel(
     tabsetPanel("Example",
                 tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderTable({
                            feature_IRATStable_index()
                          })),
                 tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderTable({
                            feature_CALtable_index()
                          })),
                 tabPanel("Histogram of the New Index",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderPlot({
                            feature = Index_Score_rect()
                            feature = feature[!is.na(feature)]
@@ -515,18 +558,22 @@ fluidPage(
                            hist(feature, density = 100, breaks = 100)
                          })),
                 tabPanel("Cumulative Abnormal Returns,High, 12m hold",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderDygraph({
                            pnl_plot_interactive(High_feature_Hedged_react_index())
                          })),
                 tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderDygraph({
                            pnl_plot_interactive(Low_feature_Hedged_react_index())
                          })),
                 tabPanel("Monthly and Yearly Returns, High, 12m hold",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderUI({
                            renderHeatmapX(pnl_matrix(High_feature_Hedged_react_index()))
                          })),
                 tabPanel("Monthly and Yearly Returns, Low, 12m hold",
+                         busyIndicator("Calculating results ...",wait = 0),
                          renderUI({
                            renderHeatmapX(pnl_matrix(Low_feature_Hedged_react_index()))
                          }))

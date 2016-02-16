@@ -14,7 +14,7 @@ libraries_used=c("stringr","gtools","foreign","reshape2","digest","timeDate","de
                  "Hmisc","vegan","fpc","GPArotation","FactoMineR","cluster",
                  "psych","stringr","googleVis", "png","ggplot2","googleVis", "gridExtra","RcppArmadillo","xts","DescTools")
 
-get_libraries(libraries_used)
+#get_libraries(libraries_used)
 
 options(stringsAsFactors=FALSE)
 
@@ -731,105 +731,6 @@ exit_helper_rnw <- function(event,exit_signal_name,holding_period_pnl = "Four.Ye
               pnl_Exit_Hedged = pnl_Exit_Hedged, pnl_NoExit_Hedged = pnl_NoExit_Hedged, 
               number_events = number_events 
   ))
-}
-
-
-###############################################################################################
-#<< A Helper function for all feature based analyses
-###############################################################################################
-
-# Define a helper function that we can use for any firm characteristic:
-get_feature_results <- function(DATASET,feature_name, company_subset_undervalued,company_subset_overvalued,quantile_feature,featurewindow, method="Complex"){
-  
-  if (method == "Simple"){
-    thefeature = DATASET$SDC[[which(names(DATASET$SDC) == feature_name)]]  
-    #High_feature_events = which(scrub(thefeature) > 1-quantile_feature & !is.na(thefeature))
-    #Low_feature_events = which(scrub(thefeature) < quantile_feature & !is.na(thefeature))
-    High_feature_events = which(scrub(thefeature) > quantile(thefeature[!is.na(thefeature)],1-quantile_feature) & !is.na(thefeature))
-    Low_feature_events = which(scrub(thefeature) < quantile(thefeature[!is.na(thefeature)],quantile_feature) & !is.na(thefeature))
-    if (length(High_feature_events) == 0)
-      High_feature_events = which(scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-quantile_feature) & !is.na(thefeature))
-    if (length(Low_feature_events) == 0)
-      Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],quantile_feature) & !is.na(thefeature))
-    
-  } else {
-    # Thresholds
-    thetimes = DATASET$SDC$Event.Date
-    thefeature = DATASET$SDC[[which(names(DATASET$SDC) == feature_name)]]  
-    thres = Reduce(cbind,lapply(1:length(thetimes), function(i){
-      useonly = thetimes <= thetimes[i] & thetimes >= thetimes[i] - featurewindow & 1:length(thetimes) != i
-      useonly = useonly & !is.na(thefeature)
-      res = c(0,0)
-      if (length(thefeature[useonly]) >= 5)
-        res = c(quantile(thefeature[useonly], quantile_feature),quantile(thefeature[useonly], 1-quantile_feature))
-      res
-    }))
-    feature_down = thres[1,]
-    feature_up = thres[2,]
-    names(feature_down) <- format(DATASET$SDC$Event.Date, "%Y%m")
-    names(feature_up) <- format(DATASET$SDC$Event.Date, "%Y%m")
-    tmp = feature_down
-    feature_thresholds_down = sapply(sort(unique(names(tmp))), function(i) {
-      mean(tmp[(names(tmp) == i)])
-    })
-    names(feature_thresholds_down)<- sort(unique(names(tmp)))
-    tmp = feature_up
-    feature_thresholds_up = sapply(sort(unique(names(tmp))), function(i) {
-      mean(tmp[(names(tmp) == i)])
-    })
-    names(feature_thresholds_up)<- sort(unique(names(tmp)))
-    # Classes
-    High_feature_events = which(scrub(thefeature) > feature_up & !is.na(thefeature)  & feature_up != 0 )
-    Low_feature_events = which(scrub(thefeature) < feature_down & !is.na(thefeature) & feature_down !=0)
-  }
-  
-  #Portfolios
-  High_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  High_feature_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  Low_feature_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
-  High_feature48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  Low_feature48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  High_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  Low_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  #IRATS
-  feature_IRATStable = round(cbind(
-    car_table(DATASET$returns_by_event_monthly[,Low_feature_events], DATASET$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
-    car_table(DATASET$returns_by_event_monthly[,High_feature_events], DATASET$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
-  ),2)
-  feature_IRATStable_under = round(cbind(
-    car_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly)$results,
-    car_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly)$results,
-    car_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly)$results,
-    car_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly)$results
-  ),2)
-  #calendar
-  feature_IRATStable_cal = round(cbind(
-    calendar_table(DATASET$returns_by_event_monthly[,Low_feature_events], DATASET$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET$returns_by_event_monthly[,High_feature_events], DATASET$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
-  ),2)
-  feature_IRATStable_under_cal = round(cbind(
-    calendar_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly)$results
-  ),2)
-  list(
-    High_feature_events    = High_feature_events,
-    Low_feature_events     = Low_feature_events,
-    High_feature          = High_feature,
-    Low_feature           = Low_feature,
-    High_feature_Hedged   = High_feature_Hedged,
-    Low_feature_Hedged    = Low_feature_Hedged,
-    High_feature48m       = High_feature48m,
-    Low_feature48m        = Low_feature48m,
-    High_feature_Hedged48m  = High_feature_Hedged48m,
-    Low_feature_Hedged48m   = Low_feature_Hedged48m,
-    feature_IRATStable       = feature_IRATStable,
-    feature_IRATStable_cal   = feature_IRATStable_cal,
-    feature_IRATStable_under =feature_IRATStable_under,
-    feature_IRATStable_under_cal = feature_IRATStable_under_cal
-  )
 }
 
 
