@@ -34,20 +34,20 @@ library("gtools")
 library("timeDate")
 source("lib/lib_helpers_shiny.R")
 source("lib/Paper_global_parameters.R")
-source("lib/heatmapOutput.R")
+source("lib/heatmapOutput.R") 
 source("lib/plots.R")
 source("report_helpers.R")
 
 DATASET_INI = BUYBACK_DATA$DATASET
 DATASET_INI$SDC = as.data.frame(DATASET_INI$SDC)
 
-if(0) {
-  CACHE <- car_table_cache(DATASET_INI$returns_by_event_monthly,
-                           DATASET_INI$SDC$Event.Date,Risk_Factors_Monthly,formula_used = five_factor_model)
-  save("CACHE",file = "cache.Rdata")
-}else {
-  load("cache.Rdata")  
-}
+#if(1) {
+#  CACHE <- car_table_cache(DATASET_INI$returns_by_event_monthly,
+#                           DATASET_INI$SDC$Event.Date,Risk_Factors_Monthly,formula_used = five_factor_model)
+#  save("CACHE",file = "cache.Rdata")
+#} else {
+#  load("cache.Rdata")  
+#}
 report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
 
 
@@ -63,7 +63,7 @@ This is an interactive tool for the article [Share Buyback and Equity Issue Anom
 
 <br>
 
-**Note that it takes a few minutes (possibly five) to create and download the new paper - work in progress.**
+**Note that it takes a few minutes (possibly more than five) to create and download the new paper (work in progress). Please wait without changing any parameters until you are prompted to download the new paper.**
 
 <br>
 
@@ -142,16 +142,26 @@ DATASET_NEW <- reactive({
   
   useonly_report = which(DATASET_INI$SDC$Event.Date >= starting & DATASET_INI$SDC$Event.Date <= ending & scrub(DATASET_INI$SDC$Market.Cap) >= market_cap_min & scrub(DATASET_INI$SDC$Market.Cap) <= market_cap_max) 
   
+  SDC = DATASET_INI$SDC[useonly_report,]
+  returns_by_event_monthly = DATASET_INI$returns_by_event_monthly[,useonly_report]
+  DatesMonth = DATASET_INI$DatesMonth[,useonly_report]
+  
+  CACHE <- car_table_cache(returns_by_event_monthly,
+                         SDC$Event.Date,Risk_Factors_Monthly,formula_used = five_factor_model)
+
   list(
-    returns_by_event_monthly = DATASET_INI$returns_by_event_monthly[,useonly_report],
-    DatesMonth = DATASET_INI$DatesMonth[,useonly_report],
-    SDC = DATASET_INI$SDC[useonly_report,],
+    CACHE = CACHE,
+    returns_by_event_monthly = returns_by_event_monthly,
+    DatesMonth = DatesMonth,
+    SDC = SDC,
     subset = useonly_report
     #returns_by_event_monthly = DATASET_INI$returns_by_event_monthly,
     #DatesMonth = DATASET_INI$DatesMonth,
     #SDC = DATASET_INI$SDC
   )
 })
+
+
 ```
 
 
@@ -225,8 +235,8 @@ feature_IRATStable_industry <- reactive({
   res = round(cbind(
     #car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], DATASET_NEW()$SDC$Event.Date[useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], Risk_Factors_Monthly)$results,
     #car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued], DATASET_NEW()$SDC$Event.Date[useonly_industry& DATASET_NEW()$SDC$company_subset_undervalued], Risk_Factors_Monthly)$results
-    car_table_cached(CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued)$results,
-    car_table_cached(CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued)$results
+    car_table_cached(DATASET_NEW()$CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued)$results,
+    car_table_cached(DATASET_NEW()$CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   as.data.frame(res)
@@ -284,8 +294,8 @@ feature_IRATStable <- reactive({
   res = round(cbind(
     #car_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
     #car_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
-    car_table_cached(CACHE,Low_feature_events)$results,
-    car_table_cached(CACHE,High_feature_events)$results
+    car_table_cached(DATASET_NEW()$CACHE,Low_feature_events)$results,
+    car_table_cached(DATASET_NEW()$CACHE,High_feature_events)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   as.data.frame(res)
@@ -498,8 +508,8 @@ feature_IRATStable_index <- reactive({
   res = round(cbind(
     #car_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
     #car_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
-    car_table_cached(CACHE,Low_feature_events)$results,
-    car_table_cached(CACHE,High_feature_events)$results
+    car_table_cached(DATASET_NEW()$CACHE,Low_feature_events)$results,
+    car_table_cached(DATASET_NEW()$CACHE,High_feature_events)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   res

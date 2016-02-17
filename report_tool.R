@@ -1,6 +1,7 @@
-
+#disable for debugging
+#load("bb_issuersALL.Rdata")
 report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
-report_months_car = c((-3:24)*2,1)
+report_months_car = sort(c((-3:24)*2,1))
 reported_times_plots <-  c("-6","-4","-2","0","+1","+2","+4","+6","+8","+10","+12","+14","+16","+18","+20","+22","+24","+26","+28","+30","+32","+34","+36","+38","+40","+42","+44","+46","+48")  
 
 #general variables and overwriting 
@@ -42,7 +43,7 @@ ISSUERS_DATA2$DATASET$SDC <- sdc_is
 ISSUERS_DATA2$DATASET$DatesMonth <- datesmonth_is
 ISSUERS_DATA2$DATASET$returns_by_event_monthly <- ret_is
 ISSUERS_DATA2$Valuation_Index <- ISSUERS_DATA$Valuation_Index[useonly_is]
-
+ 
 ######################
 # CACHE CAR TABLE
 CACHE3 <- car_table_cache(ret_bb,sdc_bb$Event.Date,Risk_Factors_Monthly,formula_used = three_factor_model)

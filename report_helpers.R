@@ -1,8 +1,10 @@
 car_table_cache <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, max_window = 48,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA") {
   factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
- 
+  
   if (sum(!(factors_used %in% colnames(Risk_Factors_Monthly))))
     stop(paste("car_table misses the risk factors: ",factors_used[!(factors_used %in% colnames(Risk_Factors_Monthly))]))
+  
+  allmonths = min_window:max_window 
   
   factors_used_noRF = setdiff(factors_used, "RF")
   if (ncol(returns) < length(factors_used_noRF) + 1){
@@ -49,27 +51,31 @@ car_table_cache <- function(returns,Event.Date,Risk_Factors_Monthly,min_window =
     "factors_used_noRF" = factors_used_noRF
   ))
 }
-car_table_cached <- function(cache,subset=NULL,allmonths=NULL,min_window = -6, max_window = 48) {
-  if(is.null(subset)) 
-    subset = 1:length(cache$Event.Date)
-  EVENT_ALIGNED        <- cache$EVENT_ALIGNED[,subset,]
-  Event.Date           <- cache$Event.Date[subset]
+#ignore allmonths for now, I don't think this can work
+car_table_cached <- function(cache,thesubset=NULL,allmonths=NULL,min_window = -6, max_window = 48) {
+  if(is.null(thesubset)) 
+    thesubset = 1:length(cache$Event.Date)
+  #if(!is.null(allmonths)) {
+  #monthindex = ifelse(allmonths > 0, paste("+",allmonths,sep=""), allmonths)
+  #} else {
+  monthindex = rownames(cache$EVENT_ALIGNED)
+  min_window = min(1,min_window)
+  max_window = max(-1,max_window)
+  allmonths = min_window:max_window 
+  #}
+  EVENT_ALIGNED        <- cache$EVENT_ALIGNED[monthindex,thesubset,]
+  Event.Date           <- cache$Event.Date[thesubset]
   Row.Date             <- cache$Row.Date
   form                 <- cache$form
   factors_used_noRF    <- cache$factors_used_noRF
   Risk_Factors_Monthly <- cache$Risk_Factors_Monthly
   
-  if(is.null(allmonths)) {
-    min_window = min(1,min_window)
-    max_window = max(-1,max_window)
-    allmonths = min_window:max_window
-  }
   #Step2: now for each month, calculate the CAR. need to include month 0 and set that one to 0  
   alphas <- rep(0,length(allmonths))
-  betas <- array(0,c(length(allmonths),ncol(Risk_Factors_Monthly)-1))
+  betas  <- array(0,c(length(allmonths),ncol(Risk_Factors_Monthly)-1))
   betasstderr <- array(0,c(length(allmonths),ncol(Risk_Factors_Monthly)-1))
   stderr <- rep(0,length(allmonths))
-  dfs <- as.integer(rep(0,length(allmonths)))
+  dfs    <- as.integer(rep(0,length(allmonths)))
   
   Event.Date_number = as.numeric(as.Date(Event.Date))
   Row.Date_number = as.numeric(Row.Date)

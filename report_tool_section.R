@@ -53,10 +53,11 @@ generate_section <- function(variable_name,reverse,quantile_used_ind) {
       types of events: low ",variable_name," and high ",variable_name," events, 
       depending on whether the variable was in the top or bottom quantile of the ",variable_name,"of
       all CRSP companies in the pre-event month. In total we have ", sum(High_feature_events), " low ",variable_name," and ",sum(Low_feature_events),  " high ",variable_name," events. 
-      Table~\\ref{tbl:industriesAdditional} shows the 
-      percentage of high and low ",variable_name," events across all industries for which we have at 
-      least 100 buyback events in our sample.
   ")
+  #Table~\\ref{tbl:industriesAdditional} shows the 
+  #percentage of high and low ",variable_name," events across all industries for which we have at 
+  #least 100 buyback events in our sample.
+  
   cat("Table~\\ref{tbl:",variable_name,"} shows the IRATS and Calendar Time abnormal returns for high
        and low ",variable_name," buybacks events-companies. Focusing on IRATS, high ",variable_name," 
        buyback stocks earn ",IRATStableBB["+48","High: CAR"],"$\\%$  after 48 months (t=" ,IRATStableBB["+48",5] ,"), while low ",variable_name," 
@@ -149,7 +150,7 @@ generate_U_section <- function(sec1,sec2,sec3,sec4,sec5,sec6,quantile_used_ind,q
   High_feature_events2 <- High_feature_events3 <- High_feature_events4 <- High_feature_events5 <- High_feature_events6 <- rep(FALSE,length(High_feature_events1))
   Low_feature_events2 <- Low_feature_events3 <- Low_feature_events4 <- Low_feature_events5 <- Low_feature_events6 <- 
     rep(FALSE,length(Low_feature_events1))
-
+  
   feature_used_names= gsub("\\.", " ",sec1$name) 
   
   if (!is.null(sec2$name)){
@@ -175,7 +176,7 @@ generate_U_section <- function(sec1,sec2,sec3,sec4,sec5,sec6,quantile_used_ind,q
   }
   if (!is.null(sec5$name)){
     thesign = ifelse(sec5$reverse_sign, -1, +1)
-    thefeature = thesign*DS$SDC[[which(names(DS$SDC) == sec5$name)]]  
+    thefeature = thesign*DS$SDC[[which(names(DS$SDC) == sec5$name)]]   
     High_feature_events5 = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(quantile_used_ind)) & !is.na(thefeature))
     Low_feature_events5 = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(quantile_used_ind)) & !is.na(thefeature))
     feature_used_names = paste(feature_used_names,gsub("\\.", " ",sec5$name),sep=", ")  
@@ -288,22 +289,21 @@ where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ 
   #CEU_IRATStable_bb / CEU_CALtable_bb
   CEU_IRATStable_bb <- NULL
   CEU_CALtable_bb <- NULL
-  for (i in unique(Index_score)){
+  for (i in sort(unique(Index_score))){
     CEU_events_now = which(Index_score == i)
     CEU_IRATStable_bb = cbind(CEU_IRATStable_bb,car_table_cached(CACHE5,CEU_events_now,allmonths=report_months_car)$results)
-    CEU_CALtable_bb = cbind(CEU_CALtable_bb,calendar_table2(DS$returns_by_event_monthly[,EU_events_now], DS$SDC$Event.Date[EU_events_now], Risk_Factors_Monthly,report_months_cal)$results)
+    CEU_CALtable_bb = cbind(CEU_CALtable_bb,calendar_table2(DS$returns_by_event_monthly[,CEU_events_now], DS$SDC$Event.Date[CEU_events_now], Risk_Factors_Monthly,report_months_cal)$results)
   }
   if(length(unique(Index_score)) < 4) {
     CEU_IRATStable_bb_latex <- printLatexTable(
       CEU_IRATStable_bb[reported_times,1:(3*length(unique(Index_score)))],
       columns = paste("CEU-index",unique(Index_score)),
       title="Buyback announcements IRATS for all EU-index Values",
-      caption="IRATS five factor cumulative abnormal returns after open market repurchase announcements for each Enhanced Undervaluation Index value from 0 to 6.
-   We calculate the EU-index simply as the sum of three numbers:  high Peyer and Vermaelen (2009) U-index terms get a score of 2, low get a 0; high idiosyncratic terms get a score of 2, low get a 0; and high volatility terms get a score of 2, low get a 0.  Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores. For each EU-index value, we report the monthly cumulative average abnormal returns (CAR) in percent using Ibbotson's (1975) returns across time and security (IRATS) method combined with the \\cite{FamaFrench2015a} five-factor model for the sample of firms that announced an open market share repurchase plus various subsamples. The following regression is run each event month~$j$:
+      caption=paste("IRATS five factor cumulative abnormal returns after open market repurchase announcements for each Customised Enhanced Undervaluation Index value from 0 to ", max(Index_score),".  We calculate the CEU-index simply as the sum of 0, 1, 2, numbers for low, middle, and high for the selected components of the CEU-Index. For each CEU-index value, we report the monthly cumulative average abnormal returns (CAR) in percent using Ibbotson's (1975) returns across time and security (IRATS) method combined with the \\cite{FamaFrench2015a} five-factor model for the sample of firms that announced an open market share repurchase plus various subsamples. The following regression is run each event month~$j$:
   \\begin{eqnarray*}
   (R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + e_t {RMW}_t + f_t {CMA}_t + \\epsilon_{i,t},
   \\end{eqnarray*}
-  where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors.",
+  where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors.", sep=""),
       label = "tbl:CEUunderBB",
       titleontop=T,lastSpecial=T,returntext=T,metric = "CAR"
     )
@@ -311,9 +311,8 @@ where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ 
       CEU_CALtable_bb[reported_times,1:(3*length(unique(Index_score)))],
       columns = paste("CEU-index",unique(Index_score)),
       title="Buyback announcements Calendar Time for all EU-index Values",
-      caption="IRATS five factor cumulative abnormal returns after open market repurchase announcements for each Enhanced Undervaluation Index value from 0 to 6.
- We calculate the EU-index simply as the sum of three numbers:  high Peyer and Vermaelen (2009) U-index terms get a score of 2, low get a 0; high idiosyncratic terms get a score of 2, low get a 0; and high volatility terms get a score of 2, low get a 0.  Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores. For each EU-index value, we report the monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the \\cite{FamaFrench2015a} five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors (the difference between the risk-free rate and the return on the equally weighted CRSP index, the monthly return on the size, book-to-market factor, profitability factor and investment factor in month) as the independent variables. The significance levels are indicated by * and ** and correspond to a significance level of $5\\%$ and $1\\%$ respectively, using a two-tailed test.",
-      label = "tbl:EUunderBBcal",metric="AR",lastSpecial=T,returntext=T
+      caption=paste("IRATS five factor cumulative abnormal returns after open market repurchase announcements for each Customised Enhanced Undervaluation Index value from 0 to ", max(Index_score),".  We calculate the EU-index simply as the sum of three numbers:  high Peyer and Vermaelen (2009) U-index terms get a score of 2, low get a 0; high idiosyncratic terms get a score of 2, low get a 0; and high volatility terms get a score of 2, low get a 0.  Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores. For each EU-index value, we report the monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the \\cite{FamaFrench2015a} five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors (the difference between the risk-free rate and the return on the equally weighted CRSP index, the monthly return on the size, book-to-market factor, profitability factor and investment factor in month) as the independent variables. The significance levels are indicated by * and ** and correspond to a significance level of $5\\%$ and $1\\%$ respectively, using a two-tailed test.", sep=""),
+      label = "tbl:CEUunderBBcal",metric="AR",lastSpecial=T,returntext=T
     )    
   } else {
     CEU_IRATStable_bb_latex <- printLatexTable2(
@@ -322,12 +321,11 @@ where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ 
       columns = paste("CEU-index",unique(Index_score)[1:4]),
       columns2 = paste("CEU-index",unique(Index_score)[5:length(unique(Index_score))]),
       title="Buyback announcements IRATS for all EU-index Values",
-      caption="IRATS five factor cumulative abnormal returns after open market repurchase announcements for each Enhanced Undervaluation Index value from 0 to 6.
-   We calculate the EU-index simply as the sum of three numbers:  high Peyer and Vermaelen (2009) U-index terms get a score of 2, low get a 0; high idiosyncratic terms get a score of 2, low get a 0; and high volatility terms get a score of 2, low get a 0.  Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores. For each EU-index value, we report the monthly cumulative average abnormal returns (CAR) in percent using Ibbotson's (1975) returns across time and security (IRATS) method combined with the \\cite{FamaFrench2015a} five-factor model for the sample of firms that announced an open market share repurchase plus various subsamples. The following regression is run each event month~$j$:
+      caption=paste("IRATS five factor cumulative abnormal returns after open market repurchase announcements for each Customised Enhanced Undervaluation Index value from 0 to ", max(Index_score),".  We calculate the CEU-index simply as the sum of 0, 1, 2, numbers for low, middle, and high for the selected components of the CEU-Index. For each CEU-index value, we report the monthly cumulative average abnormal returns (CAR) in percent using Ibbotson's (1975) returns across time and security (IRATS) method combined with the \\cite{FamaFrench2015a} five-factor model for the sample of firms that announced an open market share repurchase plus various subsamples. The following regression is run each event month~$j$:
   \\begin{eqnarray*}
-  (R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + e_t {RMW}_t + f_t {CMA}_t + \\epsilon_{i,t},
-  \\end{eqnarray*}
-  where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors.",
+                    (R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + e_t {RMW}_t + f_t {CMA}_t + \\epsilon_{i,t},
+                    \\end{eqnarray*}
+                    where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors.", sep=""),
       label = "tbl:CEUunderBB",
       bigtitleontop=T,titleontop=T, metric1="CAR",metric2="CAR",scale=1,lastSpecial=T,dorotate=T,returntext=T
     )
@@ -337,8 +335,7 @@ where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ 
       columns = paste("CEU-index",unique(Index_score)[1:4]),
       columns2 = paste("CEU-index",unique(Index_score)[5:length(unique(Index_score))]),
       title="Buyback announcements Calendar Time for all EU-index Values",
-      caption="IRATS five factor cumulative abnormal returns after open market repurchase announcements for each Enhanced Undervaluation Index value from 0 to 6.
- We calculate the EU-index simply as the sum of three numbers:  high Peyer and Vermaelen (2009) U-index terms get a score of 2, low get a 0; high idiosyncratic terms get a score of 2, low get a 0; and high volatility terms get a score of 2, low get a 0.  Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores. For each EU-index value, we report the monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the \\cite{FamaFrench2015a} five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors (the difference between the risk-free rate and the return on the equally weighted CRSP index, the monthly return on the size, book-to-market factor, profitability factor and investment factor in month) as the independent variables. The significance levels are indicated by * and ** and correspond to a significance level of $5\\%$ and $1\\%$ respectively, using a two-tailed test.",
+      caption=paste("IRATS five factor cumulative abnormal returns after open market repurchase announcements for each Customised Enhanced Undervaluation Index value from 0 to ", max(Index_score),".  We calculate the EU-index simply as the sum of three numbers:  high Peyer and Vermaelen (2009) U-index terms get a score of 2, low get a 0; high idiosyncratic terms get a score of 2, low get a 0; and high volatility terms get a score of 2, low get a 0.  Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores. For each EU-index value, we report the monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the \\cite{FamaFrench2015a} five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors (the difference between the risk-free rate and the return on the equally weighted CRSP index, the monthly return on the size, book-to-market factor, profitability factor and investment factor in month) as the independent variables. The significance levels are indicated by * and ** and correspond to a significance level of $5\\%$ and $1\\%$ respectively, using a two-tailed test.", sep=""),
       label = "tbl:CEUunderBBcal",
       bigtitleontop=T,titleontop=T,metric1="AR",metric2="AR",scale=1,lastSpecial=T,dorotate=T,returntext=T
     )
@@ -355,15 +352,15 @@ where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ 
          of the events belong in these two categories. We report the results of this CEU-Index as done for the EU-Index 
          in Section \\ref{sec:newindex}.
          Figure~\\ref{fig:CEundervaluationindex} shows the distribution of the CEU-index. 
-          The index has a symmetric distribution with a mean of ", round(mean(Index_score),2), " Table~\\ref{tbl:CEUrelations} 
-        shows how the EU-index relates to a number of firm characteristics. All variables are as in Table~\\ref{tbl:EUrelations}.  
+          The index has a symmetric distribution with a mean of ", round(mean(Index_score),2), ". 
             ", sep="")
+      #Table~\\ref{tbl:CEUrelations} shows how the CEU-index relates to a number of firm characteristics. All variables are as in Table~\\ref{tbl:EUrelations}.  
   )
   
   # NEED TO UPDATE ALL NUMBERS AND FIGURES/TABLES HERE. Note that we don't use Under_IdioBB2 and Under_IdioBB_cor2 now
   # CHANGE THESE, TOO:
   #High_CEU_BB_Hedged = 0; Low_CEU_BB_Hedged = 0; High_CEU_BB_Hedged48m = 0; Low_CEU_BB_Hedged48m = 0 
-
+  
   high_CEU_bb = High_feature_events
   low_CEU_bb = Low_feature_events
   High_CEU_BB = apply(PNL_matrix_BB(start_date_event,"One.Year.After", high_CEU_bb,  DS$DatesMonth, DS$returns_by_event_monthly,event=1),1,non_zero_mean)
@@ -389,6 +386,7 @@ where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ 
       "$\\%$.}",sep="")
   
   return(list(
+    "Index_score" = Index_score,
     "car_table" = car_table,
     "Under_IdioBB2" = Under_IdioBB2,
     "Under_IdioBB_cor2" = Under_IdioBB_cor2,
@@ -407,7 +405,7 @@ generate_industry_table <- function(sec1,sec2,sec3,sec4,sec5,sec6) {
   #  tmp = sapply(1:length(FF_industries), function(j) x %in% FF_industries[[j]])
   #  ifelse(sum(tmp!=0), names(FF_industries)[which(tmp!=0)], "Strange")
   #})
-
+  
   Event_Industries <- BUYBACK_DATA2$DATASET$SDC$Industry
   
   industry_tableBB = sort(table(Event_Industries), decreasing = TRUE)

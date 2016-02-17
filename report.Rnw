@@ -15,7 +15,7 @@ reload_data = 1
 
 # Then to make it into Word: 
 # pandoc -s bb_issuers.tex --bibliography=bibliography.bib --number-sections --reference-links -o theo.docx
-  
+
 generate_all_data = 0 # set this to 1 if the data need to be re-generated from the csv's even though they already exist as .Rdata. 
 # TIME ALIGNMENT IS KEY, SO WE HAVE A SEPARATE PART OF THE CODE FOR THIS
 time_align_all_data = 0
@@ -1149,50 +1149,54 @@ cat(secU$CEU_CALtable_bb_latex)
 % Special table combining industry characteristics and High/Low of all additional variables
 \small
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-tmp = generate_industry_table(sec1,sec2,sec3,sec5,sec5,sec6)
-latex_render_data_frame(
-  round(tmp,1), 
-  title = "Industry Characteristics",
-  caption="Percentage of high and low subset companies for all industries for which we have at least 100 events in our sample.",
-  label = "tbl:industriesAdditional",
-  columns=NULL,
-  bigtitleontop = T,
-  show_rownames=TRUE,
-  scale = 1,
-  digits=1,
-  lastSpecial=F,dorotate=T
-)
+if (0){
+  tmp = generate_industry_table(sec1,sec2,sec3,sec5,sec5,sec6)
+  latex_render_data_frame(
+    round(tmp,1), 
+    title = "Industry Characteristics",
+    caption="Percentage of high and low subset companies for all industries for which we have at least 100 events in our sample.",
+    label = "tbl:CEUrelations",
+    columns=NULL,
+    bigtitleontop = T,
+    show_rownames=TRUE,
+    scale = 1,
+    digits=1,
+    lastSpecial=F,dorotate=T
+  )
+}
 @
 \normalsize
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-rownames(secU$Under_IdioBB2)[1:2] <- c("high U-index", "low U-index")
-latex_render_data_frame(
-  round(secU$Under_IdioBB2[1:6,1:4],1), 
-  title = "Relations across firm characteristics for Buybacks",
-  caption="Relation between Under/Overvaluation and High/Low samples of the additional variables for buybacks. Numbers indicate percentage of firms in the row that are also categorized as noted in the columns.",
-  label = "tbl:underidioallBB2",
-  columns=NULL,
-  bigtitleontop = T,
-  show_rownames=TRUE,
-  scale = 0.9,
-  digits=1,
-  lastSpecial=F,dorotate=F
-)
-
-
-latex_render_data_frame(
-  round(secU$Under_IdioBB_cor2,2), 
-  title = "Correlations of Buybacks Characteristics",
-  caption="Correlation between all of the buybacks characteristics considered and the U-index score. All scores are defined using the universe of all CRSP companies at the time of the announcement with data up to the month before the announcement.",
-  label = "tbl:underidioallBBcor2",
-  columns=NULL,
-  bigtitleontop = T,
-  show_rownames=TRUE,
-  scale = 0.9,
-  digits=2,
-  lastSpecial=F,dorotate=F
-)
+if (0){
+  rownames(secU$Under_IdioBB2)[1:2] <- c("high U-index", "low U-index")
+  latex_render_data_frame(
+    round(secU$Under_IdioBB2[1:6,1:4],1), 
+    title = "Relations across firm characteristics for Buybacks",
+    caption="Relation between Under/Overvaluation and High/Low samples of the additional variables for buybacks. Numbers indicate percentage of firms in the row that are also categorized as noted in the columns.",
+    label = "tbl:underidioallBB2",
+    columns=NULL,
+    bigtitleontop = T,
+    show_rownames=TRUE,
+    scale = 0.9,
+    digits=1,
+    lastSpecial=F,dorotate=F
+  )
+  
+  
+  latex_render_data_frame(
+    round(secU$Under_IdioBB_cor2,2), 
+    title = "Correlations of Buybacks Characteristics",
+    caption="Correlation between all of the buybacks characteristics considered and the U-index score. All scores are defined using the universe of all CRSP companies at the time of the announcement with data up to the month before the announcement.",
+    label = "tbl:underidioallBBcor2",
+    columns=NULL,
+    bigtitleontop = T,
+    show_rownames=TRUE,
+    scale = 0.9,
+    digits=2,
+    lastSpecial=F,dorotate=F
+  )
+}
 @
 
 %########################################################################################################
@@ -2012,8 +2016,7 @@ if (0){
 
 \begin{figure}[H]
 \centering
-<< fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
-
+<< fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>= 
 IRATS_table_all_bb_plot = EU_IRATStable_bb
 IRATS_table_all_bb_plot[rownames(IRATS_table_all_bb_plot) %in% as.character((-6):(-1)),which(colnames(IRATS_table_all_bb_plot)=="CAR")] <- -IRATS_table_all_bb_plot[rownames(IRATS_table_all_bb_plot) %in% as.character((-6):(-1)),which(colnames(IRATS_table_all_bb_plot)=="CAR")] 
 
@@ -2063,6 +2066,23 @@ legend(x="topleft",
 %########################################################################################################
 %## REPORT.RNW SPECIAL CODE:
 %########################################################################################################
+
+\begin{figure}[H]
+\centering
+<< fig.width=10, fig.height=4, out.width='\\textwidth', echo=F >>=
+#par(mfrow=c(2,1), mar=c(2.3,4,2.3,4))
+#valuation_index_bb[which(valuation_index_bb==2)]<-3 # there is one company here. need to check why
+tmp = table(secU$Index_score)
+tmp = structure(as.numeric(tmp), .Names = names(tmp))
+barplot(tmp,main = "", ylab = "Number of Announcements", xlab = "",las=2,space=0.5, cex.names=0.8)
+#tmp = table(valuation_index_iss)
+#tmp = structure(as.numeric(tmp), .Names = names(tmp))
+#barplot(tmp,main = "SEOs", ylab = "Number of Announcements", xlab = "SEO Overvaluation Index",las=2,space=0.5, cex.names=0.8)
+rm("tmp")
+@
+\caption{CEU-index. Distribution of the CEU-index of all buyback events.}
+\label{fig:CEundervaluationindex}
+\end{figure}
 
 \begin{figure}[H]
 \centering
