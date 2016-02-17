@@ -68,9 +68,9 @@ knit_hooks$set(inline = function(x) {
 #Add any/all choices made in the tool here
 if(!exists("input")){
   input = list()
-  input$startdate <- as.Date("2000-12-31")
+  input$startdate <- as.Date("1984-12-31")
   input$enddate <- as.Date("2014-12-31")
-  input$market_cap_min = 50
+  input$market_cap_min = 250
   input$market_cap_max = 505755
   input$quantile_used_ind = 0.2
   input$quantile_used_all = 0.4
