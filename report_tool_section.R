@@ -1,35 +1,42 @@
 #overwrite some variables that we need
-if(!exists("BUYBACK_DATA2")) {
-  BUYBACK_DATA2 <- BUYBACK_DATA
+if(!exists("BUYBACK_DATA_NEW")) {
+  BUYBACK_DATA_NEW <- BUYBACK_DATA
 }
-useonly_bb = which(BUYBACK_DATA2$DATASET$SDC$Event.Date >= input$startdate & BUYBACK_DATA2$DATASET$SDC$Event.Date <= input$enddate & scrub(BUYBACK_DATA2$DATASET$SDC$Market.Cap) >= input$market_cap_min & scrub(BUYBACK_DATA2$DATASET$SDC$Market.Cap) <= input$market_cap_max) 
-useonly_is = which(ISSUERS_DATA$DATASET$SDC$Event.Date >= input$startdate & ISSUERS_DATA$DATASET$SDC$Event.Date <= input$enddate & scrub(ISSUERS_DATA$DATASET$SDC$Market.Cap) >= input$market_cap_min & scrub(ISSUERS_DATA$DATASET$SDC$Market.Cap) <= input$market_cap_max) 
+useonly_bb = which(BUYBACK_DATA_NEW$DATASET$SDC$Event.Date >= input$startdate & BUYBACK_DATA_NEW$DATASET$SDC$Event.Date <= input$enddate & scrub(BUYBACK_DATA_NEW$DATASET$SDC$Market.Cap) >= market_cap_min & scrub(BUYBACK_DATA_NEW$DATASET$SDC$Market.Cap) <= market_cap_max) 
+useonly_is = which(ISSUERS_DATA$DATASET$SDC$Event.Date >= input$startdate & ISSUERS_DATA$DATASET$SDC$Event.Date <= input$enddate & scrub(ISSUERS_DATA$DATASET$SDC$Market.Cap) >= market_cap_min & scrub(ISSUERS_DATA$DATASET$SDC$Market.Cap) <= market_cap_max) 
 subset_undervalued_bb <- company_subset_undervalued_bb[useonly_bb]
 subset_overvalued_bb <- company_subset_overvalued_bb[useonly_bb]
 
 BUYBACK_DATA$DATASET$SDC$Pre.Vol.Score <- BUYBACK_DATA$DATASET$SDC$pre_vol_Score
-BUYBACK_DATA2$DATASET$SDC$Pre.Vol.Score <- BUYBACK_DATA2$DATASET$SDC$pre_vol_Score
+BUYBACK_DATA_NEW$DATASET$SDC$Pre.Vol.Score <- BUYBACK_DATA_NEW$DATASET$SDC$pre_vol_Score
 
 ###########################################################################
 # HELPER FUNCTIONS FOR GENERATING SECTIONS
 #
 #
 generate_section <- function(variable_name,reverse,quantile_used_ind) {
-  if(is.null(variable_name)) {
+  if(is.null(variable_name) || variable_name == "None") {
     return(NULL) 
+  }else {
+    #cat(paste("Doing ",variable_name,"\n"))
+    #cat(paste("Quantile ind:",quantile_used_ind,"\n"))
+    #cat(BUYBACK_DATA_NEW$DATASET$SDC[[which(names(BUYBACK_DATA_NEW$DATASET$SDC) == variable_name)]])
   }
-  DS <- BUYBACK_DATA2$DATASET
+  DS <- BUYBACK_DATA_NEW$DATASET
+  quantile_used_ind <- as.numeric(quantile_used_ind)
+  reverse = ifelse(reverse, -1, +1)
   
   #do analysis first, add text later
-  thesign = ifelse(reverse, -1, +1)
-  thefeature = thesign*DS$SDC[[which(names(DS$SDC) == variable_name)]]  
-  High_feature_events = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(quantile_used_ind)) & !is.na(thefeature))
-  Low_feature_events = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(quantile_used_ind)) & !is.na(thefeature))
+  thesign = reverse
+  thefeature = thesign*as.numeric(DS$SDC[[which(names(DS$SDC) == variable_name)]])
+  thefeature = scrub(thefeature)
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
   
   #Test example: car table
   IRATStableBB = round(cbind(
-    car_table_cached(CACHE5,Low_feature_events,allmonths = report_months_car)$results,
-    car_table_cached(CACHE5,High_feature_events,allmonths = report_months_car)$results
+    car_table_cached(CACHE5,Low_feature_events)$results,
+    car_table_cached(CACHE5,High_feature_events)$results
   ),2)
   colnames(IRATStableBB) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   
@@ -40,7 +47,7 @@ generate_section <- function(variable_name,reverse,quantile_used_ind) {
   colnames(IRATStableBB_cal) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
   
   #numbers for the under table
-  tmp = get_feature_results(BUYBACK_DATA2$DATASET,variable_name, subset_undervalued_bb, subset_overvalued_bb, quantile_used_ind,180, method="Simple")
+  tmp = get_feature_results(BUYBACK_DATA_NEW$DATASET,variable_name, subset_undervalued_bb, subset_overvalued_bb, quantile_used_ind,180, method="Simple")
   IRATStable_underBB = tmp$feature_IRATStable_under;
   IRATStable_underBB_cal = tmp$feature_IRATStable_under_cal
   colnames(IRATStable_underBB) <- c("Low: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value", "High: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value")
@@ -137,15 +144,15 @@ where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ 
   )
 }
 
-#uses a couple of (global) variables from report_tool.R: report_months_car,report_months_cal,CACHE5,BUYBACK_DATA2
+#uses a couple of (global) variables from report_tool.R: report_months_cal,CACHE5,BUYBACK_DATA_NEW
 generate_U_section <- function(sec1,sec2,sec3,sec4,sec5,sec6,quantile_used_ind,quantile_used_all){
   #### ANALYSIS/CREATION OF CEU-INDEX
-  DS <- BUYBACK_DATA2$DATASET
+  DS <- BUYBACK_DATA_NEW$DATASET
   
   thesign = ifelse(sec1$reverse_sign, -1, +1)
   thefeature = thesign*DS$SDC[[which(names(DS$SDC) == sec1$name)]]  
   High_feature_events1 = (scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(quantile_used_ind)) & !is.na(thefeature))
-  Low_feature_events1 = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(quantile_used_ind)) & !is.na(thefeature))
+  Low_feature_events1  = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(quantile_used_ind)) & !is.na(thefeature))
   
   High_feature_events2 <- High_feature_events3 <- High_feature_events4 <- High_feature_events5 <- High_feature_events6 <- rep(FALSE,length(High_feature_events1))
   Low_feature_events2 <- Low_feature_events3 <- Low_feature_events4 <- Low_feature_events5 <- Low_feature_events6 <- 
@@ -207,8 +214,8 @@ generate_U_section <- function(sec1,sec2,sec3,sec4,sec5,sec6,quantile_used_ind,q
   if (sum(Low_feature_events) == 0)
     Low_feature_events = thefeature <= BOTQ #(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(quantile_used_all)) & !is.na(thefeature))
   res = round(cbind(
-    car_table_cached(CACHE5,Low_feature_events,allmonths=report_months_car)$results,
-    car_table_cached(CACHE5,High_feature_events,allmonths=report_months_car)$results
+    car_table_cached(CACHE5,Low_feature_events)$results,
+    car_table_cached(CACHE5,High_feature_events)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   
@@ -254,7 +261,7 @@ generate_U_section <- function(sec1,sec2,sec3,sec4,sec5,sec6,quantile_used_ind,q
   
   ##Under idio BB corr generic construction
   nameslist <- list("U Index")
-  EU_index_features <- BUYBACK_DATA2$Valuation_Index
+  EU_index_features <- BUYBACK_DATA_NEW$Valuation_Index
   for(i in 1:((length(thefactors)-1))) {
     sec <- eval(parse(text=paste("sec",thefactors[i],sep="")))
     EU_index_features <- cbind(EU_index_features,DS$SDC[sec$name])
@@ -291,7 +298,7 @@ where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ 
   CEU_CALtable_bb <- NULL
   for (i in sort(unique(Index_score))){
     CEU_events_now = which(Index_score == i)
-    CEU_IRATStable_bb = cbind(CEU_IRATStable_bb,car_table_cached(CACHE5,CEU_events_now,allmonths=report_months_car)$results)
+    CEU_IRATStable_bb = cbind(CEU_IRATStable_bb,car_table_cached(CACHE5,CEU_events_now)$results)
     CEU_CALtable_bb = cbind(CEU_CALtable_bb,calendar_table2(DS$returns_by_event_monthly[,CEU_events_now], DS$SDC$Event.Date[CEU_events_now], Risk_Factors_Monthly,report_months_cal)$results)
   }
   if(length(unique(Index_score)) < 4) {
@@ -399,14 +406,14 @@ where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ 
 
 
 generate_industry_table <- function(sec1,sec2,sec3,sec4,sec5,sec6) {
-  #Event_Industries <- suppressWarnings(scrub(as.numeric(BUYBACK_DATA2$DATASET$SDC$Industry))) # 9 industries are 499A or 619A or 619B.. they are removed
+  #Event_Industries <- suppressWarnings(scrub(as.numeric(BUYBACK_DATA_NEW$DATASET$SDC$Industry))) # 9 industries are 499A or 619A or 619B.. they are removed
   #Event_Industries<- sapply(Event_Industries, function(i){
   #  x=as.numeric(i)
   #  tmp = sapply(1:length(FF_industries), function(j) x %in% FF_industries[[j]])
   #  ifelse(sum(tmp!=0), names(FF_industries)[which(tmp!=0)], "Strange")
   #})
   
-  Event_Industries <- BUYBACK_DATA2$DATASET$SDC$Industry
+  Event_Industries <- BUYBACK_DATA_NEW$DATASET$SDC$Industry
   
   industry_tableBB = sort(table(Event_Industries), decreasing = TRUE)
   industry_tableBB=industry_tableBB[-which(names(industry_tableBB)=="Strange")]

@@ -56,7 +56,7 @@ with(BUYBACK_DATA_TOOL,{
   DATASET$compustat_data = BUYBACK_DATA$DATASET$compustat_data
   
   SDC = data.frame(
-    
+    permno = BUYBACK_DATA$DATASET$SDC$permno,
     Otherlater = BUYBACK_DATA$DATASET$SDC$Otherlater,
     OtherlaterEvent = BUYBACK_DATA$DATASET$SDC$OtherlaterEvent,
     Source...of..Funds..Code = BUYBACK_DATA$DATASET$SDC$Source...of..Funds..Code,
@@ -84,6 +84,7 @@ with(BUYBACK_DATA_TOOL,{
     CMA.beta = BUYBACK_DATA$DATASET$SDC$CMAbeta,
     
     minus_Rsq_returns = BUYBACK_DATA$DATASET$SDC$minus_Rsq_returns,
+    Idiosyncraticness = BUYBACK_DATA$DATASET$SDC$minus_Rsq_returns,
     Rsq_returns = BUYBACK_DATA$DATASET$SDC$Rsq_returns,
     one.minus.Rsq.Score = BUYBACK_DATA$DATASET$SDC$minus_Rsq_returns,
     pre_vol = BUYBACK_DATA$DATASET$SDC$pre_vol,
@@ -125,6 +126,7 @@ with(ISSUERS_DATA_TOOL,{
   DATASET$DatesMonth = ISSUERS_DATA$DATASET$DatesMonth
   
   SDC = data.frame(
+    permno     = ISSUERS_DATA$DATASET$SDC$permno,
     Otherlater = ISSUERS_DATA$DATASET$SDC$Otherlater,
     Event.Date = ISSUERS_DATA$DATASET$SDC$Event.Date,
     

@@ -7,7 +7,7 @@ car_table_cache <- function(returns,Event.Date,Risk_Factors_Monthly,min_window =
   allmonths = min_window:max_window 
   
   factors_used_noRF = setdiff(factors_used, "RF")
-  if (ncol(returns) < length(factors_used_noRF) + 1){
+  if (ncol(returns) < length(factors_used_noRF) + 1){ 
     results = matrix(0,nrow=length(allmonths), ncol = 3)
     results = rbind(results, rep(ncol(returns)))
     betas = matrix(0,nrow=length(allmonths), ncol = length(factors_used_noRF))
@@ -48,19 +48,21 @@ car_table_cache <- function(returns,Event.Date,Risk_Factors_Monthly,min_window =
     "Row.Date"      = Row.Date,
     "Risk_Factors_Monthly" = Risk_Factors_Monthly,
     "form"          = form,
-    "factors_used_noRF" = factors_used_noRF
+    "factors_used_noRF" = factors_used_noRF,
+    "min_window"    = min_window,
+    "max_window"    = max_window
   ))
 }
 #ignore allmonths for now, I don't think this can work
-car_table_cached <- function(cache,thesubset=NULL,allmonths=NULL,min_window = -6, max_window = 48) {
+car_table_cached <- function(cache,thesubset=NULL) {
   if(is.null(thesubset)) 
     thesubset = 1:length(cache$Event.Date)
   #if(!is.null(allmonths)) {
   #monthindex = ifelse(allmonths > 0, paste("+",allmonths,sep=""), allmonths)
   #} else {
   monthindex = rownames(cache$EVENT_ALIGNED)
-  min_window = min(1,min_window)
-  max_window = max(-1,max_window)
+  min_window = min(1,cache$min_window)
+  max_window = max(-1,cache$max_window)
   allmonths = min_window:max_window 
   #}
   EVENT_ALIGNED        <- cache$EVENT_ALIGNED[monthindex,thesubset,]

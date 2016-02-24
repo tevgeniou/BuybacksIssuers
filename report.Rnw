@@ -1,5 +1,5 @@
 
-<< eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
+<< Data loading and recalculation, eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 #rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 #dev.off();
 #library(knitr); knit2pdf('report.Rnw', texi2dvi='texi2dvi'); file.remove(paste("report",c(".aux",".tex",".blg",".bbl",".log",".out"),sep=""))
@@ -8,7 +8,6 @@
 #Timing: 
 require(tictoc)
 tic() #without report_tool.R: 77s
-
 ###################################################
 ## SAME AS bb_issuers.Rnw
 reload_data = 1
@@ -30,23 +29,22 @@ rerun_issuers_report_code <- 0
 # All the RNW data
 generate_rnw_data = 0
 
-source("lib_helpers.R")
-source("latex_code.R")
-source("dataset/indices_and_factors/ff_industries_sic.R")
-source("business_data_clean.R")
-source("Paper_global_parameters.R")
+source("lib_helpers.R",local=environment())
+source("latex_code.R",local=environment())
+source("dataset/indices_and_factors/ff_industries_sic.R",local=environment())
+source("business_data_clean.R",local=environment())
+source("Paper_global_parameters.R",local=environment())
 
 if (generate_rnw_data == 1){
-  source("bb_issuers.R")
+  source("bb_issuers.R",local=environment())
 }  else{
   if (reload_data)
-    #load("tmpfiles/bb_issuersALL.Rdata")
-    load("bb_issuersTOOL.Rdata")
-  source("lib_helpers.R") 
-  source("latex_code.R")
-  source("dataset/indices_and_factors/ff_industries_sic.R")
-  source("business_data_clean.R")
-  source("Paper_global_parameters.R")
+    load(normalizePath("bb_issuersTOOL.Rdata"))
+  source("lib_helpers.R",local=environment()) 
+  source("latex_code.R",local=environment())
+  source("dataset/indices_and_factors/ff_industries_sic.R",local=environment())
+  source("business_data_clean.R",local=environment())
+  source("Paper_global_parameters.R",local=environment())
 }
 
 firstyear = as.character(format(FirstTrade,"%Y"))
@@ -66,27 +64,32 @@ knit_hooks$set(inline = function(x) {
 ########################################################################################################
 
 #Add any/all choices made in the tool here
-if(!exists("input")){
+if(!exists("input") ){#& FALSE
   input = list()
   input$startdate <- as.Date("1984-12-31")
   input$enddate <- as.Date("2014-12-31")
-  input$market_cap_min = 250
-  input$market_cap_max = 505755
-  input$quantile_used_ind = 0.2
-  input$quantile_used_all = 0.4
+  market_cap_min = "10"
+  market_cap_max = "10000"
+  quantile_used_ind = "0.2"
+  quantile_used_all = "0.4"
   
   #for extra sections
   input$characteristic_irats1 <- "BE.ME.Score"
   input$characteristic_irats1_sign <- T
   
-  input$characteristic_irats2 <- "Pre.Vol.Score"
+  input$characteristic_irats2 <- "pre.vol.Score"
   input$characteristic_irats2_sign <- T
 }
+market_cap_min = as.numeric(input$market_cap_min)
+market_cap_max = as.numeric(input$market_cap_max)
+quantile_used_ind = as.numeric(input$quantile_used_ind)
+quantile_used_all = as.numeric(input$quantile_used_all)
 
+#need to add environment here because this is called from Rmd
 options(warn=-1) #because some period don't have data
-source("report_helpers.R")
-source("report_tool.R")
-source("report_tool_section.R")
+source("report_helpers.R",local=environment()) 
+source("report_tool.R",local=environment())
+source("report_tool_section.R",local=environment())
 options(warn=0)
 
 
@@ -193,7 +196,7 @@ FirstTrade = input$startdate
 %\normalsize  \today
 %\noindent \\ 
 %\begin{abstract}
-%\noindent We re-examine the behavior of stock returns after share buyback and equity issuance announcements using the five-factor model proposed by \cite{FamaFrench2015a}. We confirm the findings of \cite{FamaFrench2015b} that the equity issue anomaly, i.e., the fact that equity issues are followed by negative long-term excess returns, disappears after replacing the \cite{FamaFrench1993} three-factor model with the five-factor model. However, long term positive excess returns after buyback announcements, first reported by \cite{IkenberryLakonishokVermaelen1995}, remain economically and statistically significant. Moreover, the Undervaluation Index proposed by \cite{PeyerVermaelen2009} remains a useful proxy for the likelihood that the buyback is driven by undervaluation. The buyback anomaly is robust over time and across sectors. Firms with low correlations with the market seem to be better at market timing, which is consistent with the hypothesis that the repurchase is driven by superior company-specific information. Firms with high pre-announce stock returns volatility also have higher abnormal returns, which is consistent with the hypothesis that a repurchase authorization is an option to take advantage of undervaluation as argued by \cite{IkenberryVermaelen1996}. This result is also consistent with \cite{Stambaugh2015} who find a positive relation between stock returns and idiosyncratic volatility for undervalued stocks, unlike the well-known low volatility anomaly across all stocks. Finally, based on these findings, we develop an enhanced Undervaluation Index that improves abnormal returns relative to the index developed by \cite{PeyerVermaelen2009}.
+%\noindent We re-examine the behavior of stock returns after net issue  announcements using the five-factor model proposed by Fama and French (2015a). We confirm their findings that the equity issue anomaly disappears  with the five-factor model, but the buyback anomaly does not.. Buyback announcements by firms  with high pre-announcement (idiosyncratic) volatility  are followed by higher long-term abnormal returns. This is inconsistent with the widely documented low volatility anomaly, but consistent with Stambaugh, Yu, and Yuan (2015) who find a positive relation between stock returns and idiosyncratic volatility for undervalued stocks.
 %\end{abstract}
 %\vspace{2cm}
 %\end{center}
@@ -224,7 +227,7 @@ Nick Nassuphis$^{**}$, and Theo Vermaelen\thanks{INSEAD, Bd de Constance, 77300 
 
 \vspace{-.2in}
 \begin{abstract}
-\noindent We re-examine the behavior of stock returns after share buyback and equity issuance announcements using the five-factor model proposed by \cite{FamaFrench2015a}. We confirm the findings of \cite{FamaFrench2015b} that the equity issue anomaly, i.e., the fact that equity issues are followed by negative long-term excess returns, disappears after replacing the \cite{FamaFrench1993} three-factor model with the five-factor model. However, long term positive excess returns after buyback announcements, first reported by \cite{IkenberryLakonishokVermaelen1995}, remain economically and statistically significant. Moreover, the Undervaluation Index proposed by \cite{PeyerVermaelen2009} remains a useful proxy for the likelihood that the buyback is driven by undervaluation. The buyback anomaly is robust over time and across sectors. Firms with low correlations with the market seem to be better at market timing, which is consistent with the hypothesis that the repurchase is driven by superior company-specific information. Firms with high pre-announce stock returns volatility also have higher abnormal returns, which is consistent with the hypothesis that a repurchase authorization is an option to take advantage of undervaluation as argued by \cite{IkenberryVermaelen1996}. This result is also consistent with \cite{Stambaugh2015} who find a positive relation between stock returns and idiosyncratic volatility for undervalued stocks, unlike the well-known low volatility anomaly across all stocks. Finally, based on these findings, we develop an enhanced Undervaluation Index that improves abnormal returns relative to the index developed by \cite{PeyerVermaelen2009}.
+\noindent We re-examine the behavior of stock returns after net issue  announcements using the five-factor model proposed by Fama and French (2015a). We confirm their findings that the equity issue anomaly disappears  with the five-factor model, but the buyback anomaly does not. Buyback announcements by firms  with high pre-announcement (idiosyncratic) volatility  are followed by higher long-term abnormal returns. This is inconsistent with the widely documented low volatility anomaly, but consistent with Stambaugh, Yu, and Yuan (2015) who find a positive relation between stock returns and idiosyncratic volatility for undervalued stocks.
 
 
 \end{abstract}
@@ -277,7 +280,7 @@ This paper is organized as follows. In section 2 we describe our data. In sectio
 
 Our sample spans the period from January \Sexpr{firstyear} to December \Sexpr{lastyear}. We start in \Sexpr{firstyear} as SDC's coverage is poor before that year. We stop in \Sexpr{lastyear}, the last year all CRSP and Compustat data were available. We retrieved buyback authorization announcements and announcements of Secondary Equity Offerings (SEO's) from the Securities Data Corporation (SDC) database. Daily and monthly returns, pre-announcement daily closing prices and market capitalization data were taken from CRSP. Book value of equity (BE) was taken from Compustat. The Fama-French factors and breakpoints were obtained from Kenneth French's website.
 
-For the buybacks we combined all open market repurchase announcements from both the SDC Repurchases data base and the SDC US mergers and acquisitions ($M\&A$) data base.\footnote{More information is available upon request. An interactive online tool to explore data variations and robustness analyses of all results in this paper is also available upon request.}   We ended up with a total of \Sexpr{cleanup_bb$Standardise$final_merge_data} repurchases events, out of which \Sexpr{cleanup_bb$Standardise$only_repurchase_deals} were only from the SDC Repurchases database, \Sexpr{cleanup_bb$Standardise$only_MA_deals} only from the SDC $M\&A$ database and \Sexpr{cleanup_bb$Standardise$overlap_deals} from both. Finally, we removed the following events: no CRSP returns available (\Sexpr{cleanup_bb$get_crsp$NOPERMNO_remove + cleanup_bb$merge$CRSP_remove} events); not all Compustat data available (\Sexpr{cleanup_bb$compustat$NO_GVKEY_remove + cleanup_bb$merge$compustat_remove} events); the percent of shares authorized was larger than \Sexpr{MAX_EVENT_SIZE}$\%$ (\Sexpr{cleanup_bb$biz_clean$EventSize_filter} events), or the closing price was less than \$\Sexpr{penny_stock_price_old} for events before 1995 or \$\Sexpr{penny_stock_price_recent} for the other (\Sexpr{cleanup_bb$biz_clean$Penny_stock_filter} events), or  the primary stock exchange was not the NYSE, the Nasdaq, or Amex (\Sexpr{cleanup_bb$biz_clean$major_markets_only} events).  Finally, we removed all events from firms in the Financial and Utilities sectors (\Sexpr{length(BUYBACK_DATA$finance_Size_used)}  events).\footnote{We are using the industries from Kenneth French's Website. The Financial Sector consists of all firms with SIC code at the time of the buyback announcement that belonged in the ``Banks'' or ``Fin'' industries (SIC codes 6000 to 6300 and 6700 to 6799). The Utilities Sector consists of all firms with SIC code 4900 to 4942.}  At the end we are left with \Sexpr{length(cusip_bb)} buyback events made by \Sexpr{length(unique(cusip_bb))} firms. The average percent of share authorized for these firms was \Sexpr{datasummaryBB["Percent authorized", "Mean"]}$\%$ (median of \Sexpr{datasummaryBB["Percent authorized", "Median"]}$\%$), the average Market Capitalization at announcement was \$\Sexpr{datasummaryBB["Market cap.", "Mean"]} Million (median of \$\Sexpr{datasummaryBB["Market cap.", "Median"]} Million), while the BE/ME was on average \Sexpr{datasummaryBB["BE/ME", "Mean"]} (median of \Sexpr{datasummaryBB["BE/ME", "Median"]}).
+For the buybacks we combined all open market repurchase announcements from both the SDC Repurchases data base and the SDC US mergers and acquisitions ($M\&A$) data base.\footnote{More information is available upon request. An interactive online tool to explore data variations and robustness analyses of all results in this paper is also available upon request.}   We ended up with a total of \Sexpr{cleanup_bb$Standardise$final_merge_data} repurchases events, out of which \Sexpr{cleanup_bb$Standardise$only_repurchase_deals} were only from the SDC Repurchases database, \Sexpr{cleanup_bb$Standardise$only_MA_deals} only from the SDC $M\&A$ database and \Sexpr{cleanup_bb$Standardise$overlap_deals} from both. Finally, we removed the following events: no CRSP returns available (\Sexpr{cleanup_bb$get_crsp$NOPERMNO_remove + cleanup_bb$merge$CRSP_remove} events); not all Compustat data available (\Sexpr{cleanup_bb$compustat$NO_GVKEY_remove + cleanup_bb$merge$compustat_remove} events); the percent of shares authorized was larger than \Sexpr{MAX_EVENT_SIZE}$\%$ (\Sexpr{cleanup_bb$biz_clean$EventSize_filter} events), or the closing price was less than \$\Sexpr{penny_stock_price_old} for events before 1995 or \$\Sexpr{penny_stock_price_recent} for the other (\Sexpr{cleanup_bb$biz_clean$Penny_stock_filter} events), or  the primary stock exchange was not the NYSE, the Nasdaq, or Amex (\Sexpr{cleanup_bb$biz_clean$major_markets_only} events).  Finally, we removed all events from firms in the Financial and Utilities sectors (\Sexpr{length(BUYBACK_DATA_NEW$finance_Size_used)}  events).\footnote{We are using the industries from Kenneth French's Website. The Financial Sector consists of all firms with SIC code at the time of the buyback announcement that belonged in the ``Banks'' or ``Fin'' industries (SIC codes 6000 to 6300 and 6700 to 6799). The Utilities Sector consists of all firms with SIC code 4900 to 4942.}  At the end we are left with \Sexpr{length(cusip_bb)} buyback events made by \Sexpr{length(unique(cusip_bb))} firms. The average percent of share authorized for these firms was \Sexpr{datasummaryBB["Percent authorized", "Mean"]}$\%$ (median of \Sexpr{datasummaryBB["Percent authorized", "Median"]}$\%$), the average Market Capitalization at announcement was \$\Sexpr{datasummaryBB["Market cap.", "Mean"]} Million (median of \$\Sexpr{datasummaryBB["Market cap.", "Median"]} Million), while the BE/ME was on average \Sexpr{datasummaryBB["BE/ME", "Mean"]} (median of \Sexpr{datasummaryBB["BE/ME", "Median"]}).
 
 
 For the issuers, we started with \Sexpr{cleanup_iss$Standardise$SDC_initial_data} events from SDC, filtered to exclude rights issues, pure secondary offerings where existing shareholders sell shares without generating proceeds for the company,  issues made by non-U.S. firms or in non-U.S. markets, issues made by closed-end funds or unit investment trusts, as well as block trades, accelerated offers and best efforts. We removed all SDC events for which either the event date (\Sexpr{cleanup_iss$Standardise$SDC_NODATE} events) or the CUSIP (\Sexpr{cleanup_iss$Standardise$SDC_NOCUSIP} events) was missing or where we found duplicate events with mismatching information (\Sexpr{cleanup_iss$Standardise$BAD_DUPLICATES} events), a total of \Sexpr{cleanup_iss$Standardise$SDC_standardize_removal} events - given the overlap between these cases. Finally, as for the buybacks, we removed the following events: no CRSP returns available (\Sexpr{cleanup_iss$get_crsp$NOPERMNO_remove + cleanup_iss$merge$CRSP_remove} events); not all Compustat data available (\Sexpr{cleanup_iss$compustat$NO_GVKEY_remove + cleanup_iss$merge$compustat_remove} events); the percent of shares authorized was larger than \Sexpr{MAX_EVENT_SIZE}$\%$ (\Sexpr{cleanup_iss$biz_clean$EventSize_filter} events), or the closing price was less than \$\Sexpr{penny_stock_price_old} for events before 1995 or \$\Sexpr{penny_stock_price_recent} for the other (\Sexpr{cleanup_iss$biz_clean$Penny_stock_filter} events), or  the stocks were not listed on the NYSE, Nasdaq or Amex (\Sexpr{cleanup_iss$biz_clean$major_markets_only} events). We again removed all events from firms in the Financial and Utilities sectors (\Sexpr{length(ISSUERS_DATA$finance_Size_used)} events). Our final sample contains \Sexpr{length(cusip_iss)} issuers events made by \Sexpr{length(unique(cusip_iss))} firms. The average percent of shares issued was \Sexpr{datasummaryISS["Percent authorized", "Mean"]}$\%$ (median of \Sexpr{datasummaryISS["Percent authorized", "Median"]}$\%$), the average Market Capitalization on the announcement day  was \$\Sexpr{datasummaryISS["Market cap.", "Mean"]} Million (median of \$\Sexpr{datasummaryISS["Market cap.", "Median"]} Million), while the BE/ME was on average \Sexpr{datasummaryISS["BE/ME", "Mean"]} (median of \Sexpr{datasummaryISS["BE/ME", "Median"]}).
@@ -319,7 +322,7 @@ Figure~\ref{fig:pastall} summarizes the IRATS results in more detail by showing 
 The results so far show that firms that repurchase shares are good at market timing, in particular the small beaten up value stocks. On the other hand the average equity issuer does not seem to be driven by market timing in general. However, firms that are good at market timing when buying back undervalued stock are perhaps also good at recognizing when their shares are overvalued. Note that successful market timing requires two managerial characteristics: ability to time the market as well as willingness, i.e., accepting the idea that using superior information to benefit long term shareholders at the expense of other shareholders is the ``right'' thing to do.
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-SEO_exit_days = sapply(which(BUYBACK_DATA$DATASET$SDC$Otherlater != "2100-01-01"), function(i) as.Date(BUYBACK_DATA$DATASET$SDC$Otherlater[i]) - event.date_bb[i])
+SEO_exit_days = sapply(which(BUYBACK_DATA_NEW$DATASET$SDC$Otherlater != "2100-01-01"), function(i) as.Date(BUYBACK_DATA_NEW$DATASET$SDC$Otherlater[i]) - event.date_bb[i])
 BB_exit_days = sapply(which(ISSUERS_DATA$DATASET$SDC$Otherlater != "2100-01-01"), function(i) as.Date(ISSUERS_DATA$DATASET$SDC$Otherlater[i]) - event.date_iss[i])
 @
 
@@ -357,23 +360,23 @@ Note that both event study methods measure alpha (excess return) and betas joint
 To further study the robustness of the buyback anomaly, we simulate a portfolio investment strategy starting in \Sexpr{firstyear}. The strategy uses past data to estimate the factor betas and measures the abnormal returns of buyback portfolios over different investment horizons. While this is not an accurate measure of the returns of a buyback fund - as we do not consider transaction costs, turnover issues, or other operational issues (see for example \cite{MitchellPulvino2001}) - it provides us with an estimate of what would have happened to an investor who starts investing in \Sexpr{firstyear} in an equally weighted portfolio of buyback stocks and holds them over various horizons.
 
 << fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
-tmp = pnl_matrix(remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade))
-ri = remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade)
+tmp = pnl_matrix(remove_initialization_time(BUYBACK_DATA_NEW$long_all12mshort_risk_factors,min_date=FirstTrade))
+ri = remove_initialization_time(BUYBACK_DATA_NEW$long_all12mshort_risk_factors,min_date=FirstTrade)
 expost_betas = beta_expost(ri,Risk_Factors_Monthly[,pnl_hedge_factors])
-ri = remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_12M,min_date=FirstTrade)
+ri = remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_12M,min_date=FirstTrade)
 expost_betas_unhedged = beta_expost(ri,Risk_Factors_Monthly[,pnl_hedge_factors])
 @
 
 Specifically, we consider the following trading strategy: construct the first day of every month an equally weighted portfolio of all companies that announced buybacks during the previous $N$ months, for a given holding period of length $N$ (which can be chosen). Thus, once a company makes an announcement, it enters the portfolio on the first day of the following month and remains there for $N$ months. Note that the portfolio is re-balanced (the first day of) each month. This ``unhedged'' strategy generates a time series of returns. Each month (when we re-balance the portfolio) we also use the previous \Sexpr{hedge_months}  monthly returns of this time series    to calculate the (portfolio level) time series betas of all five factors. This allows an investor to determine the betas for the factor risks using data available at the time of portfolio formation. 
 
 << fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
-months1 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all1mshort_risk_factors,min_date=FirstTrade))
-months3 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all3mshort_risk_factors,min_date=FirstTrade))
-months6 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all6mshort_risk_factors,min_date=FirstTrade))
-months12 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade))
-months24 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all24mshort_risk_factors,min_date=FirstTrade))
-months36 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all36mshort_risk_factors,min_date=FirstTrade))
-months48 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all48mshort_risk_factors,min_date=FirstTrade))
+months1 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all1mshort_risk_factors,min_date=FirstTrade))
+months3 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all3mshort_risk_factors,min_date=FirstTrade))
+months6 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all6mshort_risk_factors,min_date=FirstTrade))
+months12 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all12mshort_risk_factors,min_date=FirstTrade))
+months24 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all24mshort_risk_factors,min_date=FirstTrade))
+months36 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all36mshort_risk_factors,min_date=FirstTrade))
+months48 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all48mshort_risk_factors,min_date=FirstTrade))
 
 @ 
 
@@ -430,7 +433,7 @@ Table~\ref{tbl:VOLunderBB} also tests whether the U-index is valid for high vola
 \label{sec:newindex}
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-EU_index_features = scrub(cbind(BUYBACK_DATA$DATASET$SDC$minus_Rsq_returns, BUYBACK_DATA$DATASET$SDC$pre_vol,BUYBACK_DATA$Valuation_Index))
+EU_index_features = scrub(cbind(BUYBACK_DATA_NEW$DATASET$SDC$minus_Rsq_returns, BUYBACK_DATA_NEW$DATASET$SDC$pre_vol,BUYBACK_DATA_NEW$Valuation_Index))
 colnames(EU_index_features) <- c("Idiosyncratic Score", "Volatility Score", "U-Index Score")
 Under_IdioBB_cor = cor(EU_index_features)
 @
@@ -438,14 +441,14 @@ Under_IdioBB_cor = cor(EU_index_features)
 Table~\ref{tbl:underidioallBB} shows how the high/low U-index  low/high idiosyncratic risk, and low/high volatility buyback events overlap, while Table~\ref{tbl:underidioallBBcor} shows the correlations between the idiosyncratic, volatility, and U-index scores. Overall we see that although high U-index firms tend to have high idiosyncratic risk and high volatility, while high idiosyncratic risk firms tend to also have high volatility, the overlap is not very high. For example from Table~\ref{tbl:underidioallBB} we learn that  only \Sexpr{round(Under_IdioBB["High Vol.","H Idiosync."],1)}$\%$ of the high volatility stocks that are classified as having either high or low idiosyncratic risk - note that we only consider the  \Sexpr{round(100*quantile_R2,2)}$\%$ tails - have high idiosyncratic risk. From Table~\ref{tbl:underidioallBBcor} we infer that the correlation between idiosyncratic risk and volatility is only \Sexpr{round(Under_IdioBB_cor["Volatility Score","Idiosyncratic Score"]*100,1)}$\%$.  A natural question is therefore whether one can further enhance the \cite{PeyerVermaelen2009} U-index by incorporating information about the firms pre-announce idiosyncratic risk and volatility. We consider one such combination where we simply take an equal-weighted combination of the 4 criteria into one ``Enhanced Undervaluation Index'' (EU-index). Specifically, in the spirit of the U-index of \cite{PeyerVermaelen2009}, we calculate the EU-index simply as the sum of three numbers: high U-index firms get a score of 2, low get a 0; high idiosyncratic firms get a score of 2, low get a 0; and high volatility firms get a score of 2, low get a 0. Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores.
 
 
-Figure~\ref{fig:Eundervaluationindex} shows the distribution of the EU-index. The index has a symmetric distribution with a mean of \Sexpr{round(mean(EUindex_bb),2)}. Table~\ref{tbl:EUrelations} shows how the EU-index relates to a number of firm characteristics. Firm leverage, based on data the year before announcement, is defined as the ratio $debt/(debt+equity)$\footnote{We use the definitions from \url{http://www.ivo-welch.info/professional/leverage.placebo/}{Ivo Welch's website} following  \url{http://www.ivo-welch.info/professional/leverage.placebo/r-sourcecode/mksane.R}. Debt is the sum of the Compustat variables $dlc+ dltt$, where $dlc$ is ``Debt in Current Liabilities'' and $dltt$ is ``Long Term Debt - Total''. Equity is the Compustat variable $seq$ which is ``Total Parent Stockholders' Equity''. We use the most recent data pre-announce, and make the winsorization and other adjustments as in the websites above. Note that we followed the same steps as in these websites to handle negative book value of equity (in the BE/ME calculations) and any other Compustat data issues.}. ``Missed (beat) EPS'' measures the percentage of firms in the specific EU index category that missed (beat) the last EPS consensus analyst forecast before the buyback announcement. ``ISS later'' measures the percentage of firms that announced an equity issue within 48 months after the buyback announcement. Next, we measure the percentage of buybacks financed with cash (CASH) when the data is available\footnote{As this SDC data was not available for many events, we did not consider the in the U-index calculation} (this data was available only for \Sexpr{sum(!(BUYBACK_DATA$DATASET$SDC$Source...of..Funds..Code == ""))} of the events) and whether the reported purpose (available only for \Sexpr{sum(!(BUYBACK_DATA$DATASET$SDC$Purpose.Code == ""))} events) included the term ``Undervalued'', or ``Enhance Shareholder Value'' or ``stock option plan''.
+Figure~\ref{fig:Eundervaluationindex} shows the distribution of the EU-index. The index has a symmetric distribution with a mean of \Sexpr{round(mean(EUindex_bb),2)}. Table~\ref{tbl:EUrelations} shows how the EU-index relates to a number of firm characteristics. Firm leverage, based on data the year before announcement, is defined as the ratio $debt/(debt+equity)$\footnote{We use the definitions from \url{http://www.ivo-welch.info/professional/leverage.placebo/}{Ivo Welch's website} following  \url{http://www.ivo-welch.info/professional/leverage.placebo/r-sourcecode/mksane.R}. Debt is the sum of the Compustat variables $dlc+ dltt$, where $dlc$ is ``Debt in Current Liabilities'' and $dltt$ is ``Long Term Debt - Total''. Equity is the Compustat variable $seq$ which is ``Total Parent Stockholders' Equity''. We use the most recent data pre-announce, and make the winsorization and other adjustments as in the websites above. Note that we followed the same steps as in these websites to handle negative book value of equity (in the BE/ME calculations) and any other Compustat data issues.}. ``Missed (beat) EPS'' measures the percentage of firms in the specific EU index category that missed (beat) the last EPS consensus analyst forecast before the buyback announcement. ``ISS later'' measures the percentage of firms that announced an equity issue within 48 months after the buyback announcement. Next, we measure the percentage of buybacks financed with cash (CASH) when the data is available\footnote{As this SDC data was not available for many events, we did not consider the in the U-index calculation} (this data was available only for \Sexpr{sum(!(BUYBACK_DATA_NEW$DATASET$SDC$Source...of..Funds..Code == ""))} of the events) and whether the reported purpose (available only for \Sexpr{sum(!(BUYBACK_DATA_NEW$DATASET$SDC$Purpose.Code == ""))} events) included the term ``Undervalued'', or ``Enhance Shareholder Value'' or ``stock option plan''.
 
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-tmp_market_cap = round(non_zero_mean(BUYBACK_DATA$DATASET$SDC$Market.Cap[EUindex_bb %in% c(4:6)])/1000,1)
+tmp_market_cap = round(non_zero_mean(BUYBACK_DATA_NEW$DATASET$SDC$Market.Cap[EUindex_bb %in% c(4:6)])/1000,1)
 @
 
-First there is a striking negative relation between the EU index and financial leverage. This makes sense according to the static trade-off theory of optimal capital structure: high risky firms have more financial distress and should have less debt. Second, the high EU index firms are more likely to miss earnings forecasts. To the extent that analysts base their recommendations on these earnings misses, stock prices may become undervalued. Evidence that analyst extrapolation forecast errors are a partial explanation for the buyback anomaly is documented by \cite{PeyerVermaelen2009}.  High EU index firms are more likely to mention ``undervaluation'' as a motivation for the buyback.  High EU index firms tend to have more cash. This could of course be related to the fact that risky firms should have more cash holdings.  They also tend to follow up with equity offerings after the buyback which suggests that they are more likely to be in the ``market timing'' business. The table also shows a strong negative relation between market-to-book ratios and market capitalization and the EU index, which is not surprising as these are components of the index. It should be noted that the EU 6 portfolio is composed of very small stocks with an average market capitalization of \$\Sexpr{round(EU_relations["Market Cap.","EU6"],1)} million. The average market capitalization of portfolios with long term (after 48 months) monthly excess return of larger than 0.3$\%$ (i.e. portfolios EU4 through EU6 in Table~\ref{tbl:EUunderBBcal}) is \$\Sexpr{tmp_market_cap} billion (not indicated in the Table). So the buyback anomaly is to some extent a small cap anomaly, although portfolio EU3 for which the average market capitalization of its \Sexpr{sum(EUindex_bb==3)} firms is \$\Sexpr{round(non_zero_mean(BUYBACK_DATA$DATASET$SDC$Market.Cap[EUindex_bb ==3])/1000,1)} billion still has significant abnormal returns. 
+First there is a striking negative relation between the EU index and financial leverage. This makes sense according to the static trade-off theory of optimal capital structure: high risky firms have more financial distress and should have less debt. Second, the high EU index firms are more likely to miss earnings forecasts. To the extent that analysts base their recommendations on these earnings misses, stock prices may become undervalued. Evidence that analyst extrapolation forecast errors are a partial explanation for the buyback anomaly is documented by \cite{PeyerVermaelen2009}.  High EU index firms are more likely to mention ``undervaluation'' as a motivation for the buyback.  High EU index firms tend to have more cash. This could of course be related to the fact that risky firms should have more cash holdings.  They also tend to follow up with equity offerings after the buyback which suggests that they are more likely to be in the ``market timing'' business. The table also shows a strong negative relation between market-to-book ratios and market capitalization and the EU index, which is not surprising as these are components of the index. It should be noted that the EU 6 portfolio is composed of very small stocks with an average market capitalization of \$\Sexpr{round(EU_relations["Market Cap.","EU6"],1)} million. The average market capitalization of portfolios with long term (after 48 months) monthly excess return of larger than 0.3$\%$ (i.e. portfolios EU4 through EU6 in Table~\ref{tbl:EUunderBBcal}) is \$\Sexpr{tmp_market_cap} billion (not indicated in the Table). So the buyback anomaly is to some extent a small cap anomaly, although portfolio EU3 for which the average market capitalization of its \Sexpr{sum(EUindex_bb==3)} firms is \$\Sexpr{round(non_zero_mean(BUYBACK_DATA_NEW$DATASET$SDC$Market.Cap[EUindex_bb ==3])/1000,1)} billion still has significant abnormal returns. 
 
 Tables  \ref{tbl:EUunderBB} and \ref{tbl:EUunderBBcal} show respectively the IRATS and Calendar Time monthly abnormal returns for all values of the EU-index. Focusing on IRATS, as the EU-index increases, the long term abnormal returns increase (from \Sexpr{round(EU_IRATStable_bb["+48",1],1)}$\%$ to \Sexpr{round(EU_IRATStable_bb["+48",19],1)}$\%$). Figure~\ref{fig:Epastall} show the same results over time for each EU-index. Long-term cumulative excess returns after 48 months are becoming statistically significantly positive at EU-index levels of 3 and higher, and then steadily increase from \Sexpr{round(EU_IRATStable_bb["+48",10],1)}$\%$ to \Sexpr{round(EU_IRATStable_bb["+48",19],1)}$\%$. The Calendar Time results are similar although they only show significance starting at EU-index levels of 4.  Investing in the very high EU index firms (EU=6) generates alphas of \Sexpr{round(EU_CALtable_bb["+48",19],2)}$\%$ per month for 48 months.\footnote{We also calculated the returns of a hedged strategy similar to Figure~\ref{fig:ReturnsBB} (Panel~B). Starting in \Sexpr{firstyear} we form a portfolio of all stocks that announced a buyback during the previous $N$ months and hold the stock for $N$ months. The 12-month holding period high EU-index portfolio has average annual abnormal returns of \Sexpr{round(pnl_stats(High_EU_BB_Hedged)[1],1)}$\%$, while the low EU-index one earns only \Sexpr{round(pnl_stats(Low_EU_BB_Hedged)[1],1)}$\%$ annual excess returns. For the 48-month holding periods the high and low EU-index portfolio earn annual excess returns of  respectively, \Sexpr{round(pnl_stats(High_EU_BB_Hedged48m)[1],1)}$\%$ and \Sexpr{round(pnl_stats(Low_EU_BB_Hedged48m)[1],1)}$\%$.} 
 
@@ -460,7 +463,7 @@ Tables \ref{tbl:EUTimeUnderBB} and \ref{tbl:EUTimeUnderBBcal} indicate that the 
 
 << fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
 tmp = pnl_matrix(remove_initialization_time(High_EU_BB_Hedged,min_date=FirstTrade))
-tmp1 = pnl_matrix(remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade))
+tmp1 = pnl_matrix(remove_initialization_time(BUYBACK_DATA_NEW$long_all12mshort_risk_factors,min_date=FirstTrade))
 
 @
 
@@ -847,7 +850,7 @@ printLatexTable2(
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 latex_render_data_frame(
-  pnl_matrix(remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade)), 
+  pnl_matrix(remove_initialization_time(BUYBACK_DATA_NEW$long_all12mshort_risk_factors,min_date=FirstTrade)), 
   title = "Monthly and Yearly Five Factor Abnormal Rerurns of a strategy investing in all buybacks",
   caption="Monthly and yearly five-factor rolling hedged abnormal returns of an equally weighted (with monthly rebalancing) portfolio of all buybacks. The holding period for each buyback is 12 months per event.",
   label="tbl:allhedgedBB", 
@@ -905,7 +908,7 @@ printLatexTable2(
   cbind(R2_IRATStableBB,R2_IRATStable_underBB)[reported_times,],
   cbind(R2_IRATStableBB_cal,R2_IRATStable_underBB_cal)[reported_times,],
   columns= c("Low Id.","High Id.","Low Id./High U-Ind.","Low Id./Low U-Ind.","High Id./High U-Ind.","High Id./Low U-Ind."),
-  title="Buyback for Low and High idiosyncratic and  for Low and and High U-index companies",
+  title="Buyback for Low and High idiosyncratic and for Low and and High U-index companies",
   title1 = "Panel A: IRATs Cumulative Abnormal Returns",
   title2 = "Panel B: Calendar Method Monthly Abnormal Returns",
   caption="This table presents the long-term abnormal return after open market repurchase announcements from the announcement date until $t$ months after, for low and high idiosyncratic and for low and  high U-index companies. Regardless of event study method and time horizon, the U-index works only for idiosyncratic companies. Panel~A reports monthly cumulative average abnormal returns (CAR) in percent using Ibbotson's (1975) returns across time and security (IRATS) method combined with the \\cite{FamaFrench2015a} five-factor model for the sample of firms that announced an open market share repurchase plus various subsamples. The following regression is run each event month~$j$:
@@ -1216,7 +1219,7 @@ if (0){
 <<   fig.width=10, fig.height=7, out.width='\\textwidth', echo=F >>=
 par(mfrow=c(2,1), mar=c(2.2,4.5,2.2,4.5))
 
-number_eventsBB = table(format(BUYBACK_DATA$DATASET$SDC$Event.Date[BUYBACK_DATA$DATASET$SDC$Event.Date >= FirstTrade], "%Y"))
+number_eventsBB = table(format(BUYBACK_DATA_NEW$DATASET$SDC$Event.Date[BUYBACK_DATA_NEW$DATASET$SDC$Event.Date >= FirstTrade], "%Y"))
 market_index = 100*(1+cumprod(1+Market_Monthly[names(Market_Monthly) >= "1985-01-01"]))
 market_index = market_index[which(str_sub(names(market_index), start = 6, end = 7)=="12")]
 names(market_index) <- str_sub(names(market_index), start = 1, end = 4)
@@ -1533,15 +1536,15 @@ Top Panel~A:  Five factor IRATS CAR for all buyback events that had (with hindsi
 par(mfrow=c(2,1), mar=c(2.8,4,2.8,4))
 
 all_ret_values = data.frame(
-  market = cumsum(100*Market_Monthly[str_sub(names(Market_Monthly), start = 1, end = 7) %in% str_sub(names(remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_1M,min_date=FirstTrade)), start = 1, end = 7)]),
-  #market = cumsum(100*Market_Daily[names(remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_1M,min_date=FirstTrade))]),
-  months1 = cumsum(100*remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_1M,min_date=FirstTrade)),
-  months3 = cumsum(100*remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_3M,min_date=FirstTrade)),
-  months6 = cumsum(100*remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_6M,min_date=FirstTrade)),
-  months12 = cumsum(100*remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_12M,min_date=FirstTrade)),
-  months24 = cumsum(100*remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_24M,min_date=FirstTrade)),
-  months36 = cumsum(100*remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_36M,min_date=FirstTrade)),
-  months48 = cumsum(100*remove_initialization_time(BUYBACK_DATA$pnl_returns_events_all_48M,min_date=FirstTrade))
+  market = cumsum(100*Market_Monthly[str_sub(names(Market_Monthly), start = 1, end = 7) %in% str_sub(names(remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_1M,min_date=FirstTrade)), start = 1, end = 7)]),
+  #market = cumsum(100*Market_Daily[names(remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_1M,min_date=FirstTrade))]),
+  months1 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_1M,min_date=FirstTrade)),
+  months3 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_3M,min_date=FirstTrade)),
+  months6 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_6M,min_date=FirstTrade)),
+  months12 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_12M,min_date=FirstTrade)),
+  months24 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_24M,min_date=FirstTrade)),
+  months36 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_36M,min_date=FirstTrade)),
+  months48 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$pnl_returns_events_all_48M,min_date=FirstTrade))
 )
 plot(all_ret_values$market, axes=FALSE, ylab="Cumulative Returns", xlab = "Time",ylim=c(min(as.vector(all_ret_values)), max(as.vector(all_ret_values))), main = "Panel A: Absolute Returns", cex.lab=1.1, lty = "dotdash", type = "l", lwd=2)
 axis(1,at=seq(1,nrow(all_ret_values),length.out=10),labels=str_sub(rownames(all_ret_values)[seq(1,nrow(all_ret_values),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
@@ -1563,15 +1566,15 @@ legend(x="topleft",
        cex=1,bg="white",inset=0.01)
 
 all_ret_values = data.frame(
-  market = cumsum(100*Market_Monthly[str_sub(names(Market_Monthly), start = 1, end = 7) %in% str_sub(names(remove_initialization_time(BUYBACK_DATA$long_all1mshort_risk_factors,min_date=FirstTrade)), start = 1, end = 7)]),
-  #market = cumsum(100*Market_Daily[names(remove_initialization_time(BUYBACK_DATA$long_all1mshort_risk_factors,min_date=FirstTrade))]),
-  months1 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all1mshort_risk_factors,min_date=FirstTrade)),
-  months3 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all3mshort_risk_factors,min_date=FirstTrade)),
-  months6 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all6mshort_risk_factors,min_date=FirstTrade)),
-  months12 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade)),
-  months24 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all24mshort_risk_factors,min_date=FirstTrade)),
-  months36 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all36mshort_risk_factors,min_date=FirstTrade)),
-  months48 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all48mshort_risk_factors,min_date=FirstTrade))
+  market = cumsum(100*Market_Monthly[str_sub(names(Market_Monthly), start = 1, end = 7) %in% str_sub(names(remove_initialization_time(BUYBACK_DATA_NEW$long_all1mshort_risk_factors,min_date=FirstTrade)), start = 1, end = 7)]),
+  #market = cumsum(100*Market_Daily[names(remove_initialization_time(BUYBACK_DATA_NEW$long_all1mshort_risk_factors,min_date=FirstTrade))]),
+  months1 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all1mshort_risk_factors,min_date=FirstTrade)),
+  months3 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all3mshort_risk_factors,min_date=FirstTrade)),
+  months6 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all6mshort_risk_factors,min_date=FirstTrade)),
+  months12 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all12mshort_risk_factors,min_date=FirstTrade)),
+  months24 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all24mshort_risk_factors,min_date=FirstTrade)),
+  months36 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all36mshort_risk_factors,min_date=FirstTrade)),
+  months48 = cumsum(100*remove_initialization_time(BUYBACK_DATA_NEW$long_all48mshort_risk_factors,min_date=FirstTrade))
 )
 plot(all_ret_values$market, axes=FALSE, ylab="CAR", xlab = "Time",ylim=c(min(as.vector(all_ret_values)), max(as.vector(all_ret_values))), main = "Panel B: Excess Returns", cex.lab=1.1, lty = "dotdash", type = "l", lwd=2)
 axis(1,at=seq(1,nrow(all_ret_values),length.out=10),labels=str_sub(rownames(all_ret_values)[seq(1,nrow(all_ret_values),length.out=10)], start = 1, end=4),cex.axis=0.8,las=3)
@@ -1648,15 +1651,15 @@ if (0){
   Market_Monthly_index = Market_Monthly
   names(Market_Monthly_index) <- paste(str_sub(names(Market_Monthly_index),start=1,end=4),str_sub(names(Market_Monthly_index),start=6,end=7),sep="")
   
-  all_dates = paste(str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=6,end=7),sep="")[High_Idiosyncr_eventsBB]
-  tmp = BUYBACK_DATA$DATASET$SDC$Rsq_returns[High_Idiosyncr_eventsBB]
+  all_dates = paste(str_sub((BUYBACK_DATA_NEW$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA_NEW$DATASET$SDC$Event.Date),start=6,end=7),sep="")[High_Idiosyncr_eventsBB]
+  tmp = BUYBACK_DATA_NEW$DATASET$SDC$Rsq_returns[High_Idiosyncr_eventsBB]
   names(tmp)<-all_dates
   R2_thresholds_up_plot = sapply(names(Market_Monthly_index), function(i){
     ifelse(sum(names(tmp) == i) > 1, mean(tmp[names(tmp) == i]),NA)
   })
   R2_thresholds_up_plot = R2_thresholds_up_plot[!is.na(R2_thresholds_up_plot)]
-  all_dates = paste(str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=6,end=7),sep="")[Low_Idiosyncr_eventsBB]
-  tmp = BUYBACK_DATA$DATASET$SDC$Rsq_returns[Low_Idiosyncr_eventsBB]
+  all_dates = paste(str_sub((BUYBACK_DATA_NEW$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA_NEW$DATASET$SDC$Event.Date),start=6,end=7),sep="")[Low_Idiosyncr_eventsBB]
+  tmp = BUYBACK_DATA_NEW$DATASET$SDC$Rsq_returns[Low_Idiosyncr_eventsBB]
   names(tmp)<-all_dates
   R2_thresholds_down_plot = sapply(names(Market_Monthly_index), function(i){
     ifelse(sum(names(tmp) == i) > 1, mean(tmp[names(tmp) == i]),NA)
@@ -1807,15 +1810,15 @@ if (0){
   Market_Monthly_index = Market_Monthly
   names(Market_Monthly_index) <- paste(str_sub(names(Market_Monthly_index),start=1,end=4),str_sub(names(Market_Monthly_index),start=6,end=7),sep="")
   
-  all_dates = paste(str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=6,end=7),sep="")[High_VOL_eventsBB]
-  tmp = BUYBACK_DATA$DATASET$SDC$pre_vol[High_VOL_eventsBB]
+  all_dates = paste(str_sub((BUYBACK_DATA_NEW$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA_NEW$DATASET$SDC$Event.Date),start=6,end=7),sep="")[High_VOL_eventsBB]
+  tmp = BUYBACK_DATA_NEW$DATASET$SDC$pre_vol[High_VOL_eventsBB]
   names(tmp)<-all_dates
   VOL_thresholds_up_plot = sapply(names(Market_Monthly_index), function(i){
     ifelse(sum(names(tmp) == i) > 1, mean(tmp[names(tmp) == i]),NA)
   })
   VOL_thresholds_up_plot = 100*VOL_thresholds_up_plot[!is.na(VOL_thresholds_up_plot)]
-  all_dates = paste(str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=6,end=7),sep="")[Low_VOL_eventsBB]
-  tmp = BUYBACK_DATA$DATASET$SDC$pre_vol[Low_VOL_eventsBB]
+  all_dates = paste(str_sub((BUYBACK_DATA_NEW$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA_NEW$DATASET$SDC$Event.Date),start=6,end=7),sep="")[Low_VOL_eventsBB]
+  tmp = BUYBACK_DATA_NEW$DATASET$SDC$pre_vol[Low_VOL_eventsBB]
   names(tmp)<-all_dates
   VOL_thresholds_down_plot = sapply(names(Market_Monthly_index), function(i){
     ifelse(sum(names(tmp) == i) > 1, mean(tmp[names(tmp) == i]),NA)
@@ -2063,21 +2066,16 @@ legend(x="topleft",
 \end{figure}
 
 
-%########################################################################################################
+%#######################################################################
 %## REPORT.RNW SPECIAL CODE:
 %########################################################################################################
 
 \begin{figure}[H]
 \centering
 << fig.width=10, fig.height=4, out.width='\\textwidth', echo=F >>=
-#par(mfrow=c(2,1), mar=c(2.3,4,2.3,4))
-#valuation_index_bb[which(valuation_index_bb==2)]<-3 # there is one company here. need to check why
 tmp = table(secU$Index_score)
 tmp = structure(as.numeric(tmp), .Names = names(tmp))
 barplot(tmp,main = "", ylab = "Number of Announcements", xlab = "",las=2,space=0.5, cex.names=0.8)
-#tmp = table(valuation_index_iss)
-#tmp = structure(as.numeric(tmp), .Names = names(tmp))
-#barplot(tmp,main = "SEOs", ylab = "Number of Announcements", xlab = "SEO Overvaluation Index",las=2,space=0.5, cex.names=0.8)
 rm("tmp")
 @
 \caption{CEU-index. Distribution of the CEU-index of all buyback events.}

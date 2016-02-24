@@ -1,6 +1,6 @@
 ---
 title: "Share Buyback and Equity Issue Anomalies Revisited: Interactive Tool"
-author: "[Theodoros Evgeniou](http://faculty.insead.edu/theodoros-evgeniou/), [Enric Junque de Fortuny](http://ciri.be/), [Nick Nassuphis](https://www.linkedin.com/in/nick-nassuphis-8029372), and [Theo Vermaelen](http://faculty.insead.edu/theo-vermaelen/)"
+author: "[Theodoros Evgeniou](http://faculty.insead.edu/theodoros-evgeniou/), [Enric Junqué de Fortuny](http://ciri.be/), [Nick Nassuphis](https://www.linkedin.com/in/nick-nassuphis-8029372), and [Theo Vermaelen](http://faculty.insead.edu/theo-vermaelen/)"
 output:  
  html_document:
  fig_width: 6
@@ -49,8 +49,6 @@ DATASET_INI$SDC = as.data.frame(DATASET_INI$SDC)
 #  load("cache.Rdata")  
 #}
 report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
-
-
 ```
 
 <br>
@@ -71,14 +69,7 @@ This is an interactive tool for the article [Share Buyback and Equity Issue Anom
 downloadHandler(
   filename = "report.pdf",
   content = function(file) {
-    cat("knitting")
-    #knitr::knit("report.Rnw",envir=environment())
-    cat("texing")
-    #tools::texi2pdf("report.tex")
-    knitr::knit2pdf("report.Rnw",envir=globalenv())
-    #toremove <- c("report.aux","report.bbl","report.blg","report.log","report.out")
-    #file.remove(normalizePath(toremove))
-    cat("done")
+    knitr::knit2pdf("report.Rnw",envir=environment())
     file.rename(normalizePath('report.pdf'), file)
   }
 )
@@ -175,7 +166,7 @@ This tool allows the user to explore descriptive statistics of some of the key f
 
 
 ```{r, eval=TRUE, echo = FALSE}
-acceptaple_features = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index","Industry", "Market.Cap",          "Percent.Shares", "Purpose.Code","Source.of.funds","Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio")
+acceptaple_features = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares","Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","Idiosyncraticness","Industry", "Purpose.Code","Source.of.funds")
 
 fluidPage(
   selectInput("characteristic", "Select Firm Characteristic:", choices = acceptaple_features,selected = acceptaple_features[1]),
@@ -278,7 +269,7 @@ fluidPage(
 The article relates 5 firm characteristics (pre-buyback-announcement returns, idiosyncratic volatility, and volatility, as well as BE/ME and Firm Size). This tool allows the user to study the effects of combining any of these firm characteristics, as well as some other ones not discussed in the paper. 
 
 ```{r, eval=TRUE, echo = FALSE}
-acceptaple_features1 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio")
+acceptaple_features1 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","Idiosyncraticness")
 
 selectInput("characteristic_irats", "Select Firm Characteristic to Define High/Low Firms:", choices = acceptaple_features1,selected = acceptaple_features1[1], width = "1000px")
 
@@ -289,8 +280,15 @@ checkboxInput("characteristic_irats_sign", "If you would like to change the sign
 feature_IRATStable <- reactive({
   thesign = ifelse(input$characteristic_irats_sign, -1, +1)
   thefeature = thesign*DATASET_NEW()$SDC[[which(names(DATASET_NEW()$SDC) == input$characteristic_irats)]]  
-  High_feature_events = which(scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
-  Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
+  
+  thefeature = as.numeric(scrub(thefeature))
+  quantile_used_ind = as.numeric(input$quantile_used_ind)
+  
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
+
+  #High_feature_events = which(scrub(thefeature) > quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
+  #Low_feature_events = which(scrub(thefeature) < quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
   res = round(cbind(
     #car_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
     #car_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
@@ -305,8 +303,8 @@ feature_IRATStable <- reactive({
 feature_CALtable <- reactive({
   thesign = ifelse(input$characteristic_irats_sign, -1, +1)
   thefeature = thesign*DATASET_NEW()$SDC[[which(names(DATASET_NEW()$SDC) == input$characteristic_irats)]]  
-  High_feature_events = which(scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
-  Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
+  High_feature_events = which(scrub(thefeature) > quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
+  Low_feature_events = which(scrub(thefeature) < quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
   res = round(cbind(
     calendar_table2(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events], DATASET_NEW()$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly,report_months_cal)$results,
     calendar_table2(DATASET_NEW()$returns_by_event_monthly[,High_feature_events], DATASET_NEW()$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly,report_months_cal)$results
@@ -316,15 +314,18 @@ feature_CALtable <- reactive({
 })
 
 High_feature_Hedged_react <- reactive({
-  thefeature = DATASET_NEW()$SDC[[which(names(DATASET_NEW()$SDC) == input$characteristic_irats)]]  
-  High_feature_events = which(scrub(thefeature) >= quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
+  thefeature = as.numeric(DATASET_NEW()$SDC[[which(names(DATASET_NEW()$SDC) == input$characteristic_irats)]])
+  quantile_used <- as.numeric(input$quantile_used)
+
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used)
+  
   High_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", High_feature_events,  DATASET_NEW()$DatesMonth, DATASET_NEW()$returns_by_event_monthly,event=1),1,non_zero_mean)
   remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
 })
 
 Low_feature_Hedged_react <- reactive({
   thefeature = DATASET_NEW()$SDC[[which(names(DATASET_NEW()$SDC) == input$characteristic_irats)]]  
-  Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
+  Low_feature_events = which(scrub(thefeature) < quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
   Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET_NEW()$DatesMonth, DATASET_NEW()$returns_by_event_monthly,event=1),1,non_zero_mean)
   remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
 })
@@ -377,47 +378,36 @@ fluidPage(
 
 ### Customized Buyback Index
 
-Much like the EU-index in the paper, one can create other indices by combining different firm characteristics as needed. 
+Much like the EU-index in the paper, one can create other indices by combining different firm characteristics as needed. You can select your own firm characteristics below and also indicate whether you would like to reverse the sign of this firm characteristic (Low will be High and vice versa).
 
 
 ```{r, eval=TRUE, echo = FALSE}
-acceptaple_features2 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","None")
+acceptaple_features2 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","Idiosyncraticness","None")
 ```
 
 <br>
 ```{r, eval=TRUE, echo = FALSE}
-selectInput("characteristic_irats1", "Select First Firm Characteristic for your new index:", choices = acceptaple_features2,selected = acceptaple_features2[1], width = "1000px")
-checkboxInput("characteristic_irats1_sign", "If you would like to change the sign of this firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
-```
-
-<br>
-```{r, eval=TRUE, echo = FALSE}
-selectInput("characteristic_irats2", "Select Second Firm Characteristic for your new index:", choices = acceptaple_features2,selected ="None", width = "1000px")
-checkboxInput("characteristic_irats2_sign", "If you would like to change the sign of this firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
-```
-
-<br>
-```{r, eval=TRUE, echo = FALSE}
-selectInput("characteristic_irats3", "Select Third Firm Characteristic for your new index:", choices = acceptaple_features2,selected = "None", width = "1000px")
-checkboxInput("characteristic_irats3_sign", "If you would like to change the sign of this firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
-```
-
-<br>
-```{r, eval=TRUE, echo = FALSE}
-selectInput("characteristic_irats4", "Select Fourth Firm Characteristic for your new index:", choices = acceptaple_features2,selected = "None", width = "1000px")
-checkboxInput("characteristic_irats4_sign", "If you would like to change the sign of this firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
-```
-
-<br>
-```{r, eval=TRUE, echo = FALSE}
-selectInput("characteristic_irats5", "Select Fifth Firm Characteristic for your new index:", choices = acceptaple_features2,selected = "None", width = "1000px")
-checkboxInput("characteristic_irats5_sign", "If you would like to change the sign of this firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
-```
-
-<br>
-```{r, eval=TRUE, echo = FALSE}
-selectInput("characteristic_irats6", "Select Sixth Firm Characteristic for your new index:", choices = acceptaple_features2,selected = "None", width = "1000px")
-checkboxInput("characteristic_irats6_sign", "If you would like to change the sign of this firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
+fluidPage( 
+  h4("Firm Characteristics of the new index"),
+  fluidRow(
+    column(6,
+      selectInput("characteristic_irats1", "First Firm Characteristic:", choices = acceptaple_features2,selected = acceptaple_features2[1], width = "425px"),
+      checkboxInput("characteristic_irats1_sign", "Reverse", value = FALSE),
+      selectInput("characteristic_irats2", "Second Firm Characteristic:", choices = acceptaple_features2,selected ="None", width = "425px"),
+checkboxInput("characteristic_irats2_sign", "Reverse", value = FALSE),
+    selectInput("characteristic_irats3", "Third Firm Characteristic:", choices = acceptaple_features2,selected = "None", width = "425px"),
+checkboxInput("characteristic_irats3_sign", "Reverse", value = FALSE)
+     ),
+  column(6,
+      selectInput("characteristic_irats4", "Fourth Firm Characteristic:", choices = acceptaple_features2,selected = "None", width = "425px"),
+      checkboxInput("characteristic_irats4_sign", "Reverse", value = FALSE),
+    selectInput("characteristic_irats5", "Fifth Firm Characteristic:", choices = acceptaple_features2,selected = "None", width = "425px"),
+    checkboxInput("characteristic_irats5_sign", "Reverse", value = FALSE),
+    selectInput("characteristic_irats6", "Sixth Firm Characteristic:", choices = acceptaple_features2,selected = "None", width = "425px"),
+    checkboxInput("characteristic_irats6_sign", "Reverse", value = FALSE)
+    )
+  )
+)
 ```
 
 <br>
