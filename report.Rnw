@@ -29,11 +29,14 @@ rerun_issuers_report_code <- 0
 # All the RNW data
 generate_rnw_data = 0
 
+options(warn=-1) #because some packages give warnings
 source("lib_helpers.R",local=environment())
 source("latex_code.R",local=environment())
 source("dataset/indices_and_factors/ff_industries_sic.R",local=environment())
 source("business_data_clean.R",local=environment())
 source("Paper_global_parameters.R",local=environment())
+options(warn=0)
+
 
 if (generate_rnw_data == 1){
   source("bb_issuers.R",local=environment())
@@ -65,20 +68,8 @@ knit_hooks$set(inline = function(x) {
 
 #Add any/all choices made in the tool here
 if(!exists("input") ){#& FALSE
-  input = list()
-  input$startdate <- as.Date("1984-12-31")
-  input$enddate <- as.Date("2014-12-31")
-  market_cap_min = "10"
-  market_cap_max = "10000"
-  quantile_used_ind = "0.2"
-  quantile_used_all = "0.4"
-  
-  #for extra sections
-  input$characteristic_irats1 <- "BE.ME.Score"
-  input$characteristic_irats1_sign <- T
-  
-  input$characteristic_irats2 <- "pre.vol.Score"
-  input$characteristic_irats2_sign <- T
+  load(normalizePath("input.Rdata")) #this is updated by the Rmd
+  input <- newinput
 }
 market_cap_min = as.numeric(input$market_cap_min)
 market_cap_max = as.numeric(input$market_cap_max)
@@ -97,7 +88,6 @@ options(warn=0)
 firstyear = as.character(format(input$startdate,"%Y"))
 lastyear = as.character(format(input$enddate,"%Y"))
 FirstTrade = input$startdate
-
 @
 
 %<<  Data loading, eval = TRUE,
@@ -324,6 +314,9 @@ The results so far show that firms that repurchase shares are good at market tim
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 SEO_exit_days = sapply(which(BUYBACK_DATA_NEW$DATASET$SDC$Otherlater != "2100-01-01"), function(i) as.Date(BUYBACK_DATA_NEW$DATASET$SDC$Otherlater[i]) - event.date_bb[i])
 BB_exit_days = sapply(which(ISSUERS_DATA$DATASET$SDC$Otherlater != "2100-01-01"), function(i) as.Date(ISSUERS_DATA$DATASET$SDC$Otherlater[i]) - event.date_iss[i])
+
+SEO_exit_days = ifelse(is.null(SEO_exit_days),list(),SEO_exit_days)
+BB_exit_days = ifelse(is.null(BB_exit_days),list(),BB_exit_days)
 @
 
 During our sample period (\Sexpr{firstyear}-\Sexpr{lastyear}) \Sexpr{length(unique(intersect(cusip_bb,cusip_iss)))} companies in our data set both announced buybacks and issued equity, but in only \Sexpr{length(SEO_exit_days)}  cases a company announced a subsequent equity issue within 4 years after the buyback announcement. We now compute the cumulative excess returns for these firms under two scenarios. First, the ``no exit'' scenario, where we hold the stock for 48 months after the buyback announcement. Second, the ``exit'' scenario, where we sell the shares as soon as the company announces an equity issue.

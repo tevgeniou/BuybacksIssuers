@@ -96,7 +96,7 @@ CACHE5 <- car_table_cache(ret_bb,sdc_bb$Event.Date,Risk_Factors_Monthly,formula_
 CACHE3IS <- car_table_cache(ret_is,sdc_is$Event.Date,Risk_Factors_Monthly,formula_used = three_factor_model)
 CACHE5IS <- car_table_cache(ret_is,sdc_is$Event.Date,Risk_Factors_Monthly,formula_used = five_factor_model)
 
-if(FALSE) {  #FOR DEBUGGING SECTIONS
+if(TRUE) {  #FOR DEBUGGING SECTIONS
 #****************************
 # Table modification 1
 IRATS_table_all_3f = car_table_cached(CACHE3)

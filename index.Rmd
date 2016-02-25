@@ -69,7 +69,15 @@ This is an interactive tool for the article [Share Buyback and Equity Issue Anom
 downloadHandler(
   filename = "report.pdf",
   content = function(file) {
-    knitr::knit2pdf("report.Rnw",envir=environment())
+    tosave= list("startdate","enddate","market_cap_min","market_cap_max","quantile_used_ind","quantile_used_all","characteristic_irats1","characteristic_irats2","characteristic_irats3","characteristic_irats4","characteristic_irats5","characteristic_irats6","characteristic_irats1_sign","characteristic_irats2_sign","characteristic_irats3_sign","characteristic_irats4_sign","characteristic_irats5_sign","characteristic_irats6_sign")
+    newinput <- list()
+    for(i in tosave) {
+      newinput[[i]] <- input[[i]]
+    }
+    
+    
+    save("newinput",file=normalizePath("input.Rdata"))
+    knitr::knit2pdf("report.Rnw",envir=globalenv())
     file.rename(normalizePath('report.pdf'), file)
   }
 )
@@ -132,7 +140,7 @@ DATASET_NEW <- reactive({
     market_cap_max = ceiling(max(DATASET_INI$SDC$Market.Cap))
   
   useonly_report = which(DATASET_INI$SDC$Event.Date >= starting & DATASET_INI$SDC$Event.Date <= ending & scrub(DATASET_INI$SDC$Market.Cap) >= market_cap_min & scrub(DATASET_INI$SDC$Market.Cap) <= market_cap_max) 
-  
+
   SDC = DATASET_INI$SDC[useonly_report,]
   returns_by_event_monthly = DATASET_INI$returns_by_event_monthly[,useonly_report]
   DatesMonth = DATASET_INI$DatesMonth[,useonly_report]
@@ -223,6 +231,7 @@ checkboxGroupInput("industry", "Select Industries  to remove:", choices = unique
 
 feature_IRATStable_industry <- reactive({
   useonly_industry = !(DATASET_NEW()$SDC$Industry %in% input$industry) 
+  cat(paste("Total left after filtering industry:",sum(useonly_industry)))
   res = round(cbind(
     #car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], DATASET_NEW()$SDC$Event.Date[useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], Risk_Factors_Monthly)$results,
     #car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued], DATASET_NEW()$SDC$Event.Date[useonly_industry& DATASET_NEW()$SDC$company_subset_undervalued], Risk_Factors_Monthly)$results
