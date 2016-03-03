@@ -504,11 +504,13 @@ if (0){
   BUYBACK_DATA$DATASET$SDC$CMAbeta <- Betas_PB6M["CMA",]
   BUYBACK_DATA$DATASET$SDC$alpha <- Betas_PB6M["alpha",]
   BUYBACK_DATA$DATASET$SDC$minus_Rsq_returns <- -Betas_PB6M["Rsq",]
+  BUYBACK_DATA$DATASET$SDC$ivol <- -Betas_PB6M["IVOL",]
 }
 # Buybacks
 # OLD WAY
 #BUYBACK_DATA$DATASET$SDC$minus_Rsq_returns = -BUYBACK_DATA$DATASET$SDC$Rsq_returns # Since higher is "low"
 #tmp = get_feature_results(BUYBACK_DATA$DATASET,"minus_Rsq_returns", company_subset_undervalued_bb, company_subset_overvalued_bb, quantile_R2,R2window)
+#tmp = get_feature_results(BUYBACK_DATA$DATASET,"ivol", company_subset_undervalued_bb, company_subset_overvalued_bb, quantile_R2,R2window)
 # NEW WAY:
 # universe_vol_q1 is from "tmpfiles/vol_analysis.Rdata" created above
 # Get the vol score the one-before-last day of the previous month (note that these scores already use the rolling vol window so we don't need to average them e.g. over all the previous month)
@@ -546,7 +548,7 @@ R2_IRATStable_underBB = tmp$feature_IRATStable_under; R2_IRATStable_underBB_cal 
 colnames(R2_IRATStableBB) <- c("Low Idiosync.: CAR", "t-stat","p-value","High Idiosync.: CAR", "t-stat","p-value")
 colnames(R2_IRATStable_underBB) <- c("Low Idiosync.: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value", "High Idiosync.: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value")
 colnames(R2_IRATStableBB_cal) <- c("Low Idiosync.: CAL", "t-stat","p-value","High Idiosync.: CAL", "t-stat","p-value")
-colnames(R2_IRATStable_underBB_cal) <- c("Low Idiosync.: U CAL", "t-stat","p-value","O CAR", "t-stat","p-value", "High Idiosync.: U CAL", "t-stat","p-value","O CAL", "t-stat","p-value")
+colnames(R2_IRATStable_underBB_cal) <- c("Low Idiosync.: U CAL", "t-stat","p-value","O CAL", "t-stat","p-value", "High Idiosync.: U CAL", "t-stat","p-value","O CAL", "t-stat","p-value")
 rm("tmp")
 # Issuers
 # OLD WAY

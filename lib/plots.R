@@ -1,6 +1,3 @@
-library("dygraphs")
-library("reshape")
-library("ggplot2")
 
 mainColor= "#E69F00"
 secondaryColor = "#333333"
