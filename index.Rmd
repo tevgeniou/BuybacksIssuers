@@ -20,18 +20,23 @@ runtime: shiny
 load("bb_issuersTOOL.Rdata")
 #load("tmpfiles/bb_issuersALL.Rdata")
 
-#library(googleVis)
-#library("shiny")
-#library("reshape2")  
-#library("ggplot2")
-# Why are these not found when deployed?!
-library("shiny") 
-library("shinysky") #  devtools::install_github("AnalytixWare/ShinySky")
-
-library("stringr")
-library("RcppArmadillo")
-library("gtools")
-library("timeDate")
+if(T) {
+  library(googleVis)
+  library("shiny")
+  library("reshape2")  
+  library("ggplot2")
+  # Why are these not found when deployed?!
+  library("shiny") 
+  library("shinysky") #  devtools::install_github("AnalytixWare/ShinySky")
+  
+  library("stringr")
+  library("RcppArmadillo")
+  library("gtools")
+  library("timeDate")
+  library("dygraphs")
+  library("reshape")
+  library("ggplot2")
+}
 source("lib/lib_helpers_shiny.R")
 source("lib/Paper_global_parameters.R")
 source("lib/heatmapOutput.R") 
@@ -57,7 +62,7 @@ report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1
 
 <hr>
 
-This is an interactive tool for the article [Share Buyback and Equity Issue Anomalies Revisited](http://tevgeniou.github.io/BuybacksIssuers/). Users can explore the effects of various parameters as well as data filtering choices. For any given choices, users can generate and download a new **customized pdf version of the paper** by clicking the button below at any time. 
+This is an interactive tool for the article [Share Buyback and Equity Issue Anomalies Revisited](http://tevgeniou.github.io/BuybacksIssuers/). Users can explore the effects of various parameters as well as data filtering choices. For any given choices, users can generate and download a new **customized pdf version of the paper** by clicking the buttons which will appear below at any time. 
 
 <br>
 
@@ -65,22 +70,61 @@ This is an interactive tool for the article [Share Buyback and Equity Issue Anom
 
 <br>
 
+
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
-downloadHandler(
-  filename = "report.pdf",
-  content = function(file) {
-    tosave= list("startdate","enddate","market_cap_min","market_cap_max","quantile_used_ind","quantile_used_all","characteristic_irats1","characteristic_irats2","characteristic_irats3","characteristic_irats4","characteristic_irats5","characteristic_irats6","characteristic_irats1_sign","characteristic_irats2_sign","characteristic_irats3_sign","characteristic_irats4_sign","characteristic_irats5_sign","characteristic_irats6_sign")
-    newinput <- list()
-    for(i in tosave) {
-      newinput[[i]] <- input[[i]]
-    }
-    
-    
-    save("newinput",file=normalizePath("input.Rdata"))
-    knitr::knit2pdf("report.Rnw",envir=globalenv())
-    file.rename(normalizePath('report.pdf'), file)
-  }
+shinyApp(
+  ui = fluidPage(
+    fluidRow(
+      column(2,
+        conditionalPanel(
+          condition = "!$('makeReport').hasClass('shiny-busy')",
+          actionButton("makeReport","Generate Report",icon=icon("file"))
+        )
+      ),
+      column(4,
+      conditionalPanel(
+        condition = "!$('makeReport').hasClass('shiny-busy')",
+        uiOutput("downloadButton")
+        #downloadButton("downloadReport", "Download Report")
+      )
+      )
+    ),
+    busyIndicator("Please wait while we prepare the report ...",wait = 0)
+  ),
+  server = function(input, output) {
+    output$download_button <- renderUI({
+        downloadButton("downloadReport", "Download Results")
+     })
+    makeReportAction <- eventReactive(input$makeReport, {
+      #Create the pdf here
+      #Sys.sleep(1);return()
+      #first check if we didn't already create a paper with these parameters, if so, load from cache
+      #filename <- paste("reports/")
+      #file.exists()
+      tosave= list("startdate","enddate","market_cap_min","market_cap_max","quantile_used_ind","quantile_used_all","characteristic_irats1","characteristic_irats2","characteristic_irats3","characteristic_irats4","characteristic_irats5","characteristic_irats6","characteristic_irats1_sign","characteristic_irats2_sign","characteristic_irats3_sign","characteristic_irats4_sign","characteristic_irats5_sign","characteristic_irats6_sign")
+        newinput <- list()
+        for(i in tosave) {
+          newinput[[i]] <- input[[i]]
+        }
+        #save("newinput",file=normalizePath("input.Rdata"))
+        knitr::knit2pdf("report.Rnw",envir=globalenv())
+    })
+    output$downloadButton <- renderUI({
+      makeReportAction() #only appear after first click on generate
+      downloadButton("downloadReport", "Download Report")
+    })
+    output$downloadReport <- downloadHandler(
+      filename = "report.pdf",
+      content = function(file) {
+        cat(paste("Does the pdf exist?",file.exists("report.pdf")))
+        file.rename(normalizePath('report.pdf'), file)
+      }
+    )
+  },
+  options = list(height = 120,width=800)
 )
+
+
 ```
 
 <hr>
@@ -174,10 +218,10 @@ This tool allows the user to explore descriptive statistics of some of the key f
 
 
 ```{r, eval=TRUE, echo = FALSE}
-acceptaple_features = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares","Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","Idiosyncraticness","Industry", "Purpose.Code","Source.of.funds")
+acceptaple_features = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares","Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","Industry", "Purpose.Code","Source.of.funds")
 
 fluidPage(
-  selectInput("characteristic", "Select Firm Characteristic:", choices = acceptaple_features,selected = acceptaple_features[1]),
+  selectInput("characteristic", "Select Firm Characteristic:", choices = acceptaple_features,selected = acceptaple_features[4]),
   mainPanel(
     tabsetPanel("Example",
                 tabPanel("Histogram",
@@ -221,7 +265,7 @@ Two types of robustness analysis has been considered in the paper: over differen
 <br>
 
 ```{r, eval=TRUE, echo = FALSE}
-checkboxGroupInput("industry", "Select Industries  to remove:", choices = unique(DATASET_INI$SDC$Industry),selected = "Software",inline=TRUE) 
+checkboxGroupInput("industry", "Select Industries to remove:", choices = unique(DATASET_INI$SDC$Industry),selected = NULL,inline=TRUE) 
 
 ```
 
@@ -231,22 +275,38 @@ checkboxGroupInput("industry", "Select Industries  to remove:", choices = unique
 
 feature_IRATStable_industry <- reactive({
   useonly_industry = !(DATASET_NEW()$SDC$Industry %in% input$industry) 
-  cat(paste("Total left after filtering industry:",sum(useonly_industry)))
+  #cat(paste("Total left after filtering industry:",sum(useonly_industry)))
+  #instead of using company_subset_undervalued and _overvalued, use Valuation Index
+  thefeature = DATASET_NEW()$SDC[[which(names(DATASET_NEW()$SDC) == "Valuation.Index")]]
+  thefeature = as.numeric(scrub(thefeature))
+  quantile_used_ind = as.numeric(0.2)
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
+
   res = round(cbind(
-    #car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], DATASET_NEW()$SDC$Event.Date[useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], Risk_Factors_Monthly)$results,
-    #car_table(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued], DATASET_NEW()$SDC$Event.Date[useonly_industry& DATASET_NEW()$SDC$company_subset_undervalued], Risk_Factors_Monthly)$results
-    car_table_cached(DATASET_NEW()$CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued)$results,
-    car_table_cached(DATASET_NEW()$CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued)$results
+    #car_table_cached(DATASET_NEW()$CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued)$results,
+    #car_table_cached(DATASET_NEW()$CACHE,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued)$results
+    car_table_cached(DATASET_NEW()$CACHE,useonly_industry & Low_feature_events)$results,
+    car_table_cached(DATASET_NEW()$CACHE,useonly_industry & High_feature_events)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   as.data.frame(res)
 })
 
 feature_CALtable_industry <- reactive({
+    thefeature = DATASET_NEW()$SDC[[which(names(DATASET_NEW()$SDC) == "Valuation.Index")]]
+  thefeature = as.numeric(scrub(thefeature))
+  quantile_used_ind = as.numeric(0.2)
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
+
   useonly_industry = !(DATASET_NEW()$SDC$Industry %in% input$industry) 
   res = round(cbind(
-    calendar_table2(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], DATASET_NEW()$SDC$Event.Date[useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], Risk_Factors_Monthly,report_months_cal)$results,
-    calendar_table2(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued], DATASET_NEW()$SDC$Event.Date[useonly_industry& DATASET_NEW()$SDC$company_subset_undervalued], Risk_Factors_Monthly,report_months_cal)$results
+    #calendar_table2(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], DATASET_NEW()$SDC$Event.Date[useonly_industry & DATASET_NEW()$SDC$company_subset_overvalued], Risk_Factors_Monthly,report_months_cal)$results,
+    #calendar_table2(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & DATASET_NEW()$SDC$company_subset_undervalued], DATASET_NEW()$SDC$Event.Date[useonly_industry& DATASET_NEW()$SDC$company_subset_undervalued], Risk_Factors_Monthly,report_months_cal)$results
+    calendar_table2(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & Low_feature_events], DATASET_NEW()$SDC$Event.Date[useonly_industry& Low_feature_events], Risk_Factors_Monthly,report_months_cal)$results,
+        calendar_table2(DATASET_NEW()$returns_by_event_monthly[,useonly_industry & High_feature_events], DATASET_NEW()$SDC$Event.Date[useonly_industry & High_feature_events], Risk_Factors_Monthly,report_months_cal)$results
+
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
   as.data.frame(res)
@@ -278,20 +338,22 @@ fluidPage(
 The article relates 5 firm characteristics (pre-buyback-announcement returns, idiosyncratic volatility, and volatility, as well as BE/ME and Firm Size). This tool allows the user to study the effects of combining any of these firm characteristics, as well as some other ones not discussed in the paper. 
 
 ```{r, eval=TRUE, echo = FALSE}
-acceptaple_features1 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","Idiosyncraticness")
+acceptaple_features1 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio")
 
-selectInput("characteristic_irats", "Select Firm Characteristic to Define High/Low Firms:", choices = acceptaple_features1,selected = acceptaple_features1[1], width = "1000px")
+selectInput("characteristic_irats", "Select Firm Characteristic to Define High/Low Firms:", choices = acceptaple_features1,selected = acceptaple_features1[4], width = "1000px")
 
 selectInput("quantile_used","Enter the quantile to use to define High and Low Firms:", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
 
 checkboxInput("characteristic_irats_sign", "If you would like to change the sign of the firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
+
+
 
 feature_IRATStable <- reactive({
   thesign = ifelse(input$characteristic_irats_sign, -1, +1)
   thefeature = thesign*DATASET_NEW()$SDC[[which(names(DATASET_NEW()$SDC) == input$characteristic_irats)]]  
   
   thefeature = as.numeric(scrub(thefeature))
-  quantile_used_ind = as.numeric(input$quantile_used_ind)
+  quantile_used_ind = as.numeric(input$quantile_used)
   
   High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
   Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
@@ -391,7 +453,7 @@ Much like the EU-index in the paper, one can create other indices by combining d
 
 
 ```{r, eval=TRUE, echo = FALSE}
-acceptaple_features2 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","Idiosyncraticness","None")
+acceptaple_features2 = c("Prior.Returns.Score", "BE.ME.Score","Size.Score" ,"Valuation.Index", "Market.Cap",          "Percent.Shares", "Market.beta","SMB.beta","HML.beta" , "RMW.beta" ,"CMA.beta", "one.minus.Rsq.Score", "pre.vol.Score","ivol", "leverage.ratio","None")
 ```
 
 <br>
@@ -400,7 +462,7 @@ fluidPage(
   h4("Firm Characteristics of the new index"),
   fluidRow(
     column(6,
-      selectInput("characteristic_irats1", "First Firm Characteristic:", choices = acceptaple_features2,selected = acceptaple_features2[1], width = "425px"),
+      selectInput("characteristic_irats1", "First Firm Characteristic:", choices = acceptaple_features2,selected = acceptaple_features2[4], width = "425px"),
       checkboxInput("characteristic_irats1_sign", "Reverse", value = FALSE),
       selectInput("characteristic_irats2", "Second Firm Characteristic:", choices = acceptaple_features2,selected ="None", width = "425px"),
 checkboxInput("characteristic_irats2_sign", "Reverse", value = FALSE),
@@ -547,6 +609,15 @@ Low_feature_Hedged_react_index <- reactive({
 fluidPage(
   mainPanel(
     tabsetPanel("Example",
+                tabPanel("Histogram of the New Index",
+                         busyIndicator("Calculating results ...",wait = 0),
+                         renderPlot({
+                           feature = Index_Score_rect()
+                           feature = feature[!is.na(feature)]
+                           if (!is.numeric(feature))
+                             feature = 1
+                           hist(feature, density = 100, breaks = 20,main="Index Histogram",xlab="Score")
+                         })),
                 tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
                          busyIndicator("Calculating results ...",wait = 0),
                          renderTable({
@@ -556,15 +627,6 @@ fluidPage(
                          busyIndicator("Calculating results ...",wait = 0),
                          renderTable({
                            feature_CALtable_index()
-                         })),
-                tabPanel("Histogram of the New Index",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderPlot({
-                           feature = Index_Score_rect()
-                           feature = feature[!is.na(feature)]
-                           if (!is.numeric(feature))
-                             feature = 1
-                           hist(feature, density = 100, breaks = 100)
                          })),
                 tabPanel("Cumulative Abnormal Returns,High, 12m hold",
                          busyIndicator("Calculating results ...",wait = 0),
