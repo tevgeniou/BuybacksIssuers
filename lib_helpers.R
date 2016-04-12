@@ -356,7 +356,10 @@ beta_expost <- function(ri,Riskfactors) {
 ################################################################################################################
 ################################################################################################################
 
+
+############################
 #Builds a car table like PV2009. Returns need to be monthly, same for the risk factors
+############################
 car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, max_window = 48,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA",value.weights = 1) {
   factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   min_window = min(1,min_window)
@@ -485,7 +488,10 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   return(all_results)
 }
 
+
+############################
 #Builds a calendar table like PV2009. Returns need to be monthly, same for the risk factors
+############################
 calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window = -6, max_window = 48,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA",value.weights = 1) {
   #data check
   if (class(Risk_Factors_Monthly) != "data.frame") {
@@ -578,6 +584,14 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
   all_results = list(results = results, betas = betas, betasstderr = betasstderr)
   return(all_results)
 }
+
+############################
+#Builds a stock specific regression like Brennan, Chordia and Subrahmanyam (1998)
+############################
+
+
+
+
 
 ################################################################################################################
 #####################################################################################
