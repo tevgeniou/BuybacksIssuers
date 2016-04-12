@@ -19,6 +19,19 @@ get_libraries(libraries_used)
 
 options(stringsAsFactors=FALSE)
 
+
+# Summary table
+my_summary <- function(x){
+  nas = sum(is.na(x))
+  x=x[!is.na(x)]
+  res = c(mean(x), median(x),min(x),quantile(x,0.1), quantile(x,0.25), quantile(x,0,95), quantile(x,0.9), max(x), sd(x), length(x))
+  names(res) <- c("mean", "p50", "min", "p10", "p25", "p75","p90","max","sd", "N")
+  res
+}
+
+non_na_mean <- function(x) { mean(x[!is.na(x) & x != 0]) }
+non_na_sd <- function(x) { sd(x[!is.na(x) & x != 0]) }
+
 remove_initialization_time <- function(x,min_date=NULL) { # Note: Added also min_date as an argument!! THis way we remove data from any given date!
   if (!is.null(min_date)){
     res = x[as.Date(names(x)) >= as.Date(min_date)]
@@ -193,7 +206,8 @@ col_apply<-function(m,f,...){
 "%-%"<-row_apply
 "%|%"<-col_apply
 
-############################
+################################################################################################################
+################################################################################################################
 
 # data is a daysXsecurities matrix of dayly returns.
 # the %|% operator applies a function column-wise
@@ -241,6 +255,34 @@ alpha_ff <- function(ri,RiskFactors,Risk_Factors_Equation) {
   model = lm(form,data=data)
   alpha = summary(model)$coefficients[1]
 }
+
+################################################################################################################
+################################################################################################################
+# DATASET CREATION RELATED FUNCTIONS
+################################################################################################################
+################################################################################################################
+
+
+get_cross_section_score <- function(therawdata){
+  tmp = therawdata%-%function(r){
+    if (sum(!is.na(r) & r!=0)){
+      res = ifelse(!is.na(r) & r!=0, ecdf(r[!is.na(r) & r!=0])(r),NA)
+    } else {
+      res = r*0
+    }
+    res
+  }
+  rownames(tmp) <- rownames(therawdata)
+  tmp
+}
+
+
+################################################################################################################
+################################################################################################################
+# Simple analyses
+################################################################################################################
+################################################################################################################
+
 
 # Returns the alpha, based on a running regression
 # Riskfactors could be any (date x factor) vector or data frame and will be used in an lm:
@@ -307,6 +349,12 @@ beta_expost <- function(ri,Riskfactors) {
   model = fastLm(form,data=data)
   return(summary(model)$coefficients)
 }
+
+################################################################################################################
+################################################################################################################
+# Econometric methods
+################################################################################################################
+################################################################################################################
 
 #Builds a car table like PV2009. Returns need to be monthly, same for the risk factors
 car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, max_window = 48,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA",value.weights = 1) {
@@ -531,18 +579,11 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
   return(all_results)
 }
 
+################################################################################################################
 #####################################################################################
-### ADDITIONAL KEY CODE FROM BUYBACKS/ISSUERS
+### ADDITIONAL KEY CODE FROM BUYBACKS/ISSUERS PROJECT
 #####################################################################################
-
-# Summary table
-my_summary <- function(x){
-  nas = sum(is.na(x))
-  x=x[!is.na(x)]
-  res = c(mean(x), median(x),min(x),quantile(x,0.1), quantile(x,0.25), quantile(x,0,95), quantile(x,0.9), max(x), sd(x), length(x))
-  names(res) <- c("mean", "p50", "min", "p10", "p25", "p75","p90","max","sd", "N")
-  res
-}
+################################################################################################################
 
 #Normal performance Function
 Performance <- function(date_to_start, date_to_end, Dates, returns_used, event){
@@ -764,12 +805,6 @@ exit_helper_rnw <- function(event,exit_signal_name,holding_period_pnl = "Four.Ye
   ))
 }
 
-############################################################
-# Define a helper function that we can use for any firm characteristic:
-
-non_na_mean <- function(x) { mean(x[!is.na(x) & x != 0]) }
-non_na_sd <- function(x) { sd(x[!is.na(x) & x != 0]) }
-
 get_feature_results <- function(DATASET,feature_name, company_subset_undervalued,company_subset_overvalued,quantile_feature,featurewindow, method="Complex"){
   
   if (method == "Simple"){
@@ -863,17 +898,3 @@ get_feature_results <- function(DATASET,feature_name, company_subset_undervalued
 }
 
 
-non_na_mean <- function(x) { mean(x[!is.na(x) & x != 0]) }
-non_na_sd <- function(x) { sd(x[!is.na(x) & x != 0]) }
-get_cross_section_score <- function(therawdata){
-  tmp = therawdata%-%function(r){
-    if (sum(!is.na(r) & r!=0)){
-      res = ifelse(!is.na(r) & r!=0, ecdf(r[!is.na(r) & r!=0])(r),NA)
-    } else {
-      res = r*0
-    }
-    res
-  }
-  rownames(tmp) <- rownames(therawdata)
-  tmp
-}
