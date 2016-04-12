@@ -589,7 +589,81 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
 #Builds a stock specific regression like Brennan, Chordia and Subrahmanyam (1998)
 ############################
 
-
+BSC1998_event_study <- function(returns,Event.Date,company_features, Risk_Factors_Monthly,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA", rolling_window=60, min_window = -6, max_window = 48, min_data = 30){
+  # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
+  
+  ## Step 1: Estimate Factor Loadings, starting min_window months before the event announcement (so month 0 is the event month)
+  # Keep track also of the risk and stock returns the next month - where we will do the predictions
+  factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
+  if (sum(!(factors_used %in% colnames(Risk_Factors_Monthly))))
+    stop(paste("BSC1998_event_study misses the risk factors: ",factors_used[!(factors_used %in% colnames(Risk_Factors_Monthly))]))
+  
+  factors_used_noRF = setdiff(factors_used, "RF")
+  number_of_factors = length(factors_used_noRF)
+  form  = as.formula(formula_used)
+  Risk_Factors_Monthly = Risk_Factors_Monthly[,factors_used]
+  if (!("RF" %in% factors_used)){
+    Risk_Factors_Monthly = cbind(Risk_Factors_Monthly,matrix(0,nrow=nrow(Risk_Factors_Monthly)))
+    colnames(Risk_Factors_Monthly)[ncol(Risk_Factors_Monthly)] <- "RF"
+  }
+  
+  Event.Date_month = str_sub(Event.Date,start=1,end=7)
+  returns_month = str_sub(rownames(returns), start=1,end=7)
+  
+  factor_loadings = lapply(1:length(Event.Date), function(i){
+    cat(i,",")
+    stock_returns = structure(returns[,i], .Names = returns_month)
+    event_row = which(returns_month == Event.Date_month[1])
+    t(Reduce(cbind,lapply((min_window-1):(max_window-1), function(themonth){ # Note we use the "-1" here as we will be using the estimates till the previous month. We may want to use -2 here to be 100% safe. to check.
+      res = structure(rep(NA,number_of_factors + (number_of_factors+1) + 1), .Names = c(factors_used_noRF, paste(factors_used,"ret", sep="_"), "actual_ret"))
+      period_used = min(length(returns_month), max(1,event_row+themonth - rolling_window)):min(length(returns_month), max(1,event_row+themonth -1))
+      period_to_predict = min(length(returns_month), max(1,event_row+themonth))
+      if (length(period_used) > min_data & tail(period_used,1) < period_to_predict){ # in case we are at the last month available for this stocks
+        ret = cbind(Risk_Factors_Monthly,returns[,i])[period_used,]
+        colnames(ret)[ncol(ret)]<- "ri"
+        if (sum(ret[,"ri"]!=0) >= min_data){
+          ret <- ret[ret[,"ri"]!=0,] 
+          model = fastLm(form,data=data.frame(ret,row.names = NULL))
+          thebetas = summary(model)$coefficients[2:nrow(summary(model)$coefficients), "Estimate"]
+          res = c(thebetas,as.numeric(Risk_Factors_Monthly[period_to_predict,]), returns[period_to_predict,i])
+          names(res) <- c(factors_used_noRF, paste(factors_used,"ret", sep="_"), "actual_ret")
+        }
+      }
+      res
+    })))
+  })
+  
+  
+  ## Step 2: Calculate Monthly Estimated Risk-adjusted Return 
+  months_used = min_window:max_window
+  Estimated_returns = Reduce(rbind,lapply(1:length(factor_loadings), function(thestock){
+    this_stock_data = factor_loadings[[thestock]]
+    apply(this_stock_data, 1, function(r)
+      ifelse(!is.na(sum(r)), r["actual_ret"] - r["RF_ret"] - sum(r[factors_used_noRF]*r[paste(factors_used_noRF,"ret", sep="_")]), NA)
+    )
+  }))
+  
+  ## Step 3: Run Cross-Section Regression in Each Post-Event Month, from 1-48 months
+  C_mt_coefficients = Reduce(cbind,lapply(1:ncol(Estimated_returns), function(month){
+    month_returns = Estimated_returns[,month]
+    useonly = which(!is.na(month_returns))
+    res = rep(NA, ncol(company_features)+1)
+    if (length(useonly) > ncol(company_features) + 1){
+      cross_sectional_data = cbind(company_features[useonly,], month_returns[useonly])
+      colnames(cross_sectional_data) <- c(paste("Ind", 1:ncol(company_features), sep=""), "ret")
+      cross_setional_form = as.formula(paste("ret", str_c(paste("Ind", 1:ncol(company_features), sep=""), collapse=" + "), sep=" ~ "))
+      model = fastLm(cross_setional_form,data=data.frame(cross_sectional_data,row.names = NULL))
+      res = summary(model)$coefficients[,1]
+    }
+    res
+  }))
+  
+  colnames(C_mt_coefficients) <- months_used
+  if (!is.null(colnames(company_features)))
+    rownames(C_mt_coefficients) <- c("alpha_intercept", colnames(company_features))
+  C_mt_coefficients
+  ## Step 4: Aggregate  C_mt_coefficients over 48 Post-Event Months: Time-Series Average of C_mt_coefficients (This can be done outside, for whatever months one needs)
+}
 
 
 
