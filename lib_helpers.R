@@ -361,6 +361,17 @@ beta_expost <- function(ri,Riskfactors) {
 #Builds a car table like PV2009. Returns need to be monthly, same for the risk factors
 ############################
 car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, max_window = 48,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA",value.weights = 1) {
+  #data check
+  if (class(Risk_Factors_Monthly) != "data.frame") {
+    dates <- names(Risk_Factors_Monthly)
+    Risk_Factors_Monthly = data.frame(market=Risk_Factors_Monthly)
+    rownames(Risk_Factors_Monthly) <- dates
+  }
+  # Make all data have monthly dates on first of month:
+  rownames(returns) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(Risk_Factors_Monthly) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  
+  ###
   factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   min_window = min(1,min_window)
   max_window = max(-1,max_window)
@@ -499,6 +510,11 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
     Risk_Factors_Monthly = data.frame(market=Risk_Factors_Monthly)
     rownames(Risk_Factors_Monthly) <- dates
   }
+  # Make all data have monthly dates on first of month:
+  rownames(returns) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(Risk_Factors_Monthly) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  
+  ### 
   factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   factors_used_noRF = setdiff(factors_used, "RF")
   min_window = min(1,min_window)
@@ -588,11 +604,11 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
 ############################
 #Builds a stock specific regression like Brennan, Chordia and Subrahmanyam (1998)
 ############################
+# Split in two parts as the first one is more generic 
 
-BSC1998_event_study <- function(returns,Event.Date,company_features, Risk_Factors_Monthly,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA", rolling_window=60, min_window = -6, max_window = 48, min_data = 30){
+# PART I OF BSC1998_event_study
+event_study_returns_estimates <- function(returns,Event.Date,company_features, Risk_Factors_Monthly,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA", rolling_window=60, min_window = -6, max_window = 48, min_data = 30){
   # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
-  
-  ## Step 1: Estimate Factor Loadings, starting min_window months before the event announcement (so month 0 is the event month)
   # Keep track also of the risk and stock returns the next month - where we will do the predictions
   factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   if (sum(!(factors_used %in% colnames(Risk_Factors_Monthly))))
@@ -610,8 +626,9 @@ BSC1998_event_study <- function(returns,Event.Date,company_features, Risk_Factor
   Event.Date_month = str_sub(Event.Date,start=1,end=7)
   returns_month = str_sub(rownames(returns), start=1,end=7)
   
-  factor_loadings = lapply(1:length(Event.Date), function(i){
-    cat(i,",")
+  ## Step 1: Estimate Factor Loadings, starting min_window months before the event announcement (so month 0 is the event month)
+  lapply(1:length(Event.Date), function(i){
+    if (i%%100 == 1) cat(i,",")
     stock_returns = structure(returns[,i], .Names = returns_month)
     event_row = which(returns_month == Event.Date_month[1])
     t(Reduce(cbind,lapply((min_window-1):(max_window-1), function(themonth){ # Note we use the "-1" here as we will be using the estimates till the previous month. We may want to use -2 here to be 100% safe. to check.
@@ -633,6 +650,31 @@ BSC1998_event_study <- function(returns,Event.Date,company_features, Risk_Factor
     })))
   })
   
+}
+# PART II OF BSC1998_event_study
+BSC1998_event_study_coeffs <- function(factor_loadings,returns,Event.Date,company_features, Risk_Factors_Monthly,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA", rolling_window=60, min_window = -6, max_window = 48, min_data = 30){
+  # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
+  # Assumes factor_loadings comes from BSC1998_event_study_returns_estimates using the exact same inputs!
+  
+  # Keep track also of the risk and stock returns the next month - where we will do the predictions
+  factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
+  if (sum(!(factors_used %in% colnames(Risk_Factors_Monthly))))
+    stop(paste("BSC1998_event_study misses the risk factors: ",factors_used[!(factors_used %in% colnames(Risk_Factors_Monthly))]))
+  
+  factors_used_noRF = setdiff(factors_used, "RF")
+  number_of_factors = length(factors_used_noRF)
+  form  = as.formula(formula_used)
+  Risk_Factors_Monthly = Risk_Factors_Monthly[,factors_used]
+  if (!("RF" %in% factors_used)){
+    Risk_Factors_Monthly = cbind(Risk_Factors_Monthly,matrix(0,nrow=nrow(Risk_Factors_Monthly)))
+    colnames(Risk_Factors_Monthly)[ncol(Risk_Factors_Monthly)] <- "RF"
+  }
+  
+  Event.Date_month = str_sub(Event.Date,start=1,end=7)
+  returns_month = str_sub(rownames(returns), start=1,end=7)
+  
+  ## Step 1: Estimate Factor Loadings, starting min_window months before the event announcement (so month 0 is the event month)
+  # Assumes these are inputs!
   
   ## Step 2: Calculate Monthly Estimated Risk-adjusted Return 
   months_used = min_window:max_window
