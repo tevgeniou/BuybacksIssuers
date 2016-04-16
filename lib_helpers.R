@@ -116,7 +116,7 @@ show_stats<-function(x)paste(names(pnl_stats(x)),pnl_stats(x),sep=":",collapse="
 ###
 
 # if number of non-zeroes of x is less than n, return 0, else return the mean of the non-zero entries 
-non_zero_mean<-function(x,n=1)ifelse(sum(x!=0)<n,0,mean(x[x!=0]))
+non_zero_mean<-function(x,n=1)ifelse(sum(scrub(x)!=0)<n,0,mean(scrub(x)[scrub(x)!=0]))
 # moving average of previous n elements : 0 for first n-1 elements
 ma<-function(x,n,f=identity){res<-as.numeric(filter(f(x),rep(1/n,n),method="convolution",sides=1,circular=FALSE)); ifelse(is.na(res),0,res)}
 # moving sum of previous n elements : 0 for first n-1 elements
@@ -933,6 +933,26 @@ exit_helper_rnw <- function(event,exit_signal_name,holding_period_pnl = "Four.Ye
               pnl_Exit_Hedged = pnl_Exit_Hedged, pnl_NoExit_Hedged = pnl_NoExit_Hedged, 
               number_events = number_events 
   ))
+}
+
+get_pnl_results_stock_subset <- function(DATASET,High_feature_events,Low_feature_events,Risk_Factors_Monthly,pnl_hedge_factors){
+  High_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
+  Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
+  High_feature_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
+  Low_feature_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
+  High_feature48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
+  Low_feature48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
+  High_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
+  Low_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
+ 
+  list(
+    High_feature_Hedged   = High_feature_Hedged,
+    Low_feature_Hedged    = Low_feature_Hedged,
+    High_feature48m       = High_feature48m,
+    Low_feature48m        = Low_feature48m,
+    High_feature_Hedged48m  = High_feature_Hedged48m,
+    Low_feature_Hedged48m   = Low_feature_Hedged48m
+  ) 
 }
 
 get_feature_results <- function(DATASET,feature_name, company_subset_undervalued,company_subset_overvalued,quantile_feature,featurewindow, method="Complex"){
