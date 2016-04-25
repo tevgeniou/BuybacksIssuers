@@ -147,26 +147,6 @@ knit_hooks$set(inline = inline_hook)
 
 \begin{document}
 
-%%Blind title page
-%\begin{titlepage}
-%\begin{center}
-%  \centering
-%\vskip 60pt
-%\LARGE Share Buyback and Equity Issue Anomalies Revisited \par
-%\vskip 1.5em
-%\normalsize  \today
-%\noindent \\ 
-%\begin{abstract}
-%\noindent We re-examine the behavior of stock returns after net issue  announcements using the five-factor model proposed by Fama and French (2015a). We confirm their findings that the equity issue anomaly disappears  with the five-factor model, but the buyback anomaly does not. Buyback announcements by firms  with high pre-announcement (idiosyncratic) volatility  are followed by higher long-term abnormal returns. This is inconsistent with the widely documented low volatility anomaly, but consistent with Stambaugh, Yu, and Yuan (2015) who find a positive relation between stock returns and idiosyncratic volatility for undervalued stocks.
-%\end{abstract}
-%\vspace{2cm}
-%\end{center}
-%\medskip
-%\noindent \textit{JEL classification}: G35
-%\medskip
-%\noindent \textit{Keywords}: Share Buybacks, Seasoned Equity Offerings
-%\end{titlepage}
-
 \setlist{noitemsep}  % Reduce space between list items (itemize, enumerate, etc.)
 %\onehalfspacing      % Use 1.5 spacing
 % Use endnotes instead of footnotes - redefine \footnote command
@@ -300,8 +280,6 @@ Table~\ref{tbl:priorBuybacks}, Panel~A, shows the three-factor as well as the fi
 
 Table~\ref{tbl:priorBuybacks}, Panel~B, shows that this conclusion holds when we use the Calendar Time method. Regardless of the horizon, high U-index stocks almost always beat low U-index stocks. As in the case of IRATS, the five-factor model improves the selectivity of the Undervaluation Index: low U-index now no longer earn significant excess returns after 48 months.
 
-%Figure~\ref{fig:pastall} summarizes the IRATS results in more detail by showing the cumulative abnormal returns during the 6 month pre and 48 month post event period, using the five-factor model. Results are shown for the total sample of buybacks and equity issues, as well as for high and low U-index buyback samples.
-
 
 \subsection{Buybacks followed by Equity Issues}
 \label{sec:Eventexit}
@@ -321,8 +299,6 @@ Of the \Sexpr{length(SEO_exit_days)} such events, \Sexpr{sum(abs(SEO_exit_days) 
 Table~\ref{tbl:BBISSexit}  shows that repurchasing firms that issued stock within 48 months after the buyback are remarkable timers. Long-term excess returns after 4 years are \Sexpr{Exit_on_SEO_Abn_table["+48",4]}$\%$ (t=\Sexpr{Exit_on_SEO_Abn_table["+48",5]}), more than four times as large as for the overwhelming majority of firms that do not issue stock subsequently. These results are graphically displayed in Figure~\ref{fig:BBISSexit} (Panel~A). Repurchases by firms that do not issue equity in the next 48 months are followed by long term excess returns of only \Sexpr{Exit_on_SEO_Abn_table["+48",1]}$\%$. One interpretation is that these firms believe they are undervalued but as long as they remain undervalued they do not think it is appropriate to issue stock. 
 
 The Calendar Method results in Panel B of Table~\ref{tbl:BBISSexit} show a relatively large drop of the excess returns over time (e.g., from \Sexpr{Exit_on_SEO_Abn_table_cal["+12",4]}$\%$ after 12 months to \Sexpr{Exit_on_SEO_Abn_table_cal["+48",4]}$\%$ after 48 months) indicating potential benefits of exiting a buyback position when there is a subsequent issue. Figure  \ref{fig:BBISSexit} (Panel~B) shows the benefits of exiting early. The figure shows a strategy with hindsight where, starting in \Sexpr{firstyear}, we invest in an equally weighted portfolio of only firms that announced a buyback and subsequently issued equity within the 48 months after the buyback announcement. The dashed line shows the cumulative excess return if we sold the stock whenever the firm issued shares within 48 months (the ``exit strategy''). The solid line shows the cumulative excess returns if we only sold 48 months after the buyback announcement (the ``no exit strategy''). The investor who had followed the exit strategy would have earned (after 30 years) a cumulative excess return of \Sexpr{round(tail(100*cumsum(BB_ISS_Exit_Hedged),1),1)}$\%$, compared to the \Sexpr{round(tail(100*cumsum(BB_ISS_NoExit_Hedged),1),1)}$\%$ of a buy and hold for 48 months strategy. Note, however, that because very few firms that buy back stock issue equity within 48 months,  a strategy ``without hindsight'' where one bought all companies after a buyback and sold only those after a subsequent equity issue would not substantially increase excess returns.
-
-%Table~\ref{tbl:BBISSexitAfter} shows the long run excess returns after the announcement of an equity issue for two samples. The first sample (After a Buyback) shows the excess returns for issues for which in the previous 48 months the firm announced a buyback.  The second sample (No Prior Buyback) shows the excess returns for all other issue announcements.  The fact that excess returns are not significantly different from zero for the post-buyback issuers agrees with the intuition of Figure~\ref{fig:BBISSexit}: exiting when there is a subsequent equity issue is a better strategy for the long-term buyback investor.  
 
 
 \section{How robust is the buyback  anomaly?}
@@ -359,20 +335,7 @@ Specifically, we consider the following trading strategy: construct the first da
 
 Despite using pre-portfolio formation data to estimate the betas, unlike both the IRATs and Calendar Time methods that use hindsight to estimate risk, the hedged portfolio indeed has very low betas with the five factors. For example for the $N =12$ months holding period, the betas for the five factors Market, SMB, HML, RMW, and CMA are respectively \Sexpr{round(expost_betas[2,1],3)}, \Sexpr{round(expost_betas[3,1],3)}, \Sexpr{round(expost_betas[4,1],3)}, \Sexpr{round(expost_betas[5,1],3)} and \Sexpr{round(expost_betas[6,1],3)}. The corresponding betas for the ``unhedged'' strategy are \Sexpr{round(expost_betas_unhedged[2,1],3)}, \Sexpr{round(expost_betas_unhedged[3,1],3)}, \Sexpr{round(expost_betas_unhedged[4,1],3)}, \Sexpr{round(expost_betas_unhedged[5,1],3)} and \Sexpr{round(expost_betas_unhedged[6,1],3)}. This indicates that the returns of the hedged strategy are indeed close to ``excess'' returns, i.e. returns that have basically eliminated all factors risk. This is also consistent with the hypothesis that the buyback announcement itself does not materially change the risk of the repurchasing firms (in the short term). 
 
-We report the returns (unhedged strategy) and excess returns (hedged strategy) of such a portfolio strategy for different holding months $N$ = 1, 3, 6, 12, 24, 36, 48 in Figure~\ref{fig:ReturnsBB}.\footnote{Results for other holding periods, as in Figure~\ref{fig:ReturnsBB}, are available upon request.} The basic conclusion is that the shorter the investment horizon the larger the excess returns. Specifically, at the end of \Sexpr{lastyear} the cumulative excess returns from the 1 month, 6 month, 12 month, 24 month, 36 month and 48 month holding periods are respectively equal to \Sexpr{round(tail(months1,1),1)}$\%$, \Sexpr{round(tail(months3,1),1)}$\%$, \Sexpr{round(tail(months6,1),1)}$\%$, \Sexpr{round(tail(months12,1),1)}$\%$, \Sexpr{round(tail(months24,1),1)}$\%$, \Sexpr{round(tail(months36,1),1)}$\%$ and \Sexpr{round(tail(months48,1),1)}$\%$. This is not surprising as the Calendar Time results in Table~\ref{tbl:priorBuybacks} show that the monthly excess returns decline when the investment horizon becomes longer. However, Figure~\ref{fig:ReturnsBB} allows us to verify that the excess returns are not simply the result of outperformance during a particular time period. %Table~\ref{tbl:allhedgedBB} shows the monthly and yearly returns of this five-factors hedged strategy for N=12.  The table shows that in \Sexpr{sum(tmp[,13] > 0)} of \Sexpr{sum(tmp[,13] != 0)} years the excess returns are positive, with a large \Sexpr{round(max(tmp[,13]),1)}$\%$ excess return in  \Sexpr{rownames(tmp)[which.max(tmp[,13])]}. In only one year (\Sexpr{rownames(tmp)[which.min(tmp[,13])]}) the strategy generates an abnormal loss larger than \Sexpr{round(abs(sort(tmp[,13])[2]),1)}$\%$.
-
-
-
-
-%\subsection{Robustness across Sectors}
-%\label{sec:AllIndustries}
-
-%<<   eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-%tmp = Reduce(cbind,lapply(1:length(industry_BB), function(i) industry_BB[[i]][,1:3] ))
-%@
-
-%Figure~\ref{fig:industryeventsBB} shows the number of buyback events per industry in our sample. The software and semiconductor industries are the most active repurchasers. They also tend to be the most volatile industries, industries where disagreement about fundamental value is large - as we report later in Table \ref{tbl:industriesR2Vol}. Table~\ref{tbl:IndustriesBB} shows the IRATS cumulative abnormal returns and Table~\ref{tbl:IndustriesBB_cal} the Calendar Time method monthly average abnormal returns when we remove one industry at the time, for the top most frequent buyback industries (those for which there are at least \Sexpr{min_industry_sampleBB} events in our sample).  Note from Table~\ref{tbl:priorBuybacks} that, after 48 months, the cumulative abnormal returns for the whole sample (using IRATS) is \Sexpr{round(IRATS_table_all_bb["+48","CAR 5F"],2)}$\%$ and the monthly average excess return (Calendar Time) is \Sexpr{round(CAL_table_all_bb["+48","CAL 5F"],2)}$\%$.  So the larger the difference between these numbers and the corresponding numbers for the industry indicated in Tables~\ref{tbl:IndustriesBB} and \ref{tbl:IndustriesBB_cal}, the larger the excess returns in the industry removed. For example, using IRATS, deleting the software industry lowers the CAR from \Sexpr{round(IRATS_table_all_bb["+48","CAR 5F"],2)}$\%$ to \Sexpr{round(tmp["+48", 3*(which(names(industry_BB) == "Software")-1)+1],2)}$\%$, a \Sexpr{round(IRATS_table_all_bb["+48","CAR 5F"] - tmp["+48", 3*(which(names(industry_BB) == "Software")-1)+1],2)}$\%$ decline. This is the largest decline in Table~\ref{tbl:IndustriesBB}, indicating that buybacks in the software industry are followed by the largest excess returns. However, deleting Retail, Insurance, Machinery, Meals and especially Chemical stocks improves the excess returns.  Of course, these differences could be explained by differences in U-index levels or other indicators of the likelihood of misvaluation, a topic we turn to next.    
-
+We report the returns (unhedged strategy) and excess returns (hedged strategy) of such a portfolio strategy for different holding months $N$ = 1, 3, 6, 12, 24, 36, 48 in Figure~\ref{fig:ReturnsBB}.\footnote{Results for other holding periods, as in Figure~\ref{fig:ReturnsBB}, are available upon request.} The basic conclusion is that the shorter the investment horizon the larger the excess returns. Specifically, at the end of \Sexpr{lastyear} the cumulative excess returns from the 1 month, 6 month, 12 month, 24 month, 36 month and 48 month holding periods are respectively equal to \Sexpr{round(tail(months1,1),1)}$\%$, \Sexpr{round(tail(months3,1),1)}$\%$, \Sexpr{round(tail(months6,1),1)}$\%$, \Sexpr{round(tail(months12,1),1)}$\%$, \Sexpr{round(tail(months24,1),1)}$\%$, \Sexpr{round(tail(months36,1),1)}$\%$ and \Sexpr{round(tail(months48,1),1)}$\%$. This is not surprising as the Calendar Time results in Table~\ref{tbl:priorBuybacks} show that the monthly excess returns decline when the investment horizon becomes longer. However, Figure~\ref{fig:ReturnsBB} allows us to verify that the excess returns are not simply the result of outperformance during a particular time period.
 
 
 \section{Excess returns and volatility}
@@ -392,8 +355,6 @@ Table~\ref{tbl:IdiosyncraticunderBB} shows the IRATS and Calendar Time abnormal 
 
 
 Figure \ref{fig:pastallidio} summarizes our results.  It shows the CAR based on IRATS (Panel~A for the high U-index firms, B for the low U-index firms, and C for all firms). In agreement with Table~\ref{tbl:IdiosyncraticunderBB}, the striking result (Panel~A) is that the U-index is not a good predictor of excess returns for stocks largely driven by market factors (low idiosyncratic firms). This is strong evidence that excess returns after buybacks are driven by superior company-specific information of the management.
-
-%The finding that $1-R^2$ and idiosyncratic volatility (IVOL in \citep{Ang2006}, measured as the standard deviation of the residuals of the factor model regression) are positively related to future excess returns is inconsistent with \cite{Ang2006} who find a negative relation between IVOL and expected returns. However, \cite{Stambaugh2015} argue that the relationship between IVOL and returns becomes positive for undervalued stocks. Their argument is that IVOL represents risk that deters arbitrage and therefore creates mispricing. Using a proxy for mispricing based on 11 anomalies they find indeed a positive relation between IVOL and future returns for undervalued stocks. Their most under-priced high IVOL stocks earn monthly excess returns (relative to the Fama-French three-factor model) of 0.56$\%$ per month which is quite similar to the \Sexpr{R2_IRATStableBB_cal["+48","High Idiosync.: CAL"]}$\%$ per month reported in our Table~\ref{tbl:IdiosyncraticunderBB} Panel B (using the five-factor model).  So our results are also consistent with the \cite{Stambaugh2015} interpretation.
 
 \subsection{Volatility and excess returns}
 \label{sec:volbuybacks}
@@ -422,9 +383,7 @@ Table~\ref{tbl:VOLunderBB} also tests whether the U-index can further differenti
 Table~\ref{tbl:underidioallBB} shows how the high/low U-index  low/high idiosyncratic risk, and low/high volatility buyback events overlap, while Table~\ref{tbl:underidioallBBcor} shows the correlations between the idiosyncratic, volatility, and U-index scores. Overall we see that although high U-index firms tend to have high idiosyncratic risk and high volatility, while high idiosyncratic risk firms tend to also have high volatility, the overlap is not very high. For example from Table~\ref{tbl:underidioallBB} we see that  only \Sexpr{round(Under_IdioBB["High Vol.","H Idiosync."],1)}$\%$ of the high volatility stocks that are classified as having either high or low idiosyncratic risk - note that we only consider the  \Sexpr{round(100*quantile_R2,2)}$\%$ tails - have high idiosyncratic risk. From Table~\ref{tbl:underidioallBBcor} we infer that the correlation between idiosyncratic risk and volatility is only \Sexpr{round(Under_IdioBB_cor["Volatility Score","Idiosyncratic Score"]*100,1)}$\%$.  A natural question is therefore whether one can further enhance the \cite{PeyerVermaelen2009} U-index by incorporating information about the firms' pre-announce idiosyncratic risk and volatility. We consider one such combination where we simply take an equal-weighted combination of the 4 criteria into one ``Enhanced Undervaluation Index'' (EU-index). Specifically, in the spirit of the U-index of \cite{PeyerVermaelen2009}, we calculate the EU-index simply as the sum of three numbers: high U-index firms get a score of 2, low get a 0; high idiosyncratic firms get a score of 2, low get a 0; and high volatility firms get a score of 2, low get a 0. Firms that get neither 0 nor 2 (hence are in the middle of the range) get a score of 1 for each of these 3 scores.
 
 
-Figure~\ref{fig:Eundervaluationindex} shows the distribution of the EU-index. The index has a symmetric distribution with a mean of \Sexpr{round(mean(EUindex_bb),2)}. Table~\ref{tbl:EUrelations} shows how the EU-index relates to a number of firm characteristics. Firm leverage, based on data the year before announcement, is defined as the ratio $debt/(debt+equity)$.\footnote{We use the definitions from \url{http://www.ivo-welch.info/professional/leverage.placebo/}{Ivo Welch's website} following  \url{http://www.ivo-welch.info/professional/leverage.placebo/r-sourcecode/mksane.R}. Debt is the sum of the Compustat variables $dlc+ dltt$, where $dlc$ is ``Debt in Current Liabilities'' and $dltt$ is ``Long Term Debt - Total''. Equity is the Compustat variable $seq$ which is ``Total Parent Stockholders' Equity''. We use the most recent data pre-announce, and make the winsorization and other adjustments as in the websites above. Note that we followed the same steps as in these websites to handle negative book value of equity (in the BE/ME calculations) and any other Compustat data issues.} 
-%``Missed (beat) EPS'' measures the percentage of firms in the specific EU index category that missed (beat) the last EPS consensus analyst forecast before the buyback announcement. 
-``ISS later'' measures the percentage of firms that announced an equity issue within 48 months after the buyback announcement. Next, we measure the percentage of buybacks financed with cash (CASH) when the data is available\footnote{As this SDC data was not available for many events, we did not consider the in the U-index calculation.} (this data was available only for \Sexpr{sum(!(BUYBACK_DATA$DATASET$SDC$Source...of..Funds..Code == ""))} of the events) and whether the reported purpose (available only for \Sexpr{sum(!(BUYBACK_DATA$DATASET$SDC$Purpose.Code == ""))} events) included the term ``Undervalued'', or ``Enhance Shareholder Value'' or ``stock option plan''.
+Figure~\ref{fig:Eundervaluationindex} shows the distribution of the EU-index. The index has a symmetric distribution with a mean of \Sexpr{round(mean(EUindex_bb),2)}. Table~\ref{tbl:EUrelations} shows how the EU-index relates to a number of firm characteristics. Firm leverage, based on data the year before announcement, is defined as the ratio $debt/(debt+equity)$.\footnote{We use the definitions from \url{http://www.ivo-welch.info/professional/leverage.placebo/}{Ivo Welch's website} following  \url{http://www.ivo-welch.info/professional/leverage.placebo/r-sourcecode/mksane.R}. Debt is the sum of the Compustat variables $dlc+ dltt$, where $dlc$ is ``Debt in Current Liabilities'' and $dltt$ is ``Long Term Debt - Total''. Equity is the Compustat variable $seq$ which is ``Total Parent Stockholders' Equity''. We use the most recent data pre-announce, and make the winsorization and other adjustments as in the websites above. Note that we followed the same steps as in these websites to handle negative book value of equity (in the BE/ME calculations) and any other Compustat data issues.} ``ISS later'' measures the percentage of firms that announced an equity issue within 48 months after the buyback announcement. Next, we measure the percentage of buybacks financed with cash (CASH) when the data is available\footnote{As this SDC data was not available for many events, we did not consider the in the U-index calculation.} (this data was available only for \Sexpr{sum(!(BUYBACK_DATA$DATASET$SDC$Source...of..Funds..Code == ""))} of the events) and whether the reported purpose (available only for \Sexpr{sum(!(BUYBACK_DATA$DATASET$SDC$Purpose.Code == ""))} events) included the term ``Undervalued'', or ``Enhance Shareholder Value'' or ``stock option plan''.
 
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
@@ -449,8 +408,6 @@ tmp = pnl_matrix(remove_initialization_time(High_EU_BB_Hedged,min_date=FirstTrad
 tmp1 = pnl_matrix(remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade))
 
 @
-
-%Finally, Table~\ref{tbl:EUhedgedBB}, like Table~\ref{tbl:allhedgedBB}, shows the monthly and yearly returns of a five-factors hedged strategy investing only in the high EU-index repurchase events.  The table shows the robustness of the abnormal returns over time. Specifically, in \Sexpr{sum(tmp[,13] > 0)} out of the \Sexpr{sum(tmp[,13] != 0)} years the hedged strategy generates positive excess returns. As in Table~\ref{tbl:allhedgedBB},  \Sexpr{rownames(tmp)[which.min(tmp1[,13])]} has a large a loss of \Sexpr{tmp[which.min(tmp1[,13]),13]}$\%$ and the best year is \Sexpr{rownames(tmp)[which.max(tmp[,13])]} with an impressive \Sexpr{tmp[which.max(tmp[,13]),13]}$\%$. 
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -561,58 +518,9 @@ lastSpecial=T,
 dorotate=F
 )
 
-
-if (0){
-  colnames(ISS_for_BB_Abn_table)[1]<- "Post-buyback SEOs"
-  colnames(ISS_for_BB_Abn_table)[4]<- "Other SEOs"
-  printLatexTable(ISS_for_BB_Abn_table[c("-6","+1", "+3", "+6","+24","+48","Observations"),],
-                  label  = "tbl:BBISSexitAfter",
-                  columns= c("After a Buyback","No Prior Buyback"),
-                  title  ="Issue announcements with and without a prior buyback",
-                  caption = "The table presents the long-run abnormal returns (CAR) for firms after issue announcements for events with and without a prior buyback announcement within 48 months. We report the monthly cumulative average abnormal returns (CAR) in percent using \\cite{ibbotson1975} returns across time and security (IRATS) method combined with the \\cite{FamaFrench2015a} five-factor model for the sample of firms that announced an open market share repurchase plus various subsamples. The following regression is run each event month~$j$:
-\\begin{eqnarray*}
-(R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + e_t {RMW}_t + f_t {CMA}_t + \\epsilon_{i,t},
-\\end{eqnarray*}
-where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors.",
-
-lastSpecial=T,
-titleontop = T
-  )
-}
 @
 
 %%%%%%%%
-
-%\clearpage
-<<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-if (0){
-  printLatexTable2(
-    Exit_on_BB_Abn_table[reported_times,],
-    Exit_on_BB_Abn_table_cal[reported_times,],
-    columns = c("No Buyback","Buyback"),
-    title="SEOs with and without subsequent buyback",
-    title1 = "Panel A: IRATs Cumulative Abnormal Returns",
-    title2 = "Panel B: Calendar Method Monthly Abnormal Returns",
-    caption="The table presents the long-run abnormal returns for firms after issue announcements with and without a subsequent buyback announcement on the full sample for different periods in time. Panel~A reports monthly cumulative average abnormal returns (CAR) in percent using \\cite{ibbotson1975} returns across time and security (IRATS) method combined with the \\cite{FamaFrench2015a} five-factor model for the sample of firms that announced an open market share repurchase plus various subsamples. The following regression is run each event month~$j$:
-\\begin{eqnarray*}
-(R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + e_t {RMW}_t + f_t {CMA}_t + \\epsilon_{i,t},
-\\end{eqnarray*}
-where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors. Panel~B reports monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the \\cite{FamaFrench2015a} five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors as the independent variables. The significance levels are indicated by +, *, and ** and correspond to a significance level of $10\\%$, $5\\%$, and $1\\%$ respectively, using a two-tailed test.",
-
-label = "tbl:ISSBBexit",
-bigtitleontop=T,
-titleontop=T,
-scale=1,
-lastSpecial=T,
-dorotate=F
-  )
-  
-  printLatexTable(BB_for_ISS_Abn_table[c("-6","+1", "+3", "+6","+24","+48","Observations"),],
-                  label  = "tbl:ISSBBexitAfter",
-                  columns= c("post-Issue Buybacks: CAR","Other Buybacks: CAR"),
-                  title  ="Long-run IRATS abnormal return of only the buybacks that are announced within 48 months after an SEO announcement versus the remaining buyback events.",lastSpecial=T)
-}
-@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -652,30 +560,6 @@ scale=1,
 lastSpecial=T,
 dorotate=T
 )
-
-if (0){
-  tmp = ISStable_time[reported_times,c(4,5,6,10,11,12,16,17,18,22,23,24)]
-  colnames(tmp) <- c("1985-1990: CAR","t-stat","p-value","1991-2000: CAR","t-stat","p-value","2001-2015: CAR","t-stat","p-value","2008-2015: CAR","t-stat","p-value")
-  tmp2 = ISStable_time_cal[reported_times,c(4,5,6,10,11,12,16,17,18,22,23,24)]
-  colnames(tmp2) <- c("1985-1990: CAL","t-stat","p-value","1991-2000: CAL","t-stat","p-value","2001-2015: CAL","t-stat","p-value","2008-2015: CAL","t-stat","p-value")
-  
-  printLatexTable2(
-    tmp,
-    tmp2,
-    columns= c("1985-1990","1991-2000","2001-2015","2008-2015"),
-    title="SEOs returns over different time periods",
-    title1 = "Panel A: IRATs Cumulative Abnormal Returns",
-    title2 = "Panel B: Calendar Method Monthly Abnormal Returns",
-    caption="Long-run IRATS cumulative (Panel~A) and Calendar method monthly (Panel~B) abnormal return after issue announcements for different time periods.",
-    label = "tbl:PastFindingsTimeISS",
-    bigtitleontop=T,
-    titleontop=T,
-    scale=1,
-    lastSpecial=T,
-    dorotate=T
-  )
-}
-
 @
 
 \clearpage
@@ -699,43 +583,6 @@ printLatexTable(one_table[reported_times,13:24],open=F,close=F,rowcolumn="1991-2
 printLatexTable(one_table[reported_times,25:36],open=F,close=F,rowcolumn="2001-2015",columns = c("High U-index (IRATS)","Low U-index (IRATS)","High U-index (CAL)","Low U-index (CAL)"),metric=c("CAR", "CAR", "AR", "AR"),scale = 1,lastSpecial=T)
 printLatexTable(one_table[reported_times,37:48],open=F,rowcolumn="2008-2015",columns = c("High U-index (IRATS)","Low U-index (IRATS)","High U-index (CAL)","Low U-index (CAL)"),metric=c("CAR", "CAR", "AR", "AR"),scale = 1,lastSpecial=T) 
 
-
-if (0){
-  paste(printLatexTable(BB_cal_table_undertime[reported_times,1:12],
-                        columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),
-                        rowcolumn="1985-1990",
-                        title="Calendar Method abnormal returns after open market repurchase announcements  for under and over valued companies over different time periods.",
-                        label="tbl:PastFindingsTimeUnderBBcal",
-                        scale = 0.8,close=F,lastSpecial=T
-  ),
-  printLatexTable(BB_cal_table_undertime[reported_times,13:24],open=F,close=F,rowcolumn="1991-2000",columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),scale = 0.9,lastSpecial=T),
-  printLatexTable(BB_cal_table_undertime[reported_times,25:36],open=F,close=F,rowcolumn="2001-2015",columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),scale = 0.9,lastSpecial=T),
-  printLatexTable(BB_cal_table_undertime[reported_times,37:48],open=F,rowcolumn="2008-2015",columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),scale = 0.9,lastSpecial=T), sep="\n")
-  
-}
-if (0){
-  paste(printLatexTable(ISStable_undertime[reported_times,1:12],
-                        columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),
-                        rowcolumn="1985-1990",
-                        title="Long-run IRATS abnormal returns after issue announcements  for under and over valued companies over different time periods.",
-                        label="tbl:PastFindingsTimeUnderISS",
-                        scale = 0.9,close=F,lastSpecial=T
-  ),
-  printLatexTable(ISStable_undertime[reported_times,13:24],open=F,close=F,rowcolumn="1991-2000",columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),scale = 0.9,lastSpecial=T),
-  printLatexTable(ISStable_undertime[reported_times,25:36],open=F,close=F,rowcolumn="2001-2015",columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),scale = 0.9,lastSpecial=T),
-  printLatexTable(ISStable_undertime[reported_times,37:48],open=F,rowcolumn="2008-2015",columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),scale = 0.9,lastSpecial=T), sep="\n")
-  
-  paste(printLatexTable(ISS_cal_table_undertime[reported_times,1:12],
-                        columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),
-                        rowcolumn="1985-1990",
-                        title="Calendar Method abnormal returns after issue announcements  for under and over valued companies over different time periods.",
-                        label="tbl:PastFindingsTimeUnderISScal",
-                        scale = 0.9,close=F,lastSpecial=T
-  ),
-  printLatexTable(ISS_cal_table_undertime[reported_times,13:24],open=F,close=F,rowcolumn="1991-2000",columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),scale = 0.9,lastSpecial=T),
-  printLatexTable(ISS_cal_table_undertime[reported_times,25:36],open=F,close=F,rowcolumn="2001-2015",columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),scale = 0.9,lastSpecial=T),
-  printLatexTable(ISS_cal_table_undertime[reported_times,37:48],open=F,rowcolumn="2008-2015",columns = c("Under 3FF","Over 3FF","Under 5FF","Over 5FF"),scale = 0.9,lastSpecial=T), sep="\n")
-}
 @
 
 
@@ -747,73 +594,6 @@ if (0){
 
 \clearpage
 
-
-<<   eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-tmp = Reduce(cbind,lapply(1:length(industry_BB), function(i) industry_BB[[i]][,1:3] ))
-tmp_cal = Reduce(cbind,lapply(1:length(industry_BB), function(i) industry_BB[[i]][,4:6] ))
-
-if (0){
-  printLatexTable2(
-    tmp[reported_times,1:(3*6)],
-    tmp[reported_times,(3*6+1):36],
-    columns= names(industry_BB)[1:6],
-    columns2= names(industry_BB)[7:12],
-    title="Buyback IRATS Abnormal Returns: Industry Robustness",
-    #title1 = "",
-    #title2 = "",
-    caption=paste("The table presents the long-run abnormal returns for firms after repurchase announcements after removing each of the industries indicated from the sample. We report the monthly cumulative average abnormal returns (CAR) in percent using \\cite{ibbotson1975} returns across time and security (IRATS) method combined with the \\cite{FamaFrench2015a} five-factor model for the sample of firms that announced an open market share repurchase plus various subsamples. The following regression is run each event month~$j$:
-\\begin{eqnarray*}
-(R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + e_t {RMW}_t + f_t {CMA}_t + \\epsilon_{i,t},
-\\end{eqnarray*}
-where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors. The 48 month abnormal return for the full sample is equal to ",round(IRATS_table_all_bb["+48","CAR 5F"],2),"$\\%$, other values are reported in Table~\\ref{tbl:priorBuybacks}.",sep=""),
-
-label = "tbl:IndustriesBB",
-bigtitleontop=T,
-metric1 = "CAR", metric2 = "CAR",
-#titleontop=T,
-scale=1,
-lastSpecial=T,
-dorotate=T
-  )
-  
-  printLatexTable2(
-    tmp_cal[reported_times,1:(3*6)],
-    tmp_cal[reported_times,(3*6+1):36],
-    columns= names(industry_BB)[1:6],
-    columns2= names(industry_BB)[7:12],
-    title="Buyback Calendar Method Abnormal Returns: Industry Robustness",
-    #title1 = "",
-    #title2 = "",
-    caption=paste("The table presents the long-run calendar method abnormal returns for firms after repurchase announcements after removing each of the industries indicated from the sample.  Specifically, we report the monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the \\cite{FamaFrench2015a} five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors (the difference between the risk-free rate and the return on the equally weighted CRSP index, the monthly return on the size, book-to-market factor, profitability factor and investment factor in month) as the independent variables. The significance levels are indicated by +, *, and ** and correspond to a significance level of $10\\%$, $5\\%$, and $1\\%$ respectively, using a two-tailed test. The 48 month abnormal return for the full sample is equal to ",round(CAL_table_all_bb["+48","CAL 5F"],2),"$\\%$, other values are reported in Table~\\ref{tbl:priorBuybacks}.",sep=""),
-    label = "tbl:IndustriesBB_cal",
-    bigtitleontop=T,
-    metric1 = "AR", metric2 = "AR",
-    #titleontop=T,
-    scale=1,
-    lastSpecial=T,
-    dorotate=T
-  )
-  
-}
-@
-
-
-<<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-if (0){
-  latex_render_data_frame(
-    pnl_matrix(remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade)), 
-    title = "Monthly and Yearly Five Factor Abnormal Rerurns of a strategy investing in all buybacks",
-    caption="Monthly and yearly five-factor rolling hedged abnormal returns of an equally weighted (with monthly rebalancing) portfolio of all buybacks. The holding period for each buyback is 12 months per event.",
-    label="tbl:allhedgedBB", 
-    columns=NULL,
-    bigtitleontop = T,
-    show_rownames=TRUE,
-    scale = 0.9,
-    digits=1,
-    lastSpecial=F,dorotate=F
-  )
-}
-@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -958,9 +738,7 @@ latex_render_data_frame(
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 
-#\\textit{Missed (Beat) EPS} measures the percentage of firms in the specific EU index category that missed (beat) the last EPS consensus analyst forecast before the buyback announcement. 
 EU_relations <- EU_relations[-which(rownames(EU_relations) %in% c("Missed EPS","Beat EPS")),]
-
 rownames(EU_relations)[1] <- "Low Leverage"
 rownames(EU_relations)[2] <- "High Leverage"
 latex_render_data_frame(
@@ -1065,25 +843,6 @@ printLatexTable2(
 
 \clearpage
 
-<<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-if (0){
-  latex_render_data_frame(
-    pnl_matrix(remove_initialization_time(High_EU_BB_Hedged,min_date=FirstTrade)), 
-    title = "Monthly and Yearly Five Factor Abnormal Rerurns of a strategy investing in all high EU-index buybacks",
-    caption="Monthly and yearly  five-factor rolling hedged abnormal returns of an equally weighted (with monthly rebalancing) portfolio of all high EU-index buybacks only. Holding period for each buyback is 12 months per event.",
-    label="tbl:EUhedgedBB", 
-    columns=NULL,
-    bigtitleontop = T,
-    show_rownames=TRUE,
-    scale = 0.9,
-    digits=1,
-    lastSpecial=F,dorotate=F
-  )
-}
-@
-
-%\clearpage
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1148,113 +907,6 @@ rm("tmp")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\clearpage
-
-%\begin{figure}[H]
-%\centering
-<< fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
-if (0){
-  par(mfrow=c(2,2), mar=c(2.3,4,2.3,4))
-  
-  IRATS_table_all_bb_plot = IRATS_table_all_bb
-  IRATS_table_all_bb_plot[rownames(IRATS_table_all_bb_plot) %in% as.character((-6):(-1)),c("CAR 3F","CAR 5F")] <- -IRATS_table_all_bb_plot[rownames(IRATS_table_all_bb_plot) %in% as.character((-6):(-1)),c("CAR 3F","CAR 5F")] 
-  IRATS_table_all_iss_plot = IRATS_table_all_iss
-  IRATS_table_all_iss_plot[rownames(IRATS_table_all_iss_plot) %in% as.character((-6):(-1)),c("CAR 3F","CAR 5F")] <- -IRATS_table_all_iss_plot[rownames(IRATS_table_all_iss_plot) %in% as.character((-6):(-1)),c("CAR 3F","CAR 5F")] 
-  IRATS_table_all_bb_undervaluation_plot = IRATS_table_all_bb_undervaluation
-  IRATS_table_all_bb_undervaluation_plot[rownames(IRATS_table_all_bb_undervaluation_plot) %in% as.character((-6):(-1)),c("U:CAR3F","O:CAR3F", "U:CAR5F","O:CAR5F")] <- -IRATS_table_all_bb_undervaluation_plot[rownames(IRATS_table_all_bb_undervaluation_plot) %in% as.character((-6):(-1)),c("U:CAR3F","O:CAR3F", "U:CAR5F","O:CAR5F")] 
-  #IRATS_table_all_iss_undervaluation_plot = IRATS_table_all_iss_undervaluation
-  #IRATS_table_all_iss_undervaluation_plot[rownames(IRATS_table_all_iss_undervaluation_plot) %in% as.character((-6):(-1)),c("U:CAR3F","O:CAR3F", "U:CAR5F","O:CAR5F")] <- -IRATS_table_all_iss_undervaluation_plot[rownames(IRATS_table_all_iss_undervaluation_plot) %in% as.character((-6):(-1)),c("U:CAR3F","O:CAR3F", "U:CAR5F","O:CAR5F")] 
-  
-  ylimit = c(min(
-    #IRATS_table_all_bb_plot[reported_times_plots,"CAR 3F"], 
-    IRATS_table_all_bb_plot[reported_times_plots,"CAR 5F"], 
-    #IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"U:CAR3F"], 
-    #IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"O:CAR3F"], 
-    IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"U:CAR5F"], 
-    IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"O:CAR5F"]), 
-    max(
-      #IRATS_table_all_bb_plot[reported_times_plots,"CAR 3F"], 
-      IRATS_table_all_bb_plot[reported_times_plots,"CAR 5F"], 
-      #IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"U:CAR3F"], 
-      #IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"O:CAR3F"], 
-      IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"U:CAR5F"], 
-      IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"O:CAR5F"])
-  )
-  
-  plot(IRATS_table_all_bb_plot[reported_times_plots,"CAR 5F"], ylim = ylimit,axes=FALSE, type = "l", ylab = "CAR", xlab="Months",main="A. Buybacks - All", lwd=1.4)
-  axis(1,at=plot_tickers,labels=plot_xlabels,cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  #lines(IRATS_table_all_bb_plot[reported_times_plots,"CAR 5F"],  lty = 2,lwd=1.4)
-  abline(v=which(reported_times_plots == "0"), lwd=0.5)
-  abline(h=0, lwd=0.5)
-  
-  plot(IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"U:CAR5F"], ylim = ylimit,axes=FALSE, type = "l", ylab = "CAR", xlab="Months",main="C. Buybacks - high/low U-index", lwd=1.4)
-  axis(1,at=plot_tickers,labels=plot_xlabels,cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  #tmp = rep(NA,length(reported_times_plots)); tmp[plot_tickers] <- IRATS_table_all_bb_undervaluation_plot[plot_tickers,"U:CAR3F"]
-  #points(tmp, pch=0)
-  #lines(IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"O:CAR3F"],lwd=1.6)
-  #tmp = rep(NA,length(reported_times_plots)); tmp[plot_tickers] <- IRATS_table_all_bb_undervaluation_plot[plot_tickers,"O:CAR3F"]
-  #points(tmp, pch=3)
-  #lines(IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"U:CAR5F"],lty = 3, lwd=1.6)
-  #tmp = rep(NA,length(reported_times_plots)); tmp[plot_tickers] <- IRATS_table_all_bb_undervaluation_plot[plot_tickers,"U:CAR5F"]
-  #points(tmp, pch=0)
-  lines(IRATS_table_all_bb_undervaluation_plot[reported_times_plots,"O:CAR5F"],  lty = 3,lwd=1.6)
-  #tmp = rep(NA,length(reported_times_plots)); tmp[plot_tickers] <- IRATS_table_all_bb_undervaluation_plot[plot_tickers,"O:CAR5F"]
-  #points(tmp, pch=3)
-  abline(v=which(reported_times_plots == "0"), lwd=0.5)
-  abline(h=0, lwd=0.5)
-  
-  # SEOs
-  ylimit = c(min(
-    #IRATS_table_all_iss_plot[reported_times_plots,"CAR 3F"], 
-    IRATS_table_all_iss_plot[reported_times_plots,"CAR 5F"]#, 
-    #IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"U:CAR3F"], 
-    #IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"O:CAR3F"], 
-    #IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"U:CAR5F"], 
-    #IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"O:CAR5F"]
-  ), 
-  max(
-    #IRATS_table_all_iss_plot[reported_times_plots,"CAR 3F"], 
-    IRATS_table_all_iss_plot[reported_times_plots,"CAR 5F"]#, 
-    #IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"U:CAR3F"], 
-    #IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"O:CAR3F"], 
-    #IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"U:CAR5F"], 
-    #IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"O:CAR5F"]
-  )
-  )
-  
-  plot(IRATS_table_all_iss_plot[reported_times_plots,"CAR 5F"], ylim = ylimit,axes=FALSE, type = "l", ylab = "CAR", xlab="Months",main="B. SEOs - All", lwd=1.4)
-  axis(1,at=plot_tickers,labels=plot_xlabels,cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  #lines(IRATS_table_all_iss_plot[reported_times_plots,"CAR 5F"],  lty = 2,lwd=1.4)
-  abline(v=which(reported_times_plots == "0"), lwd=0.5)
-  abline(h=0, lwd=0.5)
-  
-}
-if (0){
-  plot(IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"U:CAR5F"], ylim = ylimit,axes=FALSE, type = "l", ylab = "CAR", xlab="Months",main="SEOs - Under/Over-valuation", lwd=1.4)
-  axis(1,at=plot_tickers,labels=plot_xlabels,cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  #tmp = rep(NA,length(reported_times_plots)); tmp[plot_tickers] <- IRATS_table_all_iss_undervaluation_plot[plot_tickers,"U:CAR3F"]
-  #points(tmp, pch=0)
-  #lines(IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"O:CAR3F"],lwd=1.6)
-  #tmp = rep(NA,length(reported_times_plots)); tmp[plot_tickers] <- IRATS_table_all_iss_undervaluation_plot[plot_tickers,"O:CAR3F"]
-  #points(tmp, pch=3)
-  #lines(IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"U:CAR5F"],lty = 3, lwd=1.6)
-  #tmp = rep(NA,length(reported_times_plots)); tmp[plot_tickers] <- IRATS_table_all_iss_undervaluation_plot[plot_tickers,"U:CAR5F"]
-  #points(tmp, pch=0)
-  lines(IRATS_table_all_iss_undervaluation_plot[reported_times_plots,"O:CAR5F"],  lty = 3,lwd=1.6)
-  #tmp = rep(NA,length(reported_times_plots)); tmp[plot_tickers] <- IRATS_table_all_iss_undervaluation_plot[plot_tickers,"O:CAR5F"]
-  #points(tmp, pch=3)
-  abline(v=which(reported_times_plots == "0"), lwd=0.5)
-  abline(h=0, lwd=0.5)
-}
-@
-%\caption{Long-run five factors cumulative average abnormal returns (CAR) of buyback and SEO portfolios. The x-axis indicates months from the date of the event announcement. Panel~A shows all buyback events, whereas Panel C shows all high (solid line) and low (dashed lines) U-index buyback events. Panel~B includes all SEOs.}
-%\label{fig:pastall}
-%\end{figure}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1278,22 +930,7 @@ names(market_index) <- str_sub(names(market_index), start = 1, end = 4)
 df.bar <- barplot(BB_with_ISS_later_total,col=c("grey"),main = "", ylab = "Percent", xlab = "Years",las=2,space=0.5, cex.names=1)
 for (iter in 1:floor(max(BB_with_ISS_later_total)/5))
   abline(h = 5*iter)
-#par(new = TRUE)
-#plot(market_index,type="l", col="red", lwd = 4, lty=3,axes = FALSE, xlab = "", ylab = "")
-#points(market_index, pch=1, col="red", lwd=2)
-#axis(side=4, at = pretty(range(market_index)))
-#mtext("Market Index", side=4, line=3)
 
-if (0){
-  df.bar <- barplot(ISS_with_BB_later_total,col=c("grey"),main = "Issues with Follow-up Buyback", ylab = "Percent", xlab = "Years",las=2,space=0.5, cex.names=1)
-  for (iter in 1:floor(max(ISS_with_BB_later_total)/5))
-    abline(h = 5*iter)
-  par(new = TRUE)
-  plot(market_index,type="l", col="red", lwd = 4, lty=3,axes = FALSE, xlab = "", ylab = "")
-  points(market_index, pch=1, col="red", lwd=2)
-  axis(side=4, at = pretty(range(market_index)))
-  mtext("Market Index", side=4, line=3)
-}
 @
 \caption{Buybacks with a follow-up equity issue within 48 months. We show the percent of announced buyback events each year, that had a follow-up issue within 48 months after the event. The average percentage is \Sexpr{round(mean(BB_with_ISS_later_total),1)}$\%$ and there are only \Sexpr{sum(BB_with_ISS_later_total > 10)} years (1989 and 1990) where the percentage is larger than $10\%$.
 %Top figure is buybacks and bottom is SEOs.
@@ -1326,17 +963,6 @@ legend(x="topleft",
        lwd=c(2,2),
        cex=1,bg="white",inset=0.01)
 
-if (0){
-  ylimit = c(min(Exit_on_SEO_Abn_table_cal[reported_times_plots,1], Exit_on_SEO_Abn_table_cal[reported_times_plots,4]), 
-             max(Exit_on_SEO_Abn_table_cal[reported_times_plots,1], Exit_on_SEO_Abn_table_cal[reported_times_plots,4]))
-  plot(Exit_on_SEO_Abn_table_cal[reported_times_plots,1], ylim = ylimit,axes=FALSE, type = "l", ylab = "CAR", xlab="Months",main="Panel B: Buybacks with SEO: Calendar Method", lwd=1.4)
-  axis(1,at=plot_tickers,labels=plot_xlabels,cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  lines(Exit_on_SEO_Abn_table_cal[reported_times_plots,4],lty = 2,lwd=1.4)
-  abline(h=0, lwd=0.5)
-  abline(v=which(reported_times_plots == "0"), lwd=0.5)
-}
-
 reported_times_plots = reported_times_plots_tmp
 
 pnl_Exit_Hedged = BB_ISS_Exit_Hedged
@@ -1355,47 +981,9 @@ legend(x="topleft",
        cex=1,bg="white",inset=0.01)
 
 #### SEOs NOW (We combine the plots)
-if (0){ 
-  reported_times_plots_tmp = reported_times_plots
-  reported_times_plots = reported_times_plots[8:length(reported_times_plots)]
-  
-  ylimit = c(min(Exit_on_BB_Abn_table[reported_times_plots,1], Exit_on_BB_Abn_table[reported_times_plots,4]), 
-             max(Exit_on_BB_Abn_table[reported_times_plots,1], Exit_on_BB_Abn_table[reported_times_plots,4]))
-  plot(Exit_on_BB_Abn_table[reported_times_plots,1], ylim = ylimit,axes=FALSE, type = "l", ylab = "CAR", xlab="Months",main="Panel B: SEO with Buyback IRATS CAR", lwd=1.4)
-  axis(1,at=plot_tickers,labels=plot_xlabels,cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  lines(Exit_on_BB_Abn_table[reported_times_plots,4],lty = 2,lwd=1.4)
-  abline(h=0, lwd=0.5)
-  abline(v=which(reported_times_plots == "0"), lwd=0.5)
-  
-  if (0){
-    ylimit = c(min(Exit_on_BB_Abn_table_cal[reported_times_plots,1], Exit_on_BB_Abn_table_cal[reported_times_plots,4]), 
-               max(Exit_on_BB_Abn_table_cal[reported_times_plots,1], Exit_on_BB_Abn_table_cal[reported_times_plots,4]))
-    plot(Exit_on_BB_Abn_table_cal[reported_times_plots,1], ylim = ylimit,axes=FALSE, type = "l", ylab = "CAR", xlab="Months",main="SEO with Buyback: Calendar", lwd=1.4)
-    axis(1,at=plot_tickers,labels=plot_xlabels,cex.axis=1,las=3)
-    axis(2,cex.axis=1.1)
-    lines(Exit_on_BB_Abn_table_cal[reported_times_plots,4],lty = 2,lwd=1.4)
-    abline(h=0, lwd=0.5)
-    abline(v=which(reported_times_plots == "0"), lwd=0.5)
-  }
-  
-  reported_times_plots = reported_times_plots_tmp
-  
-  pnl_Exit_Hedged = ISS_BB_Exit_Hedged
-  pnl_NoExit_Hedged = ISS_BB_NoExit_Hedged
-  plot(cumsum(100*pnl_NoExit_Hedged),type="l",ylab="CAR", xlab = "",main = "Strategy Returns",axes = FALSE, ylim=c(min(c(100*cumsum(pnl_NoExit_Hedged),cumsum(100*pnl_Exit_Hedged))), max(c(cumsum(100*pnl_NoExit_Hedged),cumsum(100*pnl_Exit_Hedged)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(pnl_NoExit_Hedged),length.out=10),labels=str_sub(names(pnl_NoExit_Hedged)[seq(1,length(pnl_NoExit_Hedged),length.out=10)], start = 1, end=4),cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  lines(cumsum(100*pnl_Exit_Hedged),lty = 2,lwd=1.4)
-  for (iter in floor(100*min(c(cumsum(pnl_NoExit_Hedged),cumsum(pnl_Exit_Hedged)))/50):floor(100*max(c(cumsum(pnl_NoExit_Hedged),cumsum(pnl_Exit_Hedged)))/50))
-    abline(h = 50*iter)
-  #plot_crisis_dates(pnl_NoExit_Hedged) 
-}
 @
 \caption{ Buybacks followed by equity issues within 48 months. 
 Top Panel~A:  Five factor IRATS CAR for all buyback events that had (with hindsight) no subsequent SEO event within the 48 months post buyback announcement (solid line) versus those that did have (dashed line).  Bottom Panel~B: Abnormal (five-factor rolling hedged) returns of buybacks portfolio for only the \Sexpr{length(BB_with_ISS_later)} events for which there was a subsequent issue within 4 years. Dashed line is if we exit these positions the month after the subsequent SEO announcement. 
-%(Average annual returns: \Sexpr{round(pnl_stats(BB_ISS_Exit_Hedged)[1],1)}$\%$, Sharpe ratio: \Sexpr{round(pnl_stats(BB_ISS_Exit_Hedged)[3],1)}), and solid line is if we do not (Average annual returns: \Sexpr{round(pnl_stats(BB_ISS_NoExit_Hedged)[1],1)}$\%$, Sharpe ratio: \Sexpr{round(pnl_stats(BB_ISS_NoExit_Hedged)[3],1)}). 
-%{\bf Bottom Panel~B: Left:} Five factor IRATS CAR for all SEO events that had no subsequent buyback event within the 48 months post SEO announcement (black line) versus those that did have (dashed line). {\bf Right:} Abnormal (five-factor rolling hedged) returns of SEO portfolio for only the \Sexpr{length(ISS_with_BB_later)} events for which there was a subsequent buybacks announcement within 4 years. Dashed line is if we exit these positions  the month after the subsequent buyback announcement  (Average annual returns: \Sexpr{round(pnl_stats(ISS_BB_Exit_Hedged)[1],1)}$\%$, Sharpe ratio: \Sexpr{round(pnl_stats(ISS_BB_Exit_Hedged)[3],1)}), and solid line is if we do not (Average annual returns: \Sexpr{round(pnl_stats(ISS_BB_NoExit_Hedged)[1],1)}$\%$, Sharpe ratio: \Sexpr{round(pnl_stats(ISS_BB_NoExit_Hedged)[3],1)}). 
 }
 \label{fig:BBISSexit}
 \end{figure}
@@ -1500,16 +1088,6 @@ for (iter in 1:floor(max(industry_tableBB)/100))
 \label{fig:industryeventsBB}
 \end{figure}
 \end{landscape}
-%\begin{figure}[H]
-%\centering
-%<<  fig.width=10, fig.height=5, out.width='\\textwidth', echo=F >>=
-%df.bar <- barplot(industry_tableISS,col=c("grey"),main = "", ylab = "Issues", xlab = "",las=2,space=0.9, cex.names=1)
-%for (iter in 1:floor(max(industry_tableISS)/100))
-%  abline(h = 100*iter)
-%@
-%\caption{Number of issue announcements per industry.  }
-%\label{fig:industryeventsISS}
-%\end{figure}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1517,108 +1095,6 @@ for (iter in 1:floor(max(industry_tableBB)/100))
 % IDIOSYNCRATIC ANALYSIS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%\clearpage
-%\subsection{Idiosyncratic Risk and Buybacks}
-%\label{app:idiosync}
-
-%\begin{figure}[H]
-%\centering
-<< R2thresholds, fig.width=7, fig.height=4, out.width='\\textwidth', echo=F >>=
-if (0){
-  #par(mfrow=c(2,1), mar=c(2.7,4.5,2.7,4.5))
-  Market_Monthly_index = Market_Monthly
-  names(Market_Monthly_index) <- paste(str_sub(names(Market_Monthly_index),start=1,end=4),str_sub(names(Market_Monthly_index),start=6,end=7),sep="")
-  
-  all_dates = paste(str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=6,end=7),sep="")[High_Idiosyncr_eventsBB]
-  tmp = BUYBACK_DATA$DATASET$SDC$Rsq_returns[High_Idiosyncr_eventsBB]
-  names(tmp)<-all_dates
-  R2_thresholds_up_plot = sapply(names(Market_Monthly_index), function(i){
-    ifelse(sum(names(tmp) == i) > 1, mean(tmp[names(tmp) == i]),NA)
-  })
-  R2_thresholds_up_plot = R2_thresholds_up_plot[!is.na(R2_thresholds_up_plot)]
-  all_dates = paste(str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=6,end=7),sep="")[Low_Idiosyncr_eventsBB]
-  tmp = BUYBACK_DATA$DATASET$SDC$Rsq_returns[Low_Idiosyncr_eventsBB]
-  names(tmp)<-all_dates
-  R2_thresholds_down_plot = sapply(names(Market_Monthly_index), function(i){
-    ifelse(sum(names(tmp) == i) > 1, mean(tmp[names(tmp) == i]),NA)
-  })
-  R2_thresholds_down_plot = R2_thresholds_down_plot[!is.na(R2_thresholds_down_plot)]
-  
-  R2_thresholds_down_plot = R2_thresholds_down_plot[intersect(names(R2_thresholds_down_plot), names(R2_thresholds_up_plot))]
-  R2_thresholds_up_plot = R2_thresholds_up_plot[intersect(names(R2_thresholds_down_plot), names(R2_thresholds_up_plot))]
-  R2_thresholds_up_plot = R2_thresholds_up_plot[intersect(names(R2_thresholds_up_plot), names(Market_Monthly_index))]
-  R2_thresholds_down_plot = R2_thresholds_down_plot[names(R2_thresholds_up_plot)]
-  Market_Monthly_index = Market_Monthly_index[names(R2_thresholds_up_plot)]
-  market_index = 100*(1+cumprod(1+Market_Monthly))
-  
-  plot(R2_thresholds_up_plot, col="black", axes=FALSE, ylab="five-factor R square", main = "Buybacks Average five-factor R square", xlab = "Time",ylim=c(min(c(R2_thresholds_down_plot[!is.na(R2_thresholds_down_plot)],R2_thresholds_up_plot[!is.na(R2_thresholds_up_plot)])), max(c(R2_thresholds_down_plot[!is.na(R2_thresholds_down_plot)],R2_thresholds_up_plot[!is.na(R2_thresholds_up_plot)]))),  cex.lab=1.1, type="l", lwd=2)
-  lines(R2_thresholds_down_plot, col="black", lwd=2,lty="dotted")
-  axis(1,at=seq(1,length(Market_Monthly_index),length.out=20),labels=str_sub(names(Market_Monthly_index)[seq(1,length(Market_Monthly_index),length.out=20)], start=1,end=4),cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  #par(new = TRUE)
-  #plot(market_index,type="l", lwd = 2, axes = FALSE, xlab = "", ylab = "")
-  #axis(side=4, at = pretty(range(market_index)))
-  #mtext("Market Index", side=4, line=3)
-}
-@
-%\caption{Monthly average (across all buybacks events that month) $R^2$ defined using all buybacks events announced in a given month. Solid line is for high idiosyncratic events, dotted  line is for low. 
-%Note that as the idiosyncratic risk is estimated using 6 months returns before announcement, there is a time shift relative to the market returns. 
-%}
-%\label{fig:R2thresholds}
-%\end{figure}
-
-%\clearpage
-
-
-%\clearpage
-
-%\begin{figure}[H]
-%\centering
-<< badpreviousR2, fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
-#par(mfrow=c(2,1),mar=c(2.3,4,2.3,4))
-if (0){
-  plot(cumsum(100*High_Idiosyncr_BB_Hedged),type="l",ylab="CAR", xlab = "Time",main = "",  lwd=2, axes = FALSE, 
-       ylim=c(min(c(cumsum(100*High_Idiosyncr_BB_Hedged),cumsum(100*Low_Idiosyncr_BB_Hedged),cumsum(100*High_Idiosyncr_BB_Hedged48m),cumsum(100*Low_Idiosyncr_BB_Hedged48m))), 
-              max(c(cumsum(100*High_Idiosyncr_BB_Hedged),cumsum(100*Low_Idiosyncr_BB_Hedged),cumsum(100*High_Idiosyncr_BB_Hedged48m),cumsum(100*Low_Idiosyncr_BB_Hedged48m)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(High_Idiosyncr_BB_Hedged),length.out=10),labels=str_sub(names(High_Idiosyncr_BB_Hedged)[seq(1,length(High_Idiosyncr_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  lines(cumsum(100*Low_Idiosyncr_BB_Hedged),lty="dotted", lwd=2)
-  lines(cumsum(100*High_Idiosyncr_BB_Hedged48m),lty="dashed", lwd=2)
-  lines(cumsum(100*Low_Idiosyncr_BB_Hedged48m),lty="dotdash", lwd=2)
-  for (iter in 1:floor(100*max(c(cumsum(High_Idiosyncr_BB_Hedged),cumsum(Low_Idiosyncr_BB_Hedged)))/50))
-    abline(h = 50*iter)
-  abline(h = 200)
-  #plot_crisis_dates(High_Idiosyncr_BB_Hedged)
-  legend(x="topleft",
-         c("12 Month High Idiosyncratic","12 Month Low Idiosyncratic","48 Month High Idiosyncratic","48 Month Low Idiosyncratic"),
-         lty=c("solid","dotted","dashed","dotdash"),
-         lwd=c(2,2,2,2),
-         cex=1,bg="white",inset=0.01)
-  
-  if (0){
-    plot(cumsum(100*High_Idiosyncr_ISS_Hedged),type="l",ylab="CAR", xlab = "Time",main = "SEOs", axes = FALSE, 
-         ylim=c(min(c(cumsum(100*High_Idiosyncr_ISS_Hedged),cumsum(100*Low_Idiosyncr_ISS_Hedged),cumsum(100*High_Idiosyncr_ISS_Hedged48m),cumsum(100*Low_Idiosyncr_ISS_Hedged48m))), 
-                max(c(cumsum(100*High_Idiosyncr_ISS_Hedged),cumsum(100*Low_Idiosyncr_ISS_Hedged),cumsum(100*High_Idiosyncr_ISS_Hedged48m),cumsum(100*Low_Idiosyncr_ISS_Hedged48m)))), cex.lab=1.1)
-    axis(1,at=seq(1,length(High_Idiosyncr_ISS_Hedged),length.out=10),labels=str_sub(names(High_Idiosyncr_ISS_Hedged)[seq(1,length(High_Idiosyncr_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=1,las=3)
-    axis(2,cex.axis=1.1)
-    lines(cumsum(100*Low_Idiosyncr_ISS_Hedged), col="red")
-    lines(cumsum(100*High_Idiosyncr_ISS_Hedged48m), col="blue")
-    lines(cumsum(100*Low_Idiosyncr_ISS_Hedged48m), col="green")
-    for (iter in 1:floor(100*max(c(cumsum(High_Idiosyncr_ISS_Hedged),cumsum(Low_Idiosyncr_ISS_Hedged)))/50))
-      abline(h = 50*iter)
-    #plot_crisis_dates(High_Idiosyncr_ISS_Hedged)
-  }
-}
-@
-%\caption{Buybacks: High versus Low Idiosyncratic Events. Returns of five-factor rolling hedged portfolio for only the buyback events for high and low idiosyncratic company. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio; dashed line is ``high'' and a 48-months holding portfolio, dotted-dash line is ``low'' and a 48-months portfolio. 
-%Red line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_Idiosyncr_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_Idiosyncr_BB_Hedged)[3],1)}. Black line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_Idiosyncr_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_Idiosyncr_BB_Hedged)[3],1)}. Green line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_Idiosyncr_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_Idiosyncr_BB_Hedged48m)[3],1)}. Blue line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_Idiosyncr_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_Idiosyncr_BB_Hedged48m)[3],1)}. 
-%We assume we enter each position \Sexpr{trading_day_after_announce} day after the corresponding event announcement. 
-%Vertical lines indicate \Sexpr{BEAR_YEARS_text$dotcom[1]}, \Sexpr{BEAR_YEARS_text$dotcom[2]}, \Sexpr{BEAR_YEARS_text$financial1[1]}, and \Sexpr{BEAR_YEARS_text$financial1[2]}. 
-%}
-%\label{fig:badpreviousR2}
-%\end{figure}
-
 
 \begin{figure}[H]
 \centering
@@ -1676,103 +1152,6 @@ abline(h=0, lwd=0.5)
 % VOL ANALYSIS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%\clearpage
-%\subsection{Volatility and Buybacks}
-%\label{app:volatility}
-
-%\begin{figure}[H]
-%\centering
-<< VOLthresholds, fig.width=7, fig.height=4, out.width='\\textwidth', echo=F >>=
-#par(mfrow=c(2,1), mar=c(2.7,4.5,2.7,4.5))
-if (0){
-  Market_Monthly_index = Market_Monthly
-  names(Market_Monthly_index) <- paste(str_sub(names(Market_Monthly_index),start=1,end=4),str_sub(names(Market_Monthly_index),start=6,end=7),sep="")
-  
-  all_dates = paste(str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=6,end=7),sep="")[High_VOL_eventsBB]
-  tmp = BUYBACK_DATA$DATASET$SDC$pre_vol[High_VOL_eventsBB]
-  names(tmp)<-all_dates
-  VOL_thresholds_up_plot = sapply(names(Market_Monthly_index), function(i){
-    ifelse(sum(names(tmp) == i) > 1, mean(tmp[names(tmp) == i]),NA)
-  })
-  VOL_thresholds_up_plot = 100*VOL_thresholds_up_plot[!is.na(VOL_thresholds_up_plot)]
-  all_dates = paste(str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=1,end=4),str_sub((BUYBACK_DATA$DATASET$SDC$Event.Date),start=6,end=7),sep="")[Low_VOL_eventsBB]
-  tmp = BUYBACK_DATA$DATASET$SDC$pre_vol[Low_VOL_eventsBB]
-  names(tmp)<-all_dates
-  VOL_thresholds_down_plot = sapply(names(Market_Monthly_index), function(i){
-    ifelse(sum(names(tmp) == i) > 1, mean(tmp[names(tmp) == i]),NA)
-  })
-  VOL_thresholds_down_plot = 100*VOL_thresholds_down_plot[!is.na(VOL_thresholds_down_plot)]
-  
-  VOL_thresholds_down_plot = VOL_thresholds_down_plot[intersect(names(VOL_thresholds_down_plot), names(VOL_thresholds_up_plot))]
-  VOL_thresholds_up_plot = VOL_thresholds_up_plot[intersect(names(VOL_thresholds_down_plot), names(VOL_thresholds_up_plot))]
-  VOL_thresholds_up_plot = VOL_thresholds_up_plot[intersect(names(VOL_thresholds_up_plot), names(Market_Monthly_index))]
-  VOL_thresholds_down_plot = VOL_thresholds_down_plot[names(VOL_thresholds_up_plot)]
-  Market_Monthly_index = Market_Monthly_index[names(VOL_thresholds_up_plot)]
-  market_index = 100*(1+cumprod(1+Market_Monthly))
-  
-  plot(VOL_thresholds_up_plot, col="black", axes=FALSE, ylab="Average Volatility (percent)", main = "Buybacks pre-Announce Returns Volatility", xlab = "Time",ylim=c(min(c(VOL_thresholds_down_plot,VOL_thresholds_up_plot)), max(c(VOL_thresholds_down_plot,VOL_thresholds_up_plot))),  cex.lab=1.1, type="l", lwd=1.2)
-  lines(VOL_thresholds_down_plot, col="black", lwd=2,lty="dotted")
-  axis(1,at=seq(1,length(Market_Monthly_index),length.out=20),labels=str_sub(names(Market_Monthly_index)[seq(1,length(Market_Monthly_index),length.out=20)], start=1,end=4),cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  #par(new = TRUE)
-  #plot(market_index,type="l", lwd = 2, axes = FALSE, xlab = "", ylab = "")
-  #axis(side=4, at = pretty(range(market_index)))
-  #mtext("Market Index", side=4, line=3)
-}
-@
-%\caption{Monthly average (across all buybacks events that month) volatility (standard deviation of daily$\%$ returns over 6 months before announcement) defined using all buybacks events announced in a given month. Solid line is for high idiosyncratic events, dotted line is for low. 
-%Note that as the volatility is estimated using 6 months returns before announcement, there is a time shift relative to the market returns.  
-%}
-%\label{fig:VOLthresholds}
-%\end{figure}
-
-
-%\begin{figure}[H]
-%\centering
-<< badpreviousVOL, fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
-#par(mfrow=c(2,1),mar=c(2.3,4,2.3,4))
-if (0){
-  plot(cumsum(100*High_VOL_BB_Hedged),type="l",ylab="CAR", xlab = "Time",main = "", lwd=2, axes = FALSE, 
-       ylim=c(min(c(cumsum(100*High_VOL_BB_Hedged),cumsum(100*Low_VOL_BB_Hedged),cumsum(100*High_VOL_BB_Hedged48m),cumsum(100*Low_VOL_BB_Hedged48m))), 
-              max(c(cumsum(100*High_VOL_BB_Hedged),cumsum(100*Low_VOL_BB_Hedged),cumsum(100*High_VOL_BB_Hedged48m),cumsum(100*Low_VOL_BB_Hedged48m)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(High_VOL_BB_Hedged),length.out=10),labels=str_sub(names(High_VOL_BB_Hedged)[seq(1,length(High_VOL_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  lines(cumsum(100*Low_VOL_BB_Hedged),lty="dotted", lwd=2)
-  lines(cumsum(100*High_VOL_BB_Hedged48m),lty="dashed", lwd=2)
-  lines(cumsum(100*Low_VOL_BB_Hedged48m),lty="dotdash", lwd=2)
-  for (iter in 1:floor(100*max(c(cumsum(High_VOL_BB_Hedged),cumsum(Low_VOL_BB_Hedged)))/50))
-    abline(h = 50*iter)
-  #plot_crisis_dates(High_VOL_BB_Hedged)
-  legend(x="topleft",
-         c("12 Month High Volatility","12 Month Low Volatility","48 Month High Volatility","48 Month Low Volatility"),
-         lty=c("solid","dotted","dashed","dotdash"),
-         lwd=c(2,2,2,2),
-         cex=1,bg="white",inset=0.01)
-  
-  if (0){
-    plot(cumsum(100*High_VOL_ISS_Hedged),type="l",ylab="CAR", xlab = "Time",main = "SEOs", lwd=2, axes = FALSE, 
-         ylim=c(min(c(cumsum(100*High_VOL_ISS_Hedged),cumsum(100*Low_VOL_ISS_Hedged),cumsum(100*High_VOL_ISS_Hedged48m),cumsum(100*Low_VOL_ISS_Hedged48m))), 
-                max(c(cumsum(100*High_VOL_ISS_Hedged),cumsum(100*Low_VOL_ISS_Hedged),cumsum(100*High_VOL_ISS_Hedged48m),cumsum(100*Low_VOL_ISS_Hedged48m)))), cex.lab=1.1)
-    axis(1,at=seq(1,length(High_VOL_ISS_Hedged),length.out=10),labels=str_sub(names(High_VOL_ISS_Hedged)[seq(1,length(High_VOL_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=1,las=3)
-    axis(2,cex.axis=1.1)
-    lines(cumsum(100*Low_VOL_ISS_Hedged),lty="dotted", lwd=2)
-    lines(cumsum(100*High_VOL_ISS_Hedged48m),lty="dashed", lwd=2)
-    lines(cumsum(100*Low_VOL_ISS_Hedged48m),lty="dotdash", lwd=2)
-    for (iter in 1:floor(100*max(c(cumsum(High_VOL_ISS_Hedged),cumsum(Low_VOL_ISS_Hedged)))/50))
-      abline(h = 50*iter)
-    #plot_crisis_dates(High_VOL_ISS_Hedged)
-  }
-}
-@
-%\caption{Buybacks: High vs Low Volatility Events. Returns of five-factor rolling hedged portfolio for only the buyback events for high and low volatility company. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio; dashed line is ``high'' and a 48-months holding portfolio, dotted-dash line is ``low'' and a 48-months portfolio. 
-%Red line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_VOL_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_VOL_BB_Hedged)[3],1)}. Black line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_VOL_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_VOL_BB_Hedged)[3],1)}. Green line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_VOL_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_VOL_BB_Hedged48m)[3],1)}. Blue line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_VOL_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_VOL_BB_Hedged48m)[3],1)}. 
-%We assume we enter each position \Sexpr{trading_day_after_announce} day after the corresponding event announcement. 
-%Vertical lines indicate \Sexpr{BEAR_YEARS_text$dotcom[1]}, \Sexpr{BEAR_YEARS_text$dotcom[2]}, \Sexpr{BEAR_YEARS_text$financial1[1]}, and \Sexpr{BEAR_YEARS_text$financial1[2]}. 
-%}
-%\label{fig:badpreviousVOL}
-%\end{figure}
-
 
 \begin{figure}[H]
 \centering
@@ -1836,65 +1215,15 @@ abline(h=0, lwd=0.5)
 \begin{figure}[H]
 \centering
 << fig.width=10, fig.height=4, out.width='\\textwidth', echo=F >>=
-#par(mfrow=c(2,1), mar=c(2.3,4,2.3,4))
-#valuation_index_bb[which(valuation_index_bb==2)]<-3 # there is one company here. need to check why
 tmp = table(EUindex_bb)
 tmp = structure(as.numeric(tmp), .Names = names(tmp))
 barplot(tmp,main = "", ylab = "Number of Announcements", xlab = "",las=2,space=0.5, cex.names=1)
-#tmp = table(valuation_index_iss)
-#tmp = structure(as.numeric(tmp), .Names = names(tmp))
-#barplot(tmp,main = "SEOs", ylab = "Number of Announcements", xlab = "SEO Overvaluation Index",las=2,space=0.5, cex.names=1)
 rm("tmp")
 @
 \caption{EU-index. Distribution of the EU-index of all buyback events.}
 \label{fig:Eundervaluationindex}
 \end{figure}
 
-
-%\begin{figure}[H]
-%\centering
-<< badpreviousEU, fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
-if (0){
-  #par(mfrow=c(2,1),mar=c(2.3,4,2.3,4))
-  plot(cumsum(100*High_EU_BB_Hedged),type="l",ylab="CAR", xlab = "Time",main = "", lwd=2, axes = FALSE, 
-       ylim=c(min(c(cumsum(100*High_EU_BB_Hedged),cumsum(100*Low_EU_BB_Hedged),cumsum(100*High_EU_BB_Hedged48m),cumsum(100*Low_EU_BB_Hedged48m))), 
-              max(c(cumsum(100*High_EU_BB_Hedged),cumsum(100*Low_EU_BB_Hedged),cumsum(100*High_EU_BB_Hedged48m),cumsum(100*Low_EU_BB_Hedged48m)))), cex.lab=1.1)
-  axis(1,at=seq(1,length(High_EU_BB_Hedged),length.out=10),labels=str_sub(names(High_EU_BB_Hedged)[seq(1,length(High_EU_BB_Hedged),length.out=10)], start = 1, end=4),cex.axis=1,las=3)
-  axis(2,cex.axis=1.1)
-  lines(cumsum(100*Low_EU_BB_Hedged),lty="dotted", lwd=2)
-  lines(cumsum(100*High_EU_BB_Hedged48m),lty="dashed", lwd=2)
-  lines(cumsum(100*Low_EU_BB_Hedged48m),lty="dotdash", lwd=2)
-  for (iter in 1:floor(100*max(c(cumsum(High_EU_BB_Hedged),cumsum(Low_EU_BB_Hedged)))/50))
-    abline(h = 50*iter)
-  #plot_crisis_dates(High_EU_BB_Hedged)
-  legend(x="topleft",
-         c("12 Month High EU","12 Month Low EU","48 Month High EU","48 Month Low EU"),
-         lty=c("solid","dotted","dashed","dotdash"),
-         lwd=c(2,2,2,2),
-         cex=1,bg="white",inset=0.01)
-  
-  if (0){
-    plot(cumsum(100*High_EU_ISS_Hedged),type="l",ylab="CAR", xlab = "Time",main = "SEOs", axes = FALSE, 
-         ylim=c(min(c(cumsum(100*High_EU_ISS_Hedged),cumsum(100*Low_EU_ISS_Hedged),cumsum(100*High_EU_ISS_Hedged48m),cumsum(100*Low_EU_ISS_Hedged48m))), 
-                max(c(cumsum(100*High_EU_ISS_Hedged),cumsum(100*Low_EU_ISS_Hedged),cumsum(100*High_EU_ISS_Hedged48m),cumsum(100*Low_EU_ISS_Hedged48m)))), cex.lab=1.1)
-    axis(1,at=seq(1,length(High_EU_ISS_Hedged),length.out=10),labels=str_sub(names(High_EU_ISS_Hedged)[seq(1,length(High_EU_ISS_Hedged),length.out=10)], start = 1, end=4),cex.axis=1,las=3)
-    axis(2,cex.axis=1.1)
-    lines(cumsum(100*Low_EU_ISS_Hedged), col="red")
-    lines(cumsum(100*High_EU_ISS_Hedged48m), col="blue")
-    lines(cumsum(100*Low_EU_ISS_Hedged48m), col="green")
-    for (iter in 1:floor(100*max(c(cumsum(High_EU_ISS_Hedged),cumsum(Low_VOL_ISS_Hedged)))/50))
-      abline(h = 50*iter)
-    #plot_crisis_dates(High_VOL_ISS_Hedged)
-  }
-}
-@
-%\caption{Buybacks: High vs Low EU-index Events. Returns of five-factor rolling hedged portfolio for only the buyback events for high and low EU-index companies.  We define low EU-index firms those for which the EU-index is 0-1, and high for which it is 5-6 (note that the index takes values from 0 to 6).  Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio; dashed line is ``high'' and a 48-months holding portfolio, dotted-dash line is ``low'' and a 48-months portfolio.
-%Red line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_EU_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_EU_BB_Hedged)[3],1)}. Black line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_EU_BB_Hedged)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_EU_BB_Hedged)[3],1)}. Green line: average annual abnormal returns of \Sexpr{round(pnl_stats(Low_EU_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(Low_EU_BB_Hedged48m)[3],1)}. Blue line: average annual abnormal returns of \Sexpr{round(pnl_stats(High_EU_BB_Hedged48m)[1],1)}$\%$, Sharpe ratio of \Sexpr{round(pnl_stats(High_EU_BB_Hedged48m)[3],1)}. 
-%We assume we enter each position \Sexpr{trading_day_after_announce} day after the corresponding event announcement. 
-%Vertical lines indicate \Sexpr{BEAR_YEARS_text$dotcom[1]}, \Sexpr{BEAR_YEARS_text$dotcom[2]}, \Sexpr{BEAR_YEARS_text$financial1[1]}, and \Sexpr{BEAR_YEARS_text$financial1[2]}. 
-%}
-%\label{fig:badpreviousEU}
-%\end{figure}
 
 \begin{figure}[H]
 \centering
