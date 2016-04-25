@@ -10,22 +10,43 @@ source("../FinanceLibraries/latex_code.R")
 source("../FinanceData/rawdata_fama_french/ff_industries_sic.R")
 source("Paper_global_parameters.R")
 
+load("../FinanceData/created_daily_data/GLOBAL_DAILY_DATABASE.Rdata")
 load("../FinanceData/created_monthly_data/GLOBAL_MONTHLY_DATABASE.Rdata")
 load("../FinanceData/created_yearly_data/GLOBAL_YEARLY_DATABASE.Rdata")
 load("../FinanceData/created_ibes_data/GLOBAL_IBES_DATABASE.Rdata")
 load("../FinanceData/created_buyback_data/GLOBAL_BUYBACK.Rdata")
 load("../FinanceData/created_issuers_data/GLOBAL_ISSUERS.Rdata")
 
-# Some extra universe data variables we need for this project (based on the raw data)
+###################################################################################################
+# We only use permnos that traded at least once in only these exchanges: NYSE (11), American Stock Exchange (12), Nasdaq (14)
+# So we update all data accordingly
+###################################################################################################
+good_exchange_traded = apply(GLOBAL_YEARLY_DATABASE$exchange,2, function(r) sum(scrub(r) %in% c(11,12,14)))
+good_exchange_traded = which(good_exchange_traded !=0)
 
+for(field in setdiff(ls(GLOBAL_DAILY_DATABASE), "FamaFrench_five_factors")) 
+  if (!is.null(dim(GLOBAL_DAILY_DATABASE[[field]])))
+    GLOBAL_DAILY_DATABASE[[field]]<- GLOBAL_DAILY_DATABASE[[field]][,good_exchange_traded]
+for(field in setdiff(ls(GLOBAL_MONTHLY_DATABASE), "FamaFrench_five_factors")) 
+  if (!is.null(dim(GLOBAL_MONTHLY_DATABASE[[field]])))
+    GLOBAL_MONTHLY_DATABASE[[field]]<- GLOBAL_MONTHLY_DATABASE[[field]][,good_exchange_traded]
+for(field in ls(GLOBAL_YEARLY_DATABASE)) 
+  if (!is.null(dim(GLOBAL_YEARLY_DATABASE[[field]])))
+    GLOBAL_YEARLY_DATABASE[[field]]<- GLOBAL_YEARLY_DATABASE[[field]][,good_exchange_traded]
+# These are to treated differently
+for(field in ls(GLOBAL_IBES_DATABASE)) 
+  if (!is.null(dim(GLOBAL_IBES_DATABASE[[field]])))
+    GLOBAL_IBES_DATABASE[[field]]<- GLOBAL_IBES_DATABASE[[field]][,colnames(GLOBAL_IBES_DATABASE[[field]]) %in% colnames(GLOBAL_YEARLY_DATABASE$exchange)]
+
+
+###################################################################################################
+# Some extra universe data variables we need for this project (based on the raw data)
 month_dates = str_sub(rownames(GLOBAL_MONTHLY_DATABASE$returns_monthly), start = 1, end = 7) 
-GLOBAL_MONTHLY_DATABASE$market_cap = GLOBAL_MONTHLY_DATABASE$prices_monthly*GLOBAL_MONTHLY_DATABASE$sharesout_monthly
-GLOBAL_MONTHLY_DATABASE$market_cap_score = get_cross_section_score(GLOBAL_MONTHLY_DATABASE$market_cap)
+GLOBAL_MONTHLY_DATABASE$market_cap = GLOBAL_MONTHLY_DATABASE$prices_monthly*GLOBAL_MONTHLY_DATABASE$sharesout_monthly/1000 # In millions
 # BE/ME using just this month data:
 GLOBAL_MONTHLY_DATABASE$BE.ME = ifelse(GLOBAL_MONTHLY_DATABASE$market_cap, GLOBAL_YEARLY_DATABASE$book_value/GLOBAL_MONTHLY_DATABASE$market_cap, NA)
-GLOBAL_MONTHLY_DATABASE$BE.ME_score = get_cross_section_score(GLOBAL_MONTHLY_DATABASE$BE.ME)
 rownames(GLOBAL_MONTHLY_DATABASE$BE.ME) <- rownames(GLOBAL_MONTHLY_DATABASE$returns_monthly)
-colnames(GLOBAL_MONTHLY_DATABASE$BE.ME_score) <- colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly)
+colnames(GLOBAL_MONTHLY_DATABASE$BE.ME) <- colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly)
 #  BE/ME the way FF do it 
 GLOBAL_MONTHLY_DATABASE$market_cap_last_december = apply(GLOBAL_MONTHLY_DATABASE$market_cap,2,function(r){
   names(r) <- month_dates
@@ -42,10 +63,8 @@ GLOBAL_MONTHLY_DATABASE$Book_Value_last_june = apply(GLOBAL_YEARLY_DATABASE$book
 rownames(GLOBAL_MONTHLY_DATABASE$Book_Value_last_june) <- rownames(GLOBAL_MONTHLY_DATABASE$returns_monthly)
 colnames(GLOBAL_MONTHLY_DATABASE$Book_Value_last_june) <- colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly)
 GLOBAL_MONTHLY_DATABASE$BE.ME_ff = ifelse(GLOBAL_MONTHLY_DATABASE$market_cap_last_december, GLOBAL_MONTHLY_DATABASE$Book_Value_last_june/GLOBAL_MONTHLY_DATABASE$market_cap_last_december, NA)
-GLOBAL_MONTHLY_DATABASE$BE.ME_ff_score = get_cross_section_score(GLOBAL_MONTHLY_DATABASE$BE.ME_ff)
 rownames(GLOBAL_MONTHLY_DATABASE$BE.ME_ff) <- rownames(GLOBAL_MONTHLY_DATABASE$returns_monthly)
-colnames(GLOBAL_MONTHLY_DATABASE$BE.ME_ff_score) <- colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly)
-GLOBAL_YEARLY_DATABASE$EV_EBITDA_multiple_score <- get_cross_section_score(GLOBAL_YEARLY_DATABASE$EV_EBITDA_multiple)
+colnames(GLOBAL_MONTHLY_DATABASE$BE.ME_ff) <- colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly)
 
 ## Ibes data - note that these are not available the whole period, so we align with the mothly data, too, first
 tmp = GLOBAL_MONTHLY_DATABASE$returns_monthly*NA
@@ -66,30 +85,67 @@ match_columns = match(colnames(GLOBAL_IBES_DATABASE$STDEV), colnames(tmp))
 tmp[match_rows,match_columns] <- GLOBAL_IBES_DATABASE$STDEV 
 GLOBAL_IBES_DATABASE$STDEV<- tmp
 
-GLOBAL_IBES_DATABASE$MEANREC_score = get_cross_section_score(GLOBAL_IBES_DATABASE$MEANREC)
-GLOBAL_IBES_DATABASE$NUMREC_score = get_cross_section_score(GLOBAL_IBES_DATABASE$NUMREC)
-GLOBAL_IBES_DATABASE$STDEV_score = get_cross_section_score(GLOBAL_IBES_DATABASE$STDEV)
+tmp = GLOBAL_MONTHLY_DATABASE$returns_monthly*NA
+match_rows = match(str_sub(rownames(GLOBAL_IBES_DATABASE$NUMUP), start=1,end=7), str_sub(rownames(tmp), start=1,end=7))
+match_columns = match(colnames(GLOBAL_IBES_DATABASE$NUMUP), colnames(tmp))
+tmp[match_rows,match_columns] <- GLOBAL_IBES_DATABASE$NUMUP 
+GLOBAL_IBES_DATABASE$NUMUP<- tmp
+
+tmp = GLOBAL_MONTHLY_DATABASE$returns_monthly*NA
+match_rows = match(str_sub(rownames(GLOBAL_IBES_DATABASE$NUMDOWN), start=1,end=7), str_sub(rownames(tmp), start=1,end=7))
+match_columns = match(colnames(GLOBAL_IBES_DATABASE$NUMDOWN), colnames(tmp))
+tmp[match_rows,match_columns] <- GLOBAL_IBES_DATABASE$NUMDOWN 
+GLOBAL_IBES_DATABASE$NUMDOWN<- tmp
 
 ## This is slow but we need it for the pre-event performance. 
-load("../FinanceData/created_daily_data/GLOBAL_DAILY_DATABASE.Rdata")
 GLOBAL_DAILY_DATABASE$returns_daily <- scrub(GLOBAL_DAILY_DATABASE$returns_daily)
 tmp1 <- apply(GLOBAL_DAILY_DATABASE$returns_daily,2,function(r) ms(r,120)) # we only have trading days
 tmp2 <- apply(GLOBAL_DAILY_DATABASE$returns_daily!=0,2,function(r) ms(r,120)) # we only have trading days
 GLOBAL_DAILY_DATABASE$recent_returns_daily = ifelse(tmp2 > 60, tmp1, NA) # need at least 60 trading (non-zero returns!) days recently
-GLOBAL_DAILY_DATABASE$recent_returns_daily_score = get_cross_section_score(GLOBAL_DAILY_DATABASE$recent_returns_daily)
 rownames(GLOBAL_DAILY_DATABASE$recent_returns_daily) <- rownames(GLOBAL_DAILY_DATABASE$returns_daily)
 colnames(GLOBAL_DAILY_DATABASE$recent_returns_daily) <- colnames(GLOBAL_DAILY_DATABASE$returns_daily)
-rownames(GLOBAL_DAILY_DATABASE$recent_returns_daily_score) <- rownames(GLOBAL_DAILY_DATABASE$returns_daily)
-colnames(GLOBAL_DAILY_DATABASE$recent_returns_daily_score) <- colnames(GLOBAL_DAILY_DATABASE$returns_daily)
 rm("tmp1", "tmp2")
+
+
+#### ALL SCORES NOW
+# Note: WE GET ALL SCORES FOR EACH PROJECT FOR TWO REASONS: a) TO AVOID SAVING ALL THIS, b) AS WE MAY WANT TO GET SCORE USING ONLY A SUBSET OF THE COMPANIES
+# In this case we removed all stocks not trading in major markets already, so we use all permnos for scoring. Indeed, check this now:
+# Just check if any permnos trade some times in non-major markets: 
+bad_exchange_traded = apply(GLOBAL_YEARLY_DATABASE$exchange,2, function(r) sum(!is.na(r) & !(scrub(r) %in% c(11,12,14))))
+if (sum(bad_exchange_traded!=0) !=0)
+  print("Some permnos trading in non-major exchanges some times: check your scores")
+
+GLOBAL_MONTHLY_DATABASE$volatility_score <- get_cross_section_score(GLOBAL_MONTHLY_DATABASE$volatility)
+GLOBAL_MONTHLY_DATABASE$alphas_score <- get_cross_section_score(GLOBAL_MONTHLY_DATABASE$alphas)
+GLOBAL_MONTHLY_DATABASE$market_beta_score <- get_cross_section_score(GLOBAL_MONTHLY_DATABASE$market_beta)
+GLOBAL_MONTHLY_DATABASE$SMB_beta_score <- get_cross_section_score(GLOBAL_MONTHLY_DATABASE$SMB_beta)
+GLOBAL_MONTHLY_DATABASE$HML_beta_score <- get_cross_section_score(GLOBAL_MONTHLY_DATABASE$HML_beta)
+GLOBAL_MONTHLY_DATABASE$RMW_beta_score <- get_cross_section_score(GLOBAL_MONTHLY_DATABASE$RMW_beta)
+GLOBAL_MONTHLY_DATABASE$CMA_beta_score <- get_cross_section_score(GLOBAL_MONTHLY_DATABASE$CMA_beta)
+GLOBAL_MONTHLY_DATABASE$IVOL_score <- get_cross_section_score(GLOBAL_MONTHLY_DATABASE$IVOL)
+GLOBAL_MONTHLY_DATABASE$Rsq_score <- get_cross_section_score(GLOBAL_MONTHLY_DATABASE$Rsq)
+GLOBAL_MONTHLY_DATABASE$market_cap_score = get_cross_section_score(GLOBAL_MONTHLY_DATABASE$market_cap)
+GLOBAL_MONTHLY_DATABASE$BE.ME_score = get_cross_section_score(GLOBAL_MONTHLY_DATABASE$BE.ME)
+GLOBAL_MONTHLY_DATABASE$BE.ME_ff_score = get_cross_section_score(GLOBAL_MONTHLY_DATABASE$BE.ME_ff)
+GLOBAL_YEARLY_DATABASE$EV_EBITDA_multiple_score <- get_cross_section_score(GLOBAL_YEARLY_DATABASE$EV_EBITDA_multiple)
+
+GLOBAL_IBES_DATABASE$MEANREC_score = get_cross_section_score(GLOBAL_IBES_DATABASE$MEANREC)
+GLOBAL_IBES_DATABASE$NUMREC_score = get_cross_section_score(GLOBAL_IBES_DATABASE$NUMREC)
+GLOBAL_IBES_DATABASE$STDEV_score = get_cross_section_score(GLOBAL_IBES_DATABASE$STDEV)
+GLOBAL_IBES_DATABASE$NUMUP_score = get_cross_section_score(GLOBAL_IBES_DATABASE$NUMUP)
+GLOBAL_IBES_DATABASE$NUMDOWN_score = get_cross_section_score(GLOBAL_IBES_DATABASE$NUMDOWN)
+
+GLOBAL_DAILY_DATABASE$recent_returns_daily_score = get_cross_section_score(GLOBAL_DAILY_DATABASE$recent_returns_daily)
+
+############################################################################################
+############################################################################################
+# Gather all data we need, aligned correctly pre-event
+############################################################################################
+############################################################################################
 
 # Will use to get the permnos or other company identifiers using the cusip-date. Maybe there is a better way to do this
 load("../FinanceData/rawdata_universe_of_companies/crsp_permno_cusip_pairs.Rdata")
 cusip_date_universe = paste(universe_companies$NCUSIP, universe_companies$date, sep="-")
-
-############################################################################################
-# Gather all data we need, aligned correctly pre-event
-############################################################################################
 
 ###############################################################
 ### keep only permnos available in the global daily/monthly/yearly data
@@ -140,39 +196,93 @@ ISSUERS_DATA$DATASET$SDC$Industry_name<- sapply(ISSUERS_DATA$DATASET$SDC$Industr
   ifelse(sum(tmp!=0), names(FF_industries)[which(tmp!=0)], "Strange")
 })
 
+###############################################################
+### GVKEYS
+year_dates_yearly = str_sub(GLOBAL_YEARLY_DATABASE$date, start = 1, end = 4) 
 
+BUYBACK_DATA$DATASET$SDC$GVKEY <- sapply(1:length(BUYBACK_DATA$DATASET$SDC$CUSIP), function(i){
+  event.date = str_sub(BUYBACK_DATA$DATASET$SDC$Event.Date[i], start=1,end=4)
+  event.permno = BUYBACK_DATA$DATASET$SDC$permno[i]
+  tmp = unique(GLOBAL_YEARLY_DATABASE$gvkeys[which(GLOBAL_YEARLY_DATABASE$permnos == event.permno)])
+  ifelse(length(tmp) == 1,tmp ,NA)
+})
+
+ISSUERS_DATA$DATASET$SDC$GVKEY <- sapply(1:length(ISSUERS_DATA$DATASET$SDC$CUSIP), function(i){
+  event.date = str_sub(ISSUERS_DATA$DATASET$SDC$Event.Date[i], start=1,end=4)
+  event.permno = ISSUERS_DATA$DATASET$SDC$permno[i]
+  tmp = unique(GLOBAL_YEARLY_DATABASE$gvkeys[which(GLOBAL_YEARLY_DATABASE$permnos == event.permno)])
+  ifelse(length(tmp) == 1,tmp ,NA)
+})
+rm("year_dates_yearly")
+
+###############################################################
+### SIC/SICH
+year_dates_yearly = str_sub(GLOBAL_YEARLY_DATABASE$date, start = 1, end = 4) 
+
+BUYBACK_DATA$DATASET$CRSP$SIC <- sapply(1:length(BUYBACK_DATA$DATASET$SDC$CUSIP), function(i){
+  event.date = str_sub(BUYBACK_DATA$DATASET$SDC$Event.Date[i], start=1,end=4)
+  event.permno = BUYBACK_DATA$DATASET$SDC$permno[i]
+  tmp = unique(GLOBAL_YEARLY_DATABASE$sic[which(GLOBAL_YEARLY_DATABASE$permnos == event.permno & year_dates_yearly == event.date)])
+  ifelse(length(tmp) == 1,tmp ,NA)
+})
+BUYBACK_DATA$DATASET$CRSP$SICH <- sapply(1:length(BUYBACK_DATA$DATASET$SDC$CUSIP), function(i){
+  event.date = str_sub(BUYBACK_DATA$DATASET$SDC$Event.Date[i], start=1,end=4)
+  event.permno = BUYBACK_DATA$DATASET$SDC$permno[i]
+  tmp = unique(GLOBAL_YEARLY_DATABASE$sich[which(GLOBAL_YEARLY_DATABASE$permnos == event.permno & year_dates_yearly == event.date)])
+  ifelse(length(tmp) == 1,tmp ,NA)
+})
+
+ISSUERS_DATA$DATASET$CRSP$SIC <- sapply(1:length(ISSUERS_DATA$DATASET$SDC$CUSIP), function(i){
+  event.date = str_sub(ISSUERS_DATA$DATASET$SDC$Event.Date[i], start=1,end=4)
+  event.permno = ISSUERS_DATA$DATASET$SDC$permno[i]
+  tmp = unique(GLOBAL_YEARLY_DATABASE$sic[which(GLOBAL_YEARLY_DATABASE$permnos == event.permno & year_dates_yearly == event.date)])
+  ifelse(length(tmp) == 1,tmp ,NA)
+})
+ISSUERS_DATA$DATASET$CRSP$SICH <- sapply(1:length(ISSUERS_DATA$DATASET$SDC$CUSIP), function(i){
+  event.date = str_sub(ISSUERS_DATA$DATASET$SDC$Event.Date[i], start=1,end=4)
+  event.permno = ISSUERS_DATA$DATASET$SDC$permno[i]
+  tmp = unique(GLOBAL_YEARLY_DATABASE$sich[which(GLOBAL_YEARLY_DATABASE$permnos == event.permno & year_dates_yearly == event.date)])
+  ifelse(length(tmp) == 1,tmp ,NA)
+})
+
+rm("year_dates_yearly")
 ###############################################################
 ### Add market cap, closing price, B/M, volatility, etc + scores
 
-template_month_dates = str_sub(rownames(GLOBAL_MONTHLY_DATABASE$returns_monthly), start = 1, end = 7) # remove the day in case it is there
-
 # A helper function that given the event dates it generates the new features. date_lag_function defines the month relative to the event to get the data from
-create_event_feature <- function(event.permnos, event.dates, monthly.feature.matrix, event_date){
-  tmp = as.vector(monthly.feature.matrix)
-  indices = (match(as.character(event.permnos), colnames(monthly.feature.matrix))-1)*nrow(monthly.feature.matrix) + match(event_date, template_month_dates)
-  tmp[indices]
-  #sapply(1:length(event.permnos), function(i) monthly.feature.matrix[event_date[i],as.character(event.permnos)[i]]) # this was the slow way
+tmp_names = sapply(1:ncol(GLOBAL_MONTHLY_DATABASE$returns_monthly), function(i) paste(str_sub(rownames(GLOBAL_MONTHLY_DATABASE$returns_monthly), start = 1, end = 7), colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly)[i]))
+create_event_feature <- function(event.permnos, monthly.feature.matrix, event_date){
+  monthly.feature.matrix = as.vector(monthly.feature.matrix)
+  names(monthly.feature.matrix) = tmp_names
+  used = paste(event_date,as.character(event.permnos))
+  monthly.feature.matrix[used]
 }
 
 last_month_event_date = sapply(BUYBACK_DATA$DATASET$SDC$Event.Date, function(x) str_sub(as.character(AddMonths(as.Date(x),-1)), start = 1, end = 7))
 last_month_event_date_iss = sapply(ISSUERS_DATA$DATASET$SDC$Event.Date, function(x) str_sub(as.character(AddMonths(as.Date(x),-1)), start = 1, end = 7))
 
-BUYBACK_DATA$DATASET$CRSP$closing.price = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$prices_monthly,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$Market.Cap = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$market_cap,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$Market.Cap_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$market_cap_score,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$BE.ME = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$BE.ME,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$BE.ME_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$BE.ME_score,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$closing.price = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$prices_monthly,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$Market.Cap = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$market_cap,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$Market.Cap_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$market_cap_score,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$BE.ME = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$BE.ME,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$BE.ME_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$BE.ME_score,last_month_event_date)
 # now the BE/ME the way FF do it 
-BUYBACK_DATA$DATASET$CRSP$BE.ME_ff = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$BE.ME_ff,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$BE.ME_ff_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$BE.ME_ff_score,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$pre_vol_Score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$volatility_score,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$IVOL_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$IVOL_score,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$Rsq_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$Rsq_score,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$market_beta_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$market_beta_score,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$leverage_d_over_d_plus_e = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_YEARLY_DATABASE$leverage_d_over_d_plus_e,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$leverage_lt_over_lt_plus_e = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_YEARLY_DATABASE$leverage_lt_over_lt_plus_e,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$EV_EBITDA_multiple = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_YEARLY_DATABASE$EV_EBITDA_multiple,last_month_event_date)
-BUYBACK_DATA$DATASET$CRSP$EV_EBITDA_multiple_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_YEARLY_DATABASE$EV_EBITDA_multiple_score,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$BE.ME_ff = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$BE.ME_ff,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$BE.ME_ff_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$BE.ME_ff_score,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$pre_vol = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$volatility,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$IVOL = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$IVOL,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$Rsq = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$Rsq,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$alpha = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$alphas,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$market_beta = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$market_beta,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$pre_vol_Score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$volatility_score,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$IVOL_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$IVOL_score,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$Rsq_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$Rsq_score,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$alpha_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$alphas_score,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$market_beta_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_MONTHLY_DATABASE$market_beta_score,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$leverage_d_over_d_plus_e = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_YEARLY_DATABASE$leverage_d_over_d_plus_e,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$leverage_lt_over_lt_plus_e = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_YEARLY_DATABASE$leverage_lt_over_lt_plus_e,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$EV_EBITDA_multiple = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_YEARLY_DATABASE$EV_EBITDA_multiple,last_month_event_date)
+BUYBACK_DATA$DATASET$CRSP$EV_EBITDA_multiple_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_YEARLY_DATABASE$EV_EBITDA_multiple_score,last_month_event_date)
 
 ISSUERS_DATA$DATASET$CRSP$closing.price = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$prices_monthly,last_month_event_date_iss)
 ISSUERS_DATA$DATASET$CRSP$Market.Cap = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$market_cap,last_month_event_date_iss)
@@ -182,9 +292,15 @@ ISSUERS_DATA$DATASET$CRSP$BE.ME_score = create_event_feature(ISSUERS_DATA$DATASE
 # now the BE/ME the way FF do it 
 ISSUERS_DATA$DATASET$CRSP$BE.ME_ff = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$BE.ME_ff,last_month_event_date_iss)
 ISSUERS_DATA$DATASET$CRSP$BE.ME_ff_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$BE.ME_ff_score,last_month_event_date_iss)
+ISSUERS_DATA$DATASET$CRSP$pre_vol = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$volatility,last_month_event_date_iss)
+ISSUERS_DATA$DATASET$CRSP$IVOL = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$IVOL,last_month_event_date_iss)
+ISSUERS_DATA$DATASET$CRSP$Rsq = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$Rsq,last_month_event_date_iss)
+ISSUERS_DATA$DATASET$CRSP$alpha = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$alphas,last_month_event_date_iss)
+ISSUERS_DATA$DATASET$CRSP$market_beta = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$market_beta,last_month_event_date_iss)
 ISSUERS_DATA$DATASET$CRSP$pre_vol_Score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$volatility_score,last_month_event_date_iss)
 ISSUERS_DATA$DATASET$CRSP$IVOL_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$IVOL_score,last_month_event_date_iss)
 ISSUERS_DATA$DATASET$CRSP$Rsq_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$Rsq_score,last_month_event_date_iss)
+ISSUERS_DATA$DATASET$CRSP$alpha_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$alphas_score,last_month_event_date_iss)
 ISSUERS_DATA$DATASET$CRSP$market_beta_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_MONTHLY_DATABASE$market_beta_score,last_month_event_date_iss)
 ISSUERS_DATA$DATASET$CRSP$leverage_d_over_d_plus_e = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_YEARLY_DATABASE$leverage_d_over_d_plus_e,last_month_event_date_iss)
 ISSUERS_DATA$DATASET$CRSP$leverage_lt_over_lt_plus_e = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_YEARLY_DATABASE$leverage_lt_over_lt_plus_e,last_month_event_date_iss)
@@ -194,30 +310,47 @@ ISSUERS_DATA$DATASET$CRSP$EV_EBITDA_multiple_score = create_event_feature(ISSUER
 ##########################################################################################
 # Now add the IBES data. Note there are not available the whole period
 
-last_last_month_event_date = sapply(BUYBACK_DATA$DATASET$SDC$Event.Date, function(x) str_sub(as.character(AddMonths(as.Date(x),-2)), start = 1, end = 7))
-last_last_month_event_date_iss = sapply(ISSUERS_DATA$DATASET$SDC$Event.Date, function(x) str_sub(as.character(AddMonths(as.Date(x),-2)), start = 1, end = 7))
+ibeslist = list()
+for (lag_month in 1:7){
+  cat(lag_month,", ")
+  tmp_month_event_date = sapply(BUYBACK_DATA$DATASET$SDC$Event.Date, function(x) str_sub(as.character(AddMonths(as.Date(x),-lag_month)), start = 1, end = 7))
+  tmp = list(
+    mean_rec = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$MEANREC,tmp_month_event_date),
+    mean_rec_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$MEANREC_score,tmp_month_event_date),
+    analyst_coverage = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMREC,tmp_month_event_date),
+    analyst_coverage_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMREC_score,tmp_month_event_date),
+    analyst_disagreement = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$STDEV,tmp_month_event_date),
+    analyst_disagreement_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$STDEV_score,tmp_month_event_date),
+    analyst_numup = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMUP,tmp_month_event_date),
+    analyst_numup_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMUP_score,tmp_month_event_date),
+    analyst_numdown = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMDOWN,tmp_month_event_date),
+    analyst_numdown_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMDOWN_score,tmp_month_event_date)
+  )
+  ibeslist = c(ibeslist,list(tmp))
+}
+names(ibeslist) <- paste("month_minus",1:7,sep="")
+BUYBACK_DATA$DATASET$ibes <- ibeslist
 
-BUYBACK_DATA$DATASET$ibes$mean_rec_last_month = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$MEANREC,last_month_event_date)
-BUYBACK_DATA$DATASET$ibes$mean_rec_last_month_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$MEANREC_score,last_month_event_date)
-BUYBACK_DATA$DATASET$ibes$mean_rec_last_last_month = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$MEANREC,last_last_month_event_date)
-BUYBACK_DATA$DATASET$ibes$mean_rec_last_last_month_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$MEANREC_score,last_last_month_event_date)
-BUYBACK_DATA$DATASET$ibes$analyst_coverage_last_month = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$NUMREC,last_month_event_date)
-BUYBACK_DATA$DATASET$ibes$analyst_coverage_last_month_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$NUMREC_score,last_month_event_date)
-BUYBACK_DATA$DATASET$ibes$analyst_disagreement_last_month = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$STDEV,last_month_event_date)
-BUYBACK_DATA$DATASET$ibes$analyst_disagreement_last_month_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$STDEV_score,last_month_event_date)
-BUYBACK_DATA$DATASET$ibes$analyst_disagreement_last_last_month = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$STDEV,last_last_month_event_date)
-BUYBACK_DATA$DATASET$ibes$analyst_disagreement_last_last_month_score = create_event_feature(BUYBACK_DATA$DATASET$SDC$permno,BUYBACK_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$STDEV_score,last_last_month_event_date)
-
-ISSUERS_DATA$DATASET$ibes$mean_rec_last_month = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$MEANREC,last_month_event_date_iss)
-ISSUERS_DATA$DATASET$ibes$mean_rec_last_month_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$MEANREC_score,last_month_event_date_iss)
-ISSUERS_DATA$DATASET$ibes$mean_rec_last_last_month = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$MEANREC,last_last_month_event_date_iss)
-ISSUERS_DATA$DATASET$ibes$mean_rec_last_last_month_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$MEANREC_score,last_last_month_event_date_iss)
-ISSUERS_DATA$DATASET$ibes$analyst_coverage_last_month = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$NUMREC,last_month_event_date_iss)
-ISSUERS_DATA$DATASET$ibes$analyst_coverage_last_month_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$NUMREC_score,last_month_event_date_iss)
-ISSUERS_DATA$DATASET$ibes$analyst_disagreement_last_month = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$STDEV,last_month_event_date_iss)
-ISSUERS_DATA$DATASET$ibes$analyst_disagreement_last_month_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$STDEV_score,last_month_event_date_iss)
-ISSUERS_DATA$DATASET$ibes$analyst_disagreement_last_last_month = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$STDEV,last_last_month_event_date_iss)
-ISSUERS_DATA$DATASET$ibes$analyst_disagreement_last_last_month_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno,ISSUERS_DATA$DATASET$SDC$Event.Date, GLOBAL_IBES_DATABASE$STDEV_score,last_last_month_event_date_iss)
+ibeslist = list()
+for (lag_month in 1:7){
+  cat(lag_month,", ")
+  tmp_month_event_date = sapply(ISSUERS_DATA$DATASET$SDC$Event.Date, function(x) str_sub(as.character(AddMonths(as.Date(x),-lag_month)), start = 1, end = 7))
+  tmp = list(
+    mean_rec = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$MEANREC,tmp_month_event_date),
+    mean_rec_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$MEANREC_score,tmp_month_event_date),
+    analyst_coverage = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMREC,tmp_month_event_date),
+    analyst_coverage_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMREC_score,tmp_month_event_date),
+    analyst_disagreement = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$STDEV,tmp_month_event_date),
+    analyst_disagreement_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$STDEV_score,tmp_month_event_date),
+    analyst_numup = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMUP,tmp_month_event_date),
+    analyst_numup_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMUP_score,tmp_month_event_date),
+    analyst_numdown = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMDOWN,tmp_month_event_date),
+    analyst_numdown_score = create_event_feature(ISSUERS_DATA$DATASET$SDC$permno, GLOBAL_IBES_DATABASE$NUMDOWN_score,tmp_month_event_date)
+  )
+  ibeslist = c(ibeslist,list(tmp))
+}
+names(ibeslist) <- paste("month_minus",1:7,sep="")
+ISSUERS_DATA$DATASET$ibes <- ibeslist
 
 ##########################################################################################
 #### Other events: we do this here before cleaning data just in case we have any changes of company sizes etc that lead to removal of the company
@@ -287,7 +420,7 @@ for (i in 1:length(ISSUERS_DATA$DATASET$SDC$permno)){
 ## Add the daily data based performance - and remove that data as they are large. THis is slow, so good to do after we remove all events we don't need anyway
 
 daily_dates = as.Date(rownames(GLOBAL_DAILY_DATABASE$recent_returns_daily))
-
+# in case the event was on a non-trading day, find the first trading day before the event up to 10 days before, else insert an NA
 event_trade_days = match(BUYBACK_DATA$DATASET$SDC$Event.Date-2, daily_dates)
 i=3
 while (sum(is.na(event_trade_days)) & i < 10){
@@ -315,8 +448,6 @@ sum(is.na(ISSUERS_DATA$DATASET$CRSP$recent_performance))
 tmp = as.vector(GLOBAL_DAILY_DATABASE$recent_returns_daily_score)
 ISSUERS_DATA$DATASET$CRSP$recent_performance_score = tmp[(match(ISSUERS_DATA$DATASET$SDC$permno, colnames(GLOBAL_DAILY_DATABASE$recent_returns_daily))-1)*nrow(GLOBAL_DAILY_DATABASE$recent_returns_daily) + event_trade_days]
 sum(is.na(ISSUERS_DATA$DATASET$CRSP$recent_performance_score))
-
-rm("GLOBAL_DAILY_DATABASE")
 
 ###############################################################
 # Make the U-Index scores
@@ -517,6 +648,8 @@ BUYBACK_DATA$Risk_Factors_Monthly = GLOBAL_MONTHLY_DATABASE$FamaFrench_five_fact
 ISSUERS_DATA$Risk_Factors_Monthly = GLOBAL_MONTHLY_DATABASE$FamaFrench_five_factors
 BUYBACK_DATA$Market_Monthly = GLOBAL_MONTHLY_DATABASE$Market_Monthly
 ISSUERS_DATA$Market_Monthly = GLOBAL_MONTHLY_DATABASE$Market_Monthly
+BUYBACK_DATA$Market_daily = GLOBAL_DAILY_DATABASE$Market_Daily
+ISSUERS_DATA$Market_daily = GLOBAL_DAILY_DATABASE$Market_Daily
 
 ##########################################################################################
 ##########################################################################################

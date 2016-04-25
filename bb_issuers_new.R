@@ -21,7 +21,7 @@ initial_vars = ls(all = TRUE) # takes time to save and load, so we save only wha
 
 load("../FinanceData/created_projects_datasets/BUYBACKSnew.Rdata")
 
-remove_financials_utilities = 1 # This is defined in the Paper_global_parameters.R file... default is 1
+# remove_financials_utilities is defined in the Paper_global_parameters.R file... default is 1
 if (remove_financials_utilities){
   
   # Buybacks first
@@ -63,17 +63,26 @@ if (remove_financials_utilities){
 
 Risk_Factors_Monthly = BUYBACK_DATA$Risk_Factors_Monthly
 Market_Monthly = BUYBACK_DATA$Market_Monthly
-   
-value.weights_bb = BUYBACK_DATA$DATASET$CRSP$Market.Cap
-value.weights_iss = ISSUERS_DATA$DATASET$CRSP$Market.Cap
-# value.weights_bb = rep(1,length(BUYBACK_DATA$DATASET$CRSP$Market.Cap)) # This is the first version of the paper - no value weighted calendar method
+
+if (do.value.weight == 1){   
+  value.weights_bb = BUYBACK_DATA$DATASET$CRSP$Market.Cap
+  value.weights_iss = ISSUERS_DATA$DATASET$CRSP$Market.Cap
+} else {
+  value.weights_bb = rep(1,length(BUYBACK_DATA$DATASET$CRSP$Market.Cap)) # This is the first version of the paper - no value weighted calendar method
+  value.weights_iss = rep(1,length(ISSUERS_DATA$DATASET$CRSP$Market.Cap)) # This is the first version of the paper - no value weighted calendar method
+}
 
 company_subset_undervalued_bb = BUYBACK_DATA$Valuation_Index > 10
 company_subset_overvalued_bb = BUYBACK_DATA$Valuation_Index < 7
 High_Idiosyncr_eventsBB = BUYBACK_DATA$DATASET$CRSP$Rsq_score < quantile(BUYBACK_DATA$DATASET$CRSP$Rsq_score, quantile_R2)
 Low_Idiosyncr_eventsBB  = BUYBACK_DATA$DATASET$CRSP$Rsq_score > quantile(BUYBACK_DATA$DATASET$CRSP$Rsq_score, 1-quantile_R2)
+High_IVOL_eventsBB = BUYBACK_DATA$DATASET$CRSP$IVOL_score > quantile(BUYBACK_DATA$DATASET$CRSP$IVOL_score, 1-quantile_VOL)
+Low_IVOL_eventsBB  = BUYBACK_DATA$DATASET$CRSP$IVOL_score < quantile(BUYBACK_DATA$DATASET$CRSP$IVOL_score, quantile_VOL)
 High_VOL_eventsBB = BUYBACK_DATA$DATASET$CRSP$pre_vol_Score > quantile(BUYBACK_DATA$DATASET$CRSP$pre_vol_Score, 1-quantile_VOL)
 Low_VOL_eventsBB  = BUYBACK_DATA$DATASET$CRSP$pre_vol_Score < quantile(BUYBACK_DATA$DATASET$CRSP$pre_vol_Score, quantile_VOL)
+High_marketbeta_eventsBB = BUYBACK_DATA$DATASET$CRSP$market_beta_score > quantile(BUYBACK_DATA$DATASET$CRSP$market_beta_score, 1-quantile_VOL)
+Medium_marketbeta_eventsBB  = BUYBACK_DATA$DATASET$CRSP$market_beta_score >= quantile(BUYBACK_DATA$DATASET$CRSP$market_beta_score, quantile_VOL) & BUYBACK_DATA$DATASET$CRSP$market_beta_score <= quantile(BUYBACK_DATA$DATASET$CRSP$market_beta_score, 1-quantile_VOL)
+Low_marketbeta_eventsBB  = BUYBACK_DATA$DATASET$CRSP$market_beta_score < quantile(BUYBACK_DATA$DATASET$CRSP$market_beta_score, quantile_VOL)
 tmp = BUYBACK_DATA$DATASET$CRSP$leverage_lt_over_lt_plus_e
 High_LEV_eventsBB = scrub(tmp) > quantile(tmp[!is.na(tmp)], 1-quantile_EPS)  & !is.na(tmp)
 Low_LEV_eventsBB  = scrub(tmp) < quantile(tmp[!is.na(tmp)], quantile_EPS)  & !is.na(tmp)
@@ -363,6 +372,48 @@ rm("tmp11","tmp12","tmp21","tmp22","Otmp11","Otmp12","Otmp21","Otmp22", "useonly
 
 
 ####################################################################################
+#cbind(marketbeta_IRATStableBB,marketbeta_IRATStable_underBB)[reported_times,],
+#cbind(marketbeta_IRATStableBB_cal,marketbeta_IRATStable_underBB_cal)[reported_times,],
+
+useonly = which(Low_marketbeta_eventsBB)
+tmp11 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+tmp21 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+useonly = which(Medium_marketbeta_eventsBB)
+tmp12 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+tmp22 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+useonly = which(High_marketbeta_eventsBB)
+tmp13 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+tmp23 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+
+marketbeta_IRATStableBB = cbind(tmp11, tmp12,tmp13)
+marketbeta_IRATStableBB_cal = cbind(tmp21, tmp22,tmp23)
+colnames(marketbeta_IRATStableBB) <- c("Low beta: CAR", "t-stat","p-value","Medium beta: CAR", "t-stat","p-value","High beta: CAR", "t-stat","p-value")
+colnames(marketbeta_IRATStableBB_cal) <- c("Low beta: CAL", "t-stat","p-value","Medium beta: CAR", "t-stat","p-value","High beta: CAL", "t-stat","p-value")
+
+rm("tmp11","tmp12","tmp13","tmp21","tmp22","tmp23", "useonly")
+
+useonly = which(Low_marketbeta_eventsBB & company_subset_undervalued_bb)
+tmp11 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+tmp21 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+useonly = which(High_marketbeta_eventsBB & company_subset_undervalued_bb)
+tmp12 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+tmp22 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+useonly = which(Low_marketbeta_eventsBB & company_subset_overvalued_bb)
+Otmp11 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+Otmp21 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+useonly = which(High_marketbeta_eventsBB & company_subset_overvalued_bb)
+Otmp12 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+Otmp22 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+
+marketbeta_IRATStable_underBB = cbind(tmp11,Otmp11,tmp12,Otmp12)
+marketbeta_IRATStable_underBB_cal = cbind(tmp21,Otmp21,tmp22,Otmp22)
+colnames(marketbeta_IRATStable_underBB) <- c("Low beta: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value", "High beta: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value")
+colnames(marketbeta_IRATStable_underBB_cal) <- c("Low beta: U CAL", "t-stat","p-value","O CAL", "t-stat","p-value", "High beta: U CAL", "t-stat","p-value","O CAL", "t-stat","p-value")
+
+rm("tmp11","tmp12","tmp21","tmp22","Otmp11","Otmp12","Otmp21","Otmp22", "useonly")
+
+
+####################################################################################
 #round(Under_IdioBB[1:6,1:4],1), 
 
 Under_IdioBB = rbind(
@@ -446,7 +497,7 @@ Missed_EPS = (BUYBACK_DATA$DATASET$ibes$mean_rec_last_month_score < BUYBACK_DATA
 Beat_EPS = (BUYBACK_DATA$DATASET$ibes$mean_rec_last_month_score >= BUYBACK_DATA$DATASET$ibes$mean_rec_last_last_month_score)
 low_epsunc = 0*EUindex_bb
 low_epsunc[Low_EPS_eventsBB] <-1
-ISS_Later = ifelse(!is.na(BUYBACK_DATA$DATASET$SDC$Other_issue_later), "Yes", "No")
+ISS_Later = ifelse((BUYBACK_DATA$DATASET$SDC$OtherlaterEvent != 0), "Yes", "No")
 Credit = sapply(BUYBACK_DATA$DATASET$SDC$Source...of..Funds..Code, function(i) length(intersect(unlist(str_split(i,"\\+")), credit_funds))!=0 & length(intersect(unlist(str_split(i,"\\+")), c(cash_funds,other_funds)))==0)
 Cash = sapply(BUYBACK_DATA$DATASET$SDC$Source...of..Funds..Code, function(i) length(intersect(unlist(str_split(i,"\\+")), cash_funds))!=0 & length(intersect(unlist(str_split(i,"\\+")), c(credit_funds,other_funds)))==0)
 Good_purpose = sapply(BUYBACK_DATA$DATASET$SDC$Purpose.Code, function(i) length(intersect(unlist(str_split(i,"\\+")), good_purpose))!=0 & length(intersect(unlist(str_split(i,"\\+")), other_purpose))==0)
@@ -597,16 +648,393 @@ rm("tmp")
 
 # Done above.
 
+
+####################################################################################
+# Large firms analysis
+
+useonly = which(Low_VOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+tmp11 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+tmp21 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+useonly = which(High_VOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+tmp12 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+tmp22 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+
+VOL_large_IRATStableBB = cbind(tmp11, tmp12)
+VOL_large_IRATStableBB_cal = cbind(tmp21, tmp22)
+colnames(VOL_large_IRATStableBB) <- c("Low Vol: CAR", "t-stat","p-value","High Vol: CAR", "t-stat","p-value")
+colnames(VOL_large_IRATStableBB_cal) <- c("Low Vol: CAL", "t-stat","p-value","High Vol: CAL", "t-stat","p-value")
+
+rm("tmp11","tmp12","tmp21","tmp22", "useonly")
+
+# Time analysis now
+
+VOL_large_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_VOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowL = periodnow & Low_VOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low Vol.", sep=" "),"t-stat","p-value",
+    "High Vol.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+VOL_large_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_VOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowL = periodnow & Low_VOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low Vol.", sep=" "),"t-stat","p-value",
+    "High Vol.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+###########
+
+IVOL_large_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_IVOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowL = periodnow & Low_IVOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low IVOL.", sep=" "),"t-stat","p-value",
+    "High IVOL.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+IVOL_large_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_IVOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowL = periodnow & Low_IVOL_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low IVOL.", sep=" "),"t-stat","p-value",
+    "High IVOL.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+###########
+
+Idio_large_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_Idiosyncr_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowL = periodnow & Low_Idiosyncr_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low Id.", sep=" "),"t-stat","p-value",
+    "High Id.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+Idio_large_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_Idiosyncr_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowL = periodnow & Low_Idiosyncr_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low Id.", sep=" "),"t-stat","p-value",
+    "High Id.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+
+###########
+
+marketbeta_large_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_marketbeta_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowM = periodnow & Medium_marketbeta_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowL = periodnow & Low_marketbeta_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowM], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowM], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low beta", sep=" "),"t-stat","p-value",
+    "Medium beta","t-stat","p-value","High beta","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+marketbeta_large_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_marketbeta_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowM = periodnow & Medium_marketbeta_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowL = periodnow & Low_marketbeta_eventsBB & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowM], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowM], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowM])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low beta", sep=" "),"t-stat","p-value",
+    "Medium beta","t-stat","p-value","High beta","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+###########
+
+Uindex_large_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowL = periodnow & company_subset_undervalued_bb & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowH = periodnow & company_subset_overvalued_bb & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"High U-index", sep=" "),"t-stat","p-value",
+    "Low U-index","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+Uindex_large_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowL = periodnow & company_subset_undervalued_bb & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  periodnowH = periodnow & company_subset_overvalued_bb & BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"High U-index", sep=" "),"t-stat","p-value",
+    "Low U-index","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+####################################################################################
+# Small firms analysis
+
+useonly = which(Low_VOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3))
+tmp11 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+tmp21 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+useonly = which(High_VOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3))
+tmp12 = car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly)$results
+tmp22 = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = value.weights_bb[useonly])$results
+
+VOL_small_IRATStableBB = cbind(tmp11, tmp12)
+VOL_small_IRATStableBB_cal = cbind(tmp21, tmp22)
+colnames(VOL_small_IRATStableBB) <- c("Low Vol: CAR", "t-stat","p-value","High Vol: CAR", "t-stat","p-value")
+colnames(VOL_small_IRATStableBB_cal) <- c("Low Vol: CAL", "t-stat","p-value","High Vol: CAL", "t-stat","p-value")
+
+rm("tmp11","tmp12","tmp21","tmp22", "useonly")
+
+# Time analysis now
+
+VOL_small_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_VOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowL = periodnow & Low_VOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low Vol.", sep=" "),"t-stat","p-value",
+    "High Vol.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+VOL_small_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_VOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowL = periodnow & Low_VOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low Vol.", sep=" "),"t-stat","p-value",
+    "High Vol.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+###########
+
+IVOL_small_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_IVOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowL = periodnow & Low_IVOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low IVOL.", sep=" "),"t-stat","p-value",
+    "High IVOL.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+IVOL_small_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_IVOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowL = periodnow & Low_IVOL_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low IVOL.", sep=" "),"t-stat","p-value",
+    "High IVOL.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+###########
+
+Idio_small_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_Idiosyncr_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowL = periodnow & Low_Idiosyncr_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low Id.", sep=" "),"t-stat","p-value",
+    "High Id.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+Idio_small_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_Idiosyncr_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowL = periodnow & Low_Idiosyncr_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low Id.", sep=" "),"t-stat","p-value",
+    "High Id.","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+###########
+
+marketbeta_small_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_marketbeta_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowM = periodnow & Medium_marketbeta_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowL = periodnow & Low_marketbeta_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowM], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowM], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low beta", sep=" "),"t-stat","p-value",
+    "Medium beta","t-stat","p-value","High beta","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+marketbeta_small_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowH = periodnow & High_marketbeta_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowM = periodnow & Medium_marketbeta_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowL = periodnow & Low_marketbeta_eventsBB & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowM], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowM], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowM])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"Low beta", sep=" "),"t-stat","p-value",
+    "Medium beta","t-stat","p-value","High beta","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+##########
+
+Uindex_small_IRATStableBB_time = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowL = periodnow & company_subset_undervalued_bb & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowH = periodnow & company_subset_overvalued_bb & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model)$results,
+    car_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model)$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"High U-index", sep=" "),"t-stat","p-value",
+    "Low U-index","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+Uindex_small_time_cal = Reduce(cbind, lapply(2:nrow(periods_considered), function(i){
+  periodnow = (BUYBACK_DATA$DATASET$SDC$Event.Date >= periods_considered[i,1] & BUYBACK_DATA$DATASET$SDC$Event.Date <= periods_considered[i,2])
+  periodnowL = periodnow & company_subset_undervalued_bb & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  periodnowH = periodnow & company_subset_overvalued_bb & !(BUYBACK_DATA$DATASET$CRSP$Market.Cap > 100 & BUYBACK_DATA$Size_used <=3)
+  res = cbind(
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowL], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowL], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowL])$results,
+    calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,periodnowH], BUYBACK_DATA$DATASET$SDC$Event.Date[periodnowH], Risk_Factors_Monthly,formula_used=five_factor_model,value.weights = value.weights_bb[periodnowH])$results
+  )
+  colnames(res) <- c(
+    paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"High U-index", sep=" "),"t-stat","p-value",
+    "Low U-index","t-stat","p-value"
+  ) 
+  rownames(res)[nrow(res)] <- "Observations"
+  res    
+}))
+
+
 ####################################################################################
 # Other variables used in the .Rnw
-
-# Scale the ME and BE/ME to have millions
-BUYBACK_DATA$DATASET$CRSP$Market.Cap = BUYBACK_DATA$DATASET$CRSP$Market.Cap/1000 
-ISSUERS_DATA$DATASET$CRSP$Market.Cap = ISSUERS_DATA$DATASET$CRSP$Market.Cap/1000 
-BUYBACK_DATA$DATASET$CRSP$BE.ME = BUYBACK_DATA$DATASET$CRSP$BE.ME*1000 
-ISSUERS_DATA$DATASET$CRSP$BE.ME = ISSUERS_DATA$DATASET$CRSP$BE.ME*1000 
-BUYBACK_DATA$DATASET$CRSP$BE.ME_ff = BUYBACK_DATA$DATASET$CRSP$BE.ME_ff*1000 
-ISSUERS_DATA$DATASET$CRSP$BE.ME_ff = ISSUERS_DATA$DATASET$CRSP$BE.ME_ff*1000 
 
 datasummaryBB = rbind(
   round(c(summary(BUYBACK_DATA$DATASET$SDC$Event.Size[!is.na(BUYBACK_DATA$DATASET$SDC$Event.Size) & BUYBACK_DATA$DATASET$SDC$Event.Size!=0])[c(1,3,4,6)], sd(BUYBACK_DATA$DATASET$SDC$Event.Size[!is.na(BUYBACK_DATA$DATASET$SDC$Event.Size) & BUYBACK_DATA$DATASET$SDC$Event.Size!=0]),sum(is.na(BUYBACK_DATA$DATASET$SDC$Event.Size) | BUYBACK_DATA$DATASET$SDC$Event.Size==0)),1),
