@@ -2,14 +2,15 @@
 ## Latex commands
 ######################################################################################
 
+tostars <- function(x) ifelse(abs(x)<=0.01,"**",ifelse(abs(x)<=0.05,"*",ifelse(abs(x)<=0.1,"$^+$","")))
+
 # CAN EDIT TO PRINT OUT WHATEVER LATEX WE NEED  
-latex_render_data_frame<-function(x,y=NULL, title="",caption="",label="",columns=NULL,bigtitleontop = F,show_rownames=FALSE,red_text="",green_text="",blue_text="",scale=1,digits,lastSpecial=F,dorotate=F) {
+latex_render_data_frame<-function(x,y=NULL, title="",caption="",label="",columns=NULL,bigtitleontop = F,show_rownames=FALSE,red_text="",green_text="",blue_text="",scale=1,digits,lastSpecial=F,dorotate=F, tostars_used = function(r) "") {
   #Helper functions
   p <- function(...){paste(...)}
   pn <- function(...){paste(...,"\n")} #print newline
   pc <- function(...){paste(...,"&")}  #print column
-  tostars <- function(x) ifelse(abs(x)<0.01,"**",ifelse(abs(x)<=0.05,"*",""))
-  
+
   if(dorotate){
     width = "\\linewidth"
   } else {
@@ -163,8 +164,7 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
   p <- function(...){paste(...)}
   pn <- function(...){paste(...,"\n")} #print newline
   pc <- function(...){paste(...,"&")}  #print column
-  tostars <- function(x) ifelse(abs(x)<=0.01,"**",ifelse(abs(x)<=0.05,"*",""))
-  
+
   if(dorotate){
     width = "\\linewidth"
   } else {
@@ -421,8 +421,7 @@ printLatexTable <- function(df, title="",metric="CAR",caption="",label="",titleo
   p <- function(...){paste(...)}
   pn <- function(...){paste(...,"\n")} #print newline
   pc <- function(...){paste(...,"&")}  #print column
-  tostars <- function(x) ifelse(abs(x)<=0.01,"**",ifelse(abs(x)<=0.05,"*",""))
-  
+
   #Start the table definition
   l <- ""
   

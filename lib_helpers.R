@@ -263,12 +263,21 @@ alpha_ff <- function(ri,RiskFactors,Risk_Factors_Equation) {
 ################################################################################################################
 
 
-get_cross_section_score <- function(therawdata){
-  tmp = therawdata%-%function(r){
-    if (sum(!is.na(r) & r!=0)){
-      res = ifelse(!is.na(r) & r!=0, ecdf(r[!is.na(r) & r!=0])(r),NA)
+get_cross_section_score <- function(therawdata, therawdata_used=NULL){
+  datacol = ncol(therawdata)
+  data_used = therawdata
+  if (!is.null(therawdata_used))
+    data_used = cbind(therawdata,therawdata_used)
+  tmp = data_used%-%function(r){
+    r_scored = scrub(r[1:datacol]) # Note: we don't score NAs and 0s
+    r_ecdf = r_scored
+    if (!is.null(therawdata_used))
+      r_ecdf = scrub(r[(datacol+1):length(r)]) # Note: we don't use NAs and 0s
+    if (sum(r_ecdf !=0)){ 
+      score_fun = ecdf(r_ecdf[r_ecdf!=0])
+      res = ifelse(r_scored!=0, score_fun(r_scored),NA)
     } else {
-      res = r*0
+      res = r_scored*NA
     }
     res
   }
@@ -628,15 +637,16 @@ event_study_returns_estimates <- function(returns,Event.Date,company_features, R
   
   ## Step 1: Estimate Factor Loadings, starting min_window months before the event announcement (so month 0 is the event month)
   lapply(1:length(Event.Date), function(i){
-    if (i%%100 == 1) cat(i,",")
+    if (i%%50 == 1) cat(i,",")
     stock_returns = structure(returns[,i], .Names = returns_month)
     event_row = which(returns_month == Event.Date_month[1])
     t(Reduce(cbind,lapply((min_window-1):(max_window-1), function(themonth){ # Note we use the "-1" here as we will be using the estimates till the previous month. We may want to use -2 here to be 100% safe. to check.
+      #cat(themonth,",")
       res = structure(rep(NA,number_of_factors + (number_of_factors+1) + 1), .Names = c(factors_used_noRF, paste(factors_used,"ret", sep="_"), "actual_ret"))
       period_used = min(length(returns_month), max(1,event_row+themonth - rolling_window)):min(length(returns_month), max(1,event_row+themonth -1))
       period_to_predict = min(length(returns_month), max(1,event_row+themonth))
       if (length(period_used) > min_data & tail(period_used,1) < period_to_predict){ # in case we are at the last month available for this stocks
-        ret = cbind(Risk_Factors_Monthly,returns[,i])[period_used,]
+        ret = cbind(Risk_Factors_Monthly,scrub(returns[,i]))[period_used,] # Ignore NAs and 0s
         colnames(ret)[ncol(ret)]<- "ri"
         if (sum(ret[,"ri"]!=0) >= min_data){
           ret <- ret[ret[,"ri"]!=0,] 
@@ -866,13 +876,13 @@ create_dates <- function(Event_Date) {
 
 create_dates_month <- function(Event_Date) {
   Trading.Day = paste(format(AddMonths(Event_Date,1),"%Y-%m"), "01",sep="-")
-  One.Month.After = paste(format(AddMonths(Event_Date,1),"%Y-%m"), "01",sep="-")
-  Three.Month.After = paste(format(AddMonths(Event_Date,3),"%Y-%m"), "01",sep="-")
-  Six.Month.After = paste(format(AddMonths(Event_Date,6),"%Y-%m"), "01",sep="-")
-  One.Year.After = paste(format(AddMonths(Event_Date,12),"%Y-%m"), "01",sep="-")
-  Two.Years.After = paste(format(AddMonths(Event_Date,24),"%Y-%m"), "01",sep="-")
-  Three.Years.After = paste(format(AddMonths(Event_Date,36),"%Y-%m"), "01",sep="-")
-  Four.Years.After = paste(format(AddMonths(Event_Date,48),"%Y-%m"), "01",sep="-")
+  One.Month.After = paste(format(AddMonths(Event_Date,1+1),"%Y-%m"), "01",sep="-")
+  Three.Month.After = paste(format(AddMonths(Event_Date,3+1),"%Y-%m"), "01",sep="-")
+  Six.Month.After = paste(format(AddMonths(Event_Date,6+1),"%Y-%m"), "01",sep="-")
+  One.Year.After = paste(format(AddMonths(Event_Date,12+1),"%Y-%m"), "01",sep="-")
+  Two.Years.After = paste(format(AddMonths(Event_Date,24+1),"%Y-%m"), "01",sep="-")
+  Three.Years.After = paste(format(AddMonths(Event_Date,36+1),"%Y-%m"), "01",sep="-")
+  Four.Years.After = paste(format(AddMonths(Event_Date,48+1),"%Y-%m"), "01",sep="-")
   Dates <- data.frame(Trading.Day,One.Month.After,Three.Month.After,Six.Month.After,One.Year.After,Two.Years.After,Three.Years.After,Four.Years.After)
   colnames(Dates) <- c("Trading.Day","One.Month.After","Three.Month.After","Six.Month.After","One.Year.After","Two.Years.After","Three.Years.After","Four.Years.After")
   Dates <- t(Dates)
