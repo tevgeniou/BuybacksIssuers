@@ -16,6 +16,7 @@ libraries_used=c("stringr","gtools","foreign","reshape2","digest","timeDate","de
                  "psych","stringr","googleVis", "png","ggplot2","googleVis", "gridExtra","RcppArmadillo","xts","DescTools")
 
 get_libraries(libraries_used)
+Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
 
 options(stringsAsFactors=FALSE)
 
@@ -577,11 +578,8 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
         ret[ Row.Date_number >= Event.Date_number[j] | Row.Date_number < hitnow[j],j ] <- 0
     
     # Value weight them now:  
-    ri <- apply(ret,1, function(x) {
-      tmp = sum((scrub(x)!=0)*value.weights)
-      ifelse(tmp,sum(scrub(x)*value.weights/tmp),0) })
-    #ri <- apply(ret,1, function(x) non_zero_mean(scrub(x)))
-    
+    ri <- row_weights(ret, value.weights)
+
     if (sum(ri!=0) > 10) { ### For special cases...
       ri <- ri[ head(which(ri !=0),1) : tail(which(ri!=0),1)]
       
