@@ -570,12 +570,12 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
     w = allmonths[i]
     hitnow = sapply(Event.Date_number, function(j) Row.Date_number[min(length(Row.Date_number),max(1,(which(Row.Date_number == j) + w)))])
     ret <- returns
-    if (w > 0)
-      for(j in 1:length(Event.Date)) 
-        ret[ Row.Date_number <= Event.Date_number[j] | Row.Date_number > hitnow[j],j ] <- 0
-    if (w < 0)
-      for(j in 1:length(Event.Date)) 
-        ret[ Row.Date_number >= Event.Date_number[j] | Row.Date_number < hitnow[j],j ] <- 0
+    if (w > 0) ret <- calendar_table_helper1(ret, Row.Date_number, Event.Date_number, hitnow)
+    # for(j in 1:length(Event.Date)) 
+    #   ret[ Row.Date_number <= Event.Date_number[j] | Row.Date_number > hitnow[j],j ] <- 0
+    if (w < 0) ret <- calendar_table_helper2(ret, Row.Date_number, Event.Date_number, hitnow)
+    # for(j in 1:length(Event.Date)) 
+    #   ret[ Row.Date_number >= Event.Date_number[j] | Row.Date_number < hitnow[j],j ] <- 0
     
     # Value weight them now:  
     ri <- row_weights(ret, value.weights)

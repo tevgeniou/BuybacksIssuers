@@ -37,6 +37,43 @@ NumericVector row_weights(NumericMatrix x, NumericVector weight) {
 }
 
 
+// [[Rcpp::export]]
+NumericMatrix calendar_table_helper1(NumericMatrix x, NumericVector Row_Date_number, NumericVector Event_Date_number, NumericVector hitnow) {
+//NOTE: it would be much faster to update the matrix without cloning it, but
+//that could lead to unexpected bugs, as R wouldn't know the matrix was updated.
+  NumericMatrix ret = Rcpp::clone(x);
+  int nX = ret.ncol();
+  int nY = ret.nrow();
+  
+  #pragma omp parallel for schedule(static)
+  for (int col=0; col < nX; col++) {
+    for (int row=0; row < nY; row++) {
+      if (Row_Date_number[row] <= Event_Date_number[col] || Row_Date_number[row] > hitnow[col]) {
+        ret(row, col) = 0;
+      }
+    }
+  }
+  return ret;
+}
+// [[Rcpp::export]]
+NumericMatrix calendar_table_helper2(NumericMatrix x, NumericVector Row_Date_number, NumericVector Event_Date_number, NumericVector hitnow) {
+//NOTE: it would be much faster to update the matrix without cloning it, but
+//that could lead to unexpected bugs, as R wouldn't know the matrix was updated.
+  NumericMatrix ret = Rcpp::clone(x);
+  int nX = ret.ncol();
+  int nY = ret.nrow();
+  
+#pragma omp parallel for schedule(static)
+  for (int col=0; col < nX; col++) {
+    for (int row=0; row < nY; row++) {
+      if (Row_Date_number[row] >= Event_Date_number[col] || Row_Date_number[row] < hitnow[col]) {
+        ret(row, col) = 0;
+      }
+    }
+  }
+  return ret;
+}
+
 /*** R
 row_weights.R <- function(x, weight) {
   apply(x, 1, function(row) {
