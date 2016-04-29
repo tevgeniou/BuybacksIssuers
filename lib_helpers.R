@@ -407,7 +407,12 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   #Step 1: Build an event matrix, where all the events are aligned by event month as opposed to calendar month
   Event.Date = paste(str_sub(Event.Date,start=1,end=7), "01", sep="-") # just in case
   Row.Date <- as.Date(rownames(returns))
-  firstHit = sapply(Event.Date, function(i) ifelse(i > tail(Row.Date,1), length(Row.Date)+1, ifelse(i < head(Row.Date,1), 0, which(Row.Date == i))))
+  Row.Date_number = as.numeric(Row.Date)
+  Event.Date_number = as.numeric(as.Date(Event.Date))
+  firstday = as.numeric(as.Date(head(rownames(returns),1)))
+  lastday = as.numeric(as.Date(tail(rownames(returns),1)))
+  
+  firstHit = match(Event.Date_number,Row.Date_number)
   form  = as.formula(formula_used)
   Risk_Factors_Monthly = Risk_Factors_Monthly[,factors_used]
   if (!("RF" %in% factors_used)){
@@ -417,13 +422,14 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   
   #Build event_month x company x factor matrix
   EVENT_ALIGNED <- array(0, c(length(allmonths), ncol(returns), ncol(Risk_Factors_Monthly)+1)) 
+  starting      = pmax(1,pmin(nrow(returns),firstHit + min_window))
+  ending        = pmax(1,pmin(nrow(returns),firstHit + max_window))
+  # THIS IS THE SLOW PART
   for(ev in 1:length(Event.Date)) {
-    starting      = max(1,min(nrow(returns),firstHit[ev] + min_window))
-    ending        = max(1,min(nrow(returns),firstHit[ev] + max_window))
-    EVENT_ALIGNED[(1 + (starting - (firstHit[ev] + min_window))):(length(allmonths) - (firstHit[ev] + max_window-ending)),ev,] <- as.matrix(cbind(Risk_Factors_Monthly[starting:ending,], returns[starting:ending,ev]))
+    EVENT_ALIGNED[(1 + (starting[ev] - (firstHit[ev] + min_window))):(length(allmonths) - (firstHit[ev] + max_window-ending[ev])),ev,] <- as.matrix(cbind(Risk_Factors_Monthly[starting[ev]:ending[ev],], returns[starting[ev]:ending[ev],ev]))
   }
   dimnames(EVENT_ALIGNED) <- list( ifelse(allmonths > 0, paste("+",allmonths,sep=""), allmonths),
-                                   c(paste(colnames(returns),Event.Date)),
+                                   c(paste(colnames(returns),Event.Date_number)),
                                    c(colnames(Risk_Factors_Monthly),"ri"))
   
   #Step2: now for each month, calculate the CAR. need to include month 0 and set that one to 0  
@@ -433,16 +439,12 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   stderr <- rep(0,length(allmonths))
   dfs <- as.integer(rep(0,length(allmonths)))
   
-  Event.Date_number = as.numeric(as.Date(Event.Date))
-  Row.Date_number = as.numeric(Row.Date)
-  firstday = as.numeric(as.Date(head(rownames(returns),1)))
-  lastday = as.numeric(as.Date(tail(rownames(returns),1)))
-  
+  match_ini =  match(Event.Date_number, Row.Date_number)
   for (i in 1:length(allmonths)) {
     if (allmonths[i] !=0) { #we do not consider the month of the event
       #tmpdate = AddMonths(Event.Date,allmonths[i])    
       #ret <- EVENT_ALIGNED[i,(tmpdate <= tail(rownames(returns),1)) & (tmpdate >= head(rownames(returns),1)),]
-      hitnow = sapply(Event.Date_number, function(j) (which(Row.Date_number == j) + allmonths[i]))
+      hitnow = match_ini + allmonths[i]
       ret <- EVENT_ALIGNED[i,(hitnow <= length(Row.Date_number)) & (hitnow >= 1),]
       ret <- ret[ret[,"ri"]!=0,]  # WE NEED THIS HERE!!!!!
       #ret <- ret[ret[,"ri"] <1,]  # WE NEED THIS HERE!!!!!
@@ -502,7 +504,7 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   results[,1] = 100*results[,1]
   rownames(results) <- c(ifelse(allmonths > 0, paste("+",allmonths,sep=""), allmonths),"Observations")
   colnames(results) <- c("CAR","t-stat","p-value")
-  results[nrow(results),] <- rep(length(Event.Date),ncol(results)) 
+  results[nrow(results),] <- rep(length(Event.Date_number),ncol(results)) 
   colnames(betas) <- factors_used_noRF
   colnames(betasstderr) <- factors_used_noRF
   all_results = list(results = results, betas = betas, betasstderr = betasstderr)
@@ -568,22 +570,20 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
   results <- array(0,c(length(allmonths)+1,3))
   max_index = length(Row.Date_number)
   start_match = match(Event.Date_number,Row.Date_number)
-    
+  
   for (i in 1:length(allmonths)) {
     w = allmonths[i]
     hitnow = Row.Date_number[pmax(1,pmin(start_match+w,max_index))]
     ret <- returns
     if (w > 0) ret <- calendar_table_helper1(ret, Row.Date_number, Event.Date_number, hitnow)
-    # for(j in 1:length(Event.Date)) 
+    #for(j in 1:length(Event.Date)) 
     #   ret[ Row.Date_number <= Event.Date_number[j] | Row.Date_number > hitnow[j],j ] <- 0
     if (w < 0) ret <- calendar_table_helper2(ret, Row.Date_number, Event.Date_number, hitnow)
     # for(j in 1:length(Event.Date)) 
     #   ret[ Row.Date_number >= Event.Date_number[j] | Row.Date_number < hitnow[j],j ] <- 0
     
-    # Value weight them now:  
-    if (!sum(value.weights!=1))
-      ri <- row_weights(ret, value.weights)
-
+    ri <- row_weights(ret, value.weights)
+    
     if (sum(ri!=0) > 10) { ### For special cases...
       ri <- ri[ head(which(ri !=0),1) : tail(which(ri!=0),1)]
       
@@ -956,7 +956,7 @@ get_pnl_results_stock_subset <- function(DATASET,High_feature_events,Low_feature
   Low_feature48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
   High_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
   Low_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
- 
+  
   list(
     High_feature_Hedged   = High_feature_Hedged,
     Low_feature_Hedged    = Low_feature_Hedged,
