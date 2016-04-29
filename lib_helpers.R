@@ -566,9 +566,12 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
   Row.Date_number = as.numeric(Row.Date)
   #Now create aggregate returns based on the window and calculate the model
   results <- array(0,c(length(allmonths)+1,3))
+  max_index = length(Row.Date_number)
+  start_match = match(Event.Date_number,Row.Date_number)
+    
   for (i in 1:length(allmonths)) {
     w = allmonths[i]
-    hitnow = sapply(Event.Date_number, function(j) Row.Date_number[min(length(Row.Date_number),max(1,(which(Row.Date_number == j) + w)))])
+    hitnow = Row.Date_number[pmax(1,pmin(start_match+w,max_index))]
     ret <- returns
     if (w > 0) ret <- calendar_table_helper1(ret, Row.Date_number, Event.Date_number, hitnow)
     # for(j in 1:length(Event.Date)) 
@@ -578,7 +581,8 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
     #   ret[ Row.Date_number >= Event.Date_number[j] | Row.Date_number < hitnow[j],j ] <- 0
     
     # Value weight them now:  
-    ri <- row_weights(ret, value.weights)
+    if (!sum(value.weights!=1))
+      ri <- row_weights(ret, value.weights)
 
     if (sum(ri!=0) > 10) { ### For special cases...
       ri <- ri[ head(which(ri !=0),1) : tail(which(ri!=0),1)]
