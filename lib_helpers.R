@@ -438,6 +438,7 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   betasstderr <- array(0,c(length(allmonths),ncol(Risk_Factors_Monthly)-1))
   stderr <- rep(0,length(allmonths))
   dfs <- as.integer(rep(0,length(allmonths)))
+  event_alphas = matrix(0,nrow = length(Event.Date_number), ncol = length(allmonths))
   
   match_ini =  match(Event.Date_number, Row.Date_number)
   for (i in 1:length(allmonths)) {
@@ -445,22 +446,26 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
       #tmpdate = AddMonths(Event.Date,allmonths[i])    
       #ret <- EVENT_ALIGNED[i,(tmpdate <= tail(rownames(returns),1)) & (tmpdate >= head(rownames(returns),1)),]
       hitnow = match_ini + allmonths[i]
-      ret <- EVENT_ALIGNED[i,(hitnow <= length(Row.Date_number)) & (hitnow >= 1),]
-      ret <- ret[ret[,"ri"]!=0,]  # WE NEED THIS HERE!!!!!
+      ret <- EVENT_ALIGNED[i,,]
+      non_zeros = which(ret[,"ri"]!=0 & (hitnow <= length(Row.Date_number)) & (hitnow >= 1))
+      ret <- ret[non_zeros,]  # WE NEED THIS HERE!!!!!
       #ret <- ret[ret[,"ri"] <1,]  # WE NEED THIS HERE!!!!!
       if (nrow(ret) > ncol(ret)){
         model = fastLm(form,data=data.frame(ret,row.names = NULL))
         alphas[i] = summary(model)$coefficients[1,"Estimate"] 
-        betas[i,] <- summary(model)$coefficients[2:nrow(summary(model)$coefficients), "Estimate"]
+        the_betas = summary(model)$coefficients[2:nrow(summary(model)$coefficients), "Estimate"]
+        betas[i,] <- the_betas
         betasstderr[i,] <- summary(model)$coefficients[2:nrow(summary(model)$coefficients), "StdErr"]    
         stderr[i] = coef(summary(model))[1, "StdErr"]
         dfs[i] = df.residual(model)
+        event_alphas[non_zeros,i] <- ret[,"ri"] - ret[,"RF"] - ret[,names(the_betas)]%*%matrix(the_betas,ncol=1)
       } else{
         alphas[i] = 0
         betas[i,] <- 0
         betasstderr[i,] <- 0  
         stderr[i] = 0
         dfs[i] = 0
+        event_alphas[non_zeros,i] <- 0
       }
     }
   }
@@ -507,7 +512,7 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   results[nrow(results),] <- rep(length(Event.Date_number),ncol(results)) 
   colnames(betas) <- factors_used_noRF
   colnames(betasstderr) <- factors_used_noRF
-  all_results = list(results = results, betas = betas, betasstderr = betasstderr)
+  all_results = list(results = results, betas = betas, betasstderr = betasstderr,event_alphas = event_alphas)
   return(all_results)
 }
 
