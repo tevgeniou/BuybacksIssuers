@@ -269,7 +269,7 @@ get_cross_section_score <- function(therawdata, therawdata_used=NULL){
   data_used = therawdata
   if (!is.null(therawdata_used))
     data_used = cbind(therawdata,therawdata_used)
-  tmp = data_used%-%function(r){
+  tmp = t(apply(data_used,1,function(r){
     r_scored = scrub(r[1:datacol]) # Note: we don't score NAs and 0s
     r_ecdf = r_scored
     if (!is.null(therawdata_used))
@@ -281,7 +281,7 @@ get_cross_section_score <- function(therawdata, therawdata_used=NULL){
       res = r_scored*NA
     }
     res
-  }
+  }))
   rownames(tmp) <- rownames(therawdata)
   tmp
 }
@@ -881,15 +881,20 @@ create_dates <- function(Event_Date) {
   return(Dates)
 }
 
-create_dates_month <- function(Event_Date) {
-  Trading.Day = paste(format(AddMonths(Event_Date,1),"%Y-%m"), "01",sep="-")
-  One.Month.After = paste(format(AddMonths(Event_Date,1+1),"%Y-%m"), "01",sep="-")
-  Three.Month.After = paste(format(AddMonths(Event_Date,3+1),"%Y-%m"), "01",sep="-")
-  Six.Month.After = paste(format(AddMonths(Event_Date,6+1),"%Y-%m"), "01",sep="-")
-  One.Year.After = paste(format(AddMonths(Event_Date,12+1),"%Y-%m"), "01",sep="-")
-  Two.Years.After = paste(format(AddMonths(Event_Date,24+1),"%Y-%m"), "01",sep="-")
-  Three.Years.After = paste(format(AddMonths(Event_Date,36+1),"%Y-%m"), "01",sep="-")
-  Four.Years.After = paste(format(AddMonths(Event_Date,48+1),"%Y-%m"), "01",sep="-")
+create_dates_month <- function(Event_Date, allmonths) {
+  last_available = tail(allmonths,1)
+  allmonths = sort(allmonths) # just in case
+  allmonths = str_sub(allmonths, start=1,end=7)
+  tmp = match(str_sub(Event_Date, start = 1, end = 7), str_sub(allmonths, start=1,end=7))
+  
+  Trading.Day = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1, length(allmonths))], "01",sep="-"), last_available)
+  One.Month.After = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1+1, length(allmonths))], "01",sep="-"), last_available)
+  Three.Month.After = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1+3, length(allmonths))], "01",sep="-"), last_available)
+  Six.Month.After = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1+6, length(allmonths))], "01",sep="-"), last_available)
+  One.Year.After = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1+12, length(allmonths))], "01",sep="-"), last_available)
+  Two.Years.After = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1+24, length(allmonths))], "01",sep="-"), last_available)
+  Three.Years.After = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1+36, length(allmonths))], "01",sep="-"), last_available)
+  Four.Years.After = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1+48, length(allmonths))], "01",sep="-"), last_available)
   Dates <- data.frame(Trading.Day,One.Month.After,Three.Month.After,Six.Month.After,One.Year.After,Two.Years.After,Three.Years.After,Four.Years.After)
   colnames(Dates) <- c("Trading.Day","One.Month.After","Three.Month.After","Six.Month.After","One.Year.After","Two.Years.After","Three.Years.After","Four.Years.After")
   Dates <- t(Dates)
