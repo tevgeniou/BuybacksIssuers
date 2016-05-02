@@ -424,9 +424,10 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   EVENT_ALIGNED <- array(0, c(length(allmonths), ncol(returns), ncol(Risk_Factors_Monthly)+1)) 
   starting      = pmax(1,pmin(nrow(returns),firstHit + min_window))
   ending        = pmax(1,pmin(nrow(returns),firstHit + max_window))
+  Risk_Factors_Matrix <- as.matrix(Risk_Factors_Monthly)
   # THIS IS THE SLOW PART
   for(ev in 1:length(Event.Date)) {
-    EVENT_ALIGNED[(1 + (starting[ev] - (firstHit[ev] + min_window))):(length(allmonths) - (firstHit[ev] + max_window-ending[ev])),ev,] <- as.matrix(cbind(Risk_Factors_Monthly[starting[ev]:ending[ev],], returns[starting[ev]:ending[ev],ev]))
+    EVENT_ALIGNED[(1 + (starting[ev] - (firstHit[ev] + min_window))):(length(allmonths) - (firstHit[ev] + max_window-ending[ev])),ev,] <- cbind(Risk_Factors_Matrix[starting[ev]:ending[ev],], returns[starting[ev]:ending[ev],ev])
   }
   dimnames(EVENT_ALIGNED) <- list( ifelse(allmonths > 0, paste("+",allmonths,sep=""), allmonths),
                                    c(paste(colnames(returns),Event.Date_number)),
@@ -452,11 +453,12 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
       #ret <- ret[ret[,"ri"] <1,]  # WE NEED THIS HERE!!!!!
       if (nrow(ret) > ncol(ret)){
         model = fastLm(form,data=data.frame(ret,row.names = NULL))
-        alphas[i] = summary(model)$coefficients[1,"Estimate"] 
-        the_betas = summary(model)$coefficients[2:nrow(summary(model)$coefficients), "Estimate"]
+        model.summary = summary(model)
+        alphas[i] = model.summary$coefficients[1,"Estimate"] 
+        the_betas = model.summary$coefficients[2:nrow(model.summary$coefficients), "Estimate"]
         betas[i,] <- the_betas
-        betasstderr[i,] <- summary(model)$coefficients[2:nrow(summary(model)$coefficients), "StdErr"]    
-        stderr[i] = coef(summary(model))[1, "StdErr"]
+        betasstderr[i,] <- model.summary$coefficients[2:nrow(model.summary$coefficients), "StdErr"]    
+        stderr[i] = coef(model.summary)[1, "StdErr"]
         dfs[i] = df.residual(model)
         event_alphas[non_zeros,i] <- ret[,"ri"] - ret[,"RF"] - ret[,names(the_betas)]%*%matrix(the_betas,ncol=1)
       } else{

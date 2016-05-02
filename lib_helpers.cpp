@@ -63,7 +63,7 @@ NumericMatrix calendar_table_helper2(NumericMatrix x, NumericVector Row_Date_num
   int nX = ret.ncol();
   int nY = ret.nrow();
   
-#pragma omp parallel for schedule(static)
+  #pragma omp parallel for schedule(static)
   for (int col=0; col < nX; col++) {
     for (int row=0; row < nY; row++) {
       if (Row_Date_number[row] >= Event_Date_number[col] || Row_Date_number[row] < hitnow[col]) {
