@@ -883,6 +883,7 @@ create_dates <- function(Event_Date) {
 
 create_dates_month <- function(Event_Date, allmonths) {
   last_available = tail(allmonths,1)
+  last_available = paste(format(AddMonths(as.Date(last_available),1),"%Y-%m"), "01",sep="-") # Just make it a date in the future
   allmonths = sort(allmonths) # just in case
   allmonths = str_sub(allmonths, start=1,end=7)
   tmp = match(str_sub(Event_Date, start = 1, end = 7), str_sub(allmonths, start=1,end=7))
