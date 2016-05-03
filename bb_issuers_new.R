@@ -5,14 +5,7 @@
 
 rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 
-###
-# Just to check with the older version
-#load("../FinanceData/created_projects_datasets/bb_issuersALL.Rdata")
-#BUYBACK_DATA_old = BUYBACK_DATA
-#ISSUERS_DATA_old = ISSUERS_DATA
-###
-
-source("../FinanceLibraries/lib_helpers.R")
+source("../FinanceLibraries/lib_helpers.R", chdir=TRUE)
 source("../FinanceLibraries/latex_code.R")
 source("../FinanceData/rawdata_fama_french/ff_industries_sic.R")
 source("Paper_global_parameters.R")
@@ -21,45 +14,50 @@ initial_vars = ls(all = TRUE) # takes time to save and load, so we save only wha
 
 load("../FinanceData/created_projects_datasets/BUYBACKSnew.Rdata")
 
-# remove_financials_utilities is defined in the Paper_global_parameters.R file... default is 1
-if (remove_financials_utilities){
+if (continuous_valuation_index){
+  BUYBACK_DATA$Valuation_Index = 
+  ifelse(is.na(BUYBACK_DATA$DATASET$CRSP$recent_performance_score), NA, (1-BUYBACK_DATA$DATASET$CRSP$recent_performance_score)) +
+  ifelse(is.na(BUYBACK_DATA$DATASET$CRSP$Market.Cap_score), NA, (1-BUYBACK_DATA$DATASET$CRSP$Market.Cap_score)) + 
+  ifelse(is.na(BUYBACK_DATA$DATASET$CRSP$BE.ME_score), NA, BUYBACK_DATA$DATASET$CRSP$BE.ME_score)
   
-  # Buybacks first
-  Industry_filter = BUYBACK_DATA$DATASET$SDC$Industry %in% INDUSTRY_USED 
-  to_remove = which(!Industry_filter)
-  if (length(to_remove) > 0){
-    # just in alphabetic order not to forget any    
-    BUYBACK_DATA$BEME_used <- BUYBACK_DATA$BEME_used[-to_remove]
-    BUYBACK_DATA$Performance_used <- BUYBACK_DATA$Performance_used[-to_remove]
-    BUYBACK_DATA$Size_used <- BUYBACK_DATA$Size_used[-to_remove]
-    BUYBACK_DATA$Valuation_Index <- BUYBACK_DATA$Valuation_Index[-to_remove]
-    
-    BUYBACK_DATA$DATASET$returns_by_event_monthly <- BUYBACK_DATA$DATASET$returns_by_event_monthly[,-to_remove]
-    BUYBACK_DATA$DATASET$SDC <- BUYBACK_DATA$DATASET$SDC[-to_remove,]
-    for(field in ls(BUYBACK_DATA$DATASET$CRSP))  BUYBACK_DATA$DATASET$CRSP[[field]] <- BUYBACK_DATA$DATASET$CRSP[[field]][-to_remove]
-    for(field in ls(BUYBACK_DATA$DATASET$ibes))  BUYBACK_DATA$DATASET$ibes[[field]] <- BUYBACK_DATA$DATASET$ibes[[field]][-to_remove]
-  }
-  BUYBACK_DATA$cleanupBIZ$Industry_filter = sum(!Industry_filter)
+  ISSUERS_DATA$Valuation_Index = 
+    ifelse(is.na(ISSUERS_DATA$DATASET$CRSP$recent_performance_score), NA, (1-ISSUERS_DATA$DATASET$CRSP$recent_performance_score)) +
+    ifelse(is.na(ISSUERS_DATA$DATASET$CRSP$Market.Cap_score), NA, (1-ISSUERS_DATA$DATASET$CRSP$Market.Cap_score)) + 
+    ifelse(is.na(ISSUERS_DATA$DATASET$CRSP$BE.ME_score), NA, ISSUERS_DATA$DATASET$CRSP$BE.ME_score)
+
+} else {
+  ###############################################################
+  # Make the U-Index scores
+  BUYBACK_DATA$Performance_used <- ifelse(is.na(BUYBACK_DATA$DATASET$CRSP$recent_performance_score), NA, ceiling(5*(1-BUYBACK_DATA$DATASET$CRSP$recent_performance_score)))
+  BUYBACK_DATA$Performance_used[BUYBACK_DATA$Performance_used==0] <- 1
+  BUYBACK_DATA$Size_used <- ifelse(is.na(BUYBACK_DATA$DATASET$CRSP$Market.Cap_score), NA, ceiling(5*(1-BUYBACK_DATA$DATASET$CRSP$Market.Cap_score)))
+  BUYBACK_DATA$Size_used[BUYBACK_DATA$Size_used==0] <- 1
+  # USE OUR BE.ME, NOT THE FF
+  BUYBACK_DATA$BEME_used <- ifelse(is.na(BUYBACK_DATA$DATASET$CRSP$BE.ME_score), NA, ceiling(5*BUYBACK_DATA$DATASET$CRSP$BE.ME_score))
+  BUYBACK_DATA$BEME_used[BUYBACK_DATA$BEME_used==0] <- 1
+  BUYBACK_DATA$Valuation_Index = BUYBACK_DATA$Performance_used + BUYBACK_DATA$Size_used + BUYBACK_DATA$BEME_used 
   
-  # Issuers now
-  Industry_filter = ISSUERS_DATA$DATASET$SDC$Industry %in% INDUSTRY_USED 
-  to_remove = which(!Industry_filter)
-  if (length(to_remove) > 0){
-    # just in alphabetic order not to forget any    
-    ISSUERS_DATA$BEME_used <- ISSUERS_DATA$BEME_used[-to_remove]
-    ISSUERS_DATA$Performance_used <- ISSUERS_DATA$Performance_used[-to_remove]
-    ISSUERS_DATA$Size_used <- ISSUERS_DATA$Size_used[-to_remove]
-    ISSUERS_DATA$Valuation_Index <- ISSUERS_DATA$Valuation_Index[-to_remove]
-    
-    ISSUERS_DATA$DATASET$returns_by_event_monthly <- ISSUERS_DATA$DATASET$returns_by_event_monthly[,-to_remove]
-    ISSUERS_DATA$DATASET$SDC <- ISSUERS_DATA$DATASET$SDC[-to_remove,]
-    for(field in ls(ISSUERS_DATA$DATASET$CRSP))  ISSUERS_DATA$DATASET$CRSP[[field]] <- ISSUERS_DATA$DATASET$CRSP[[field]][-to_remove]
-    for(field in ls(ISSUERS_DATA$DATASET$ibes))  ISSUERS_DATA$DATASET$ibes[[field]] <- ISSUERS_DATA$DATASET$ibes[[field]][-to_remove]
-  }
-  ISSUERS_DATA$cleanupBIZ$Industry_filter = sum(!Industry_filter)
-  
-  rm("to_remove","field")
+  # Note differences from buybacks for performance and BE/ME 
+  ISSUERS_DATA$Performance_used <- ifelse(is.na(ISSUERS_DATA$DATASET$CRSP$recent_performance_score), NA, ceiling(5*(ISSUERS_DATA$DATASET$CRSP$recent_performance_score)))
+  ISSUERS_DATA$Performance_used[ISSUERS_DATA$Performance_used==0] <- 1
+  ISSUERS_DATA$Size_used <- ifelse(is.na(ISSUERS_DATA$DATASET$CRSP$Market.Cap_score), NA, ceiling(5*(1-ISSUERS_DATA$DATASET$CRSP$Market.Cap_score)))
+  ISSUERS_DATA$Size_used[ISSUERS_DATA$Size_used==0] <- 1
+  # USE OUR BE.ME, NOT THE FF
+  ISSUERS_DATA$BEME_used <- ifelse(is.na(ISSUERS_DATA$DATASET$CRSP$BE.ME_score), NA, ceiling(5*(1-ISSUERS_DATA$DATASET$CRSP$BE.ME_score)))
+  ISSUERS_DATA$BEME_used[ISSUERS_DATA$BEME_used==0] <- 1
+  ISSUERS_DATA$Valuation_Index = ISSUERS_DATA$Performance_used + ISSUERS_DATA$Size_used + ISSUERS_DATA$BEME_used 
 }
+############################################################################################################
+# All the data filters are done in here
+source("filter_bbissuers_data.R")
+
+############################################################################################################
+
+BUYBACK_DATA$DATASET$DatesMonth <- create_dates_month(BUYBACK_DATA$DATASET$SDC$Event.Date, rownames(BUYBACK_DATA$Risk_Factors_Monthly)) # We don't need this any more, can simplify to only get the dates needed... it's ok for now, as it is now slow
+colnames(BUYBACK_DATA$DATASET$DatesMonth) <- BUYBACK_DATA$DATASET$SDC$permno
+
+ISSUERS_DATA$DATASET$DatesMonth <- create_dates_month(ISSUERS_DATA$DATASET$SDC$Event.Date, rownames(ISSUERS_DATA$Risk_Factors_Monthly)) # We don't need this any more, can simplify to only get the dates needed... it's ok for now, as it is now slow
+colnames(ISSUERS_DATA$DATASET$DatesMonth) <- ISSUERS_DATA$DATASET$SDC$permno
 
 Risk_Factors_Monthly = BUYBACK_DATA$Risk_Factors_Monthly
 Market_Monthly = BUYBACK_DATA$Market_Monthly
@@ -72,8 +70,8 @@ if (do.value.weight == 1){
   value.weights_iss = rep(1,length(ISSUERS_DATA$DATASET$CRSP$Market.Cap)) # This is the first version of the paper - no value weighted calendar method
 }
 
-company_subset_undervalued_bb = BUYBACK_DATA$Valuation_Index > 10
-company_subset_overvalued_bb = BUYBACK_DATA$Valuation_Index < 7
+company_subset_undervalued_bb = BUYBACK_DATA$Valuation_Index > quantile(BUYBACK_DATA$Valuation_Index, 1-quantile_Uindex)
+company_subset_overvalued_bb = BUYBACK_DATA$Valuation_Index < quantile(BUYBACK_DATA$Valuation_Index,quantile_Uindex)
 High_Idiosyncr_eventsBB = BUYBACK_DATA$DATASET$CRSP$Rsq_score < quantile(BUYBACK_DATA$DATASET$CRSP$Rsq_score, quantile_R2)
 Low_Idiosyncr_eventsBB  = BUYBACK_DATA$DATASET$CRSP$Rsq_score > quantile(BUYBACK_DATA$DATASET$CRSP$Rsq_score, 1-quantile_R2)
 High_IVOL_eventsBB = BUYBACK_DATA$DATASET$CRSP$IVOL_score > quantile(BUYBACK_DATA$DATASET$CRSP$IVOL_score, 1-quantile_VOL)
@@ -84,15 +82,13 @@ High_marketbeta_eventsBB = BUYBACK_DATA$DATASET$CRSP$market_beta_score > quantil
 Medium_marketbeta_eventsBB  = BUYBACK_DATA$DATASET$CRSP$market_beta_score >= quantile(BUYBACK_DATA$DATASET$CRSP$market_beta_score, quantile_VOL) & BUYBACK_DATA$DATASET$CRSP$market_beta_score <= quantile(BUYBACK_DATA$DATASET$CRSP$market_beta_score, 1-quantile_VOL)
 Low_marketbeta_eventsBB  = BUYBACK_DATA$DATASET$CRSP$market_beta_score < quantile(BUYBACK_DATA$DATASET$CRSP$market_beta_score, quantile_VOL)
 tmp = BUYBACK_DATA$DATASET$CRSP$leverage_lt_over_lt_plus_e
-High_LEV_eventsBB = scrub(tmp) > quantile(tmp[!is.na(tmp)], 1-quantile_EPS)  & !is.na(tmp)
-Low_LEV_eventsBB  = scrub(tmp) < quantile(tmp[!is.na(tmp)], quantile_EPS)  & !is.na(tmp)
-tmp = BUYBACK_DATA$DATASET$ibes$mean_rec_last_month_score
+High_LEV_eventsBB = scrub(tmp) > quantile(tmp[!is.na(tmp)], 1-quantile_LEV)  & !is.na(tmp)
+Low_LEV_eventsBB  = scrub(tmp) < quantile(tmp[!is.na(tmp)], quantile_LEV)  & !is.na(tmp)
+tmp = BUYBACK_DATA$DATASET$ibes$month_minus1$mean_rec_score
 High_EPS_eventsBB = scrub(tmp) > quantile(tmp[!is.na(tmp)], 1-quantile_EPS)  & !is.na(tmp)
 Low_EPS_eventsBB  = scrub(tmp) < quantile(tmp[!is.na(tmp)], quantile_EPS)  & !is.na(tmp)
 rm("tmp")
 
-BUYBACK_DATA$DATASET$DatesMonth <- create_dates_month(as.Date(BUYBACK_DATA$DATASET$SDC$Event.Date)) # We don't need this any more, can simplify to only get the dates needed... it's ok for now, as it is now slow
-colnames(BUYBACK_DATA$DATASET$DatesMonth) <- BUYBACK_DATA$DATASET$SDC$permno
 
 ####################################################################################
 #cbind(IRATS_table_all_bb,IRATS_table_all_bb_undervaluation)[reported_times,],
@@ -216,7 +212,6 @@ BBtable_undertime = Reduce(cbind, lapply(1:nrow(periods_considered), function(i)
   )
   colnames(res) <- c(paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"U 3FF", sep=" "),
                      "t-stat","p-value", "O 3FF", "t-stat","p-value", "U 5FF","t-stat","p-value"," O 5FF","t-stat"," p-value") 
-  
   res    
 }))              
 
@@ -232,7 +227,6 @@ BB_cal_table_undertime = Reduce(cbind, lapply(1:nrow(periods_considered), functi
   colnames(res) <- c(paste(paste(str_sub(periods_considered[i,1],start = 1, end = 4), str_sub(periods_considered[i,2],start = 1, end = 4), sep= "-"),"U 3FF", sep=" "),
                      "t-stat","p-value", "O 3FF", "t-stat","p-value", "U 5FF","t-stat","p-value"," O 5FF","t-stat"," p-value") 
   rownames(res)[nrow(res)] <- "Observations" 
-  
   res    
 }))
 
@@ -731,6 +725,7 @@ rm("tmp")
 ########################################################################################################
 ########################################################################################################
 # Keep all results ONLY IN THIS FILE just in case we need to rerun or add something... this is temporary
+
 save(list = setdiff(ls(all = TRUE),initial_vars), file = "bb_issuers_new.Rdata")
 
 
