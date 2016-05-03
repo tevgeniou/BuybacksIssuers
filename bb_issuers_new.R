@@ -326,6 +326,10 @@ R2_IRATStable_underBB_cal = cbind(tmp21,Otmp21,tmp22,Otmp22)
 colnames(R2_IRATStable_underBB) <- c("Low Idiosync.: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value", "High Idiosync.: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value")
 colnames(R2_IRATStable_underBB_cal) <- c("Low Idiosync.: U CAL", "t-stat","p-value","O CAL", "t-stat","p-value", "High Idiosync.: U CAL", "t-stat","p-value","O CAL", "t-stat","p-value")
 
+# The value weighted calendar now
+useonly = which(High_Idiosyncr_eventsBB)
+R2_IRATStableBB_calValue = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = BUYBACK_DATA$DATASET$CRSP$Market.Cap[useonly])$results
+
 rm("tmp11","tmp12","tmp21","tmp22","Otmp11","Otmp12","Otmp21","Otmp22", "useonly")
 
 ####################################################################################
@@ -362,8 +366,11 @@ VOL_IRATStable_underBB_cal = cbind(tmp21,Otmp21,tmp22,Otmp22)
 colnames(VOL_IRATStable_underBB) <- c("Low Vol: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value", "High Vol: U CAR", "t-stat","p-value","O CAR", "t-stat","p-value")
 colnames(VOL_IRATStable_underBB_cal) <- c("Low Vol: U CAL", "t-stat","p-value","O CAL", "t-stat","p-value", "High Vol: U CAL", "t-stat","p-value","O CAL", "t-stat","p-value")
 
-rm("tmp11","tmp12","tmp21","tmp22","Otmp11","Otmp12","Otmp21","Otmp22", "useonly")
+# The value weighted calendar now
+useonly = which(High_VOL_eventsBB)
+VOL_IRATStableBB_calValue = calendar_table(BUYBACK_DATA$DATASET$returns_by_event_monthly[,useonly], BUYBACK_DATA$DATASET$SDC$Event.Date[useonly], Risk_Factors_Monthly,value.weights = BUYBACK_DATA$DATASET$CRSP$Market.Cap[useonly])$results
 
+rm("tmp11","tmp12","tmp21","tmp22","Otmp11","Otmp12","Otmp21","Otmp22", "useonly")
 
 ####################################################################################
 #cbind(marketbeta_IRATStableBB,marketbeta_IRATStable_underBB)[reported_times,],
