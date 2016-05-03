@@ -201,15 +201,6 @@ Nick Nassuphis$^{***}$,} and \uppercase{Theo Vermaelen}\thanks{INSEAD, Bd de Con
 
 \thispagestyle{empty}
 
-
-\clearpage
-\thispagestyle{empty}
-\section*{Conflict-of-interest disclosure.}
-\paragraph{Theodoros Evgeniou} I have nothing to disclose.
-\paragraph{Enric Junqu\'e de Fortuny}  I have nothing to disclose.
-\paragraph{Nick Nassuphis}  I have nothing to disclose.
-\paragraph{Theo Vermaelen}  I have nothing to disclose.
-
 \clearpage
 
 \onehalfspacing
