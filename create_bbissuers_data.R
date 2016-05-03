@@ -31,7 +31,7 @@ if (1){
   GLOBAL_DAILY_DATABASE$volume_daily <- NULL
   GLOBAL_DAILY_DATABASE$recent_volatility_daily <- NULL
   GLOBAL_DAILY_DATABASE$FamaFrench_five_factors <- NULL
-} else{ 
+} else{  # For next version of creating data directly from WRDS
   GLOBAL_DAILY_DATABASE = list()
   GLOBAL_DAILY_DATABASE$returns_daily <- wrdsQueryStockFieldMatrix(wrds_handle, colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly), "RET",start=as.Date("1980-01-01"))
 }
