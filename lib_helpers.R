@@ -472,6 +472,8 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
     }
   }
   
+  event_alphas_aggregate = 0*event_alphas
+  
   #summary CAR output: aggregate results for all windows
   results <- array(0,c(length(allmonths)+1,3))
   if (0 %in% allmonths){
@@ -514,7 +516,7 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   results[nrow(results),] <- rep(length(Event.Date_number),ncol(results)) 
   colnames(betas) <- factors_used_noRF
   colnames(betasstderr) <- factors_used_noRF
-  all_results = list(results = results, betas = betas, betasstderr = betasstderr,event_alphas = event_alphas)
+  all_results = list(results = results, betas = betas, betasstderr = betasstderr,event_alphas = event_alphas,dfs = dfs)
   return(all_results)
 }
 
@@ -547,6 +549,7 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
     results = rbind(results, rep(ncol(returns),3))
     betas = matrix(0,nrow=length(allmonths), ncol = length(factors_used_noRF))
     betasstderr = matrix(0,nrow=length(allmonths), ncol = length(factors_used_noRF)) 
+    dfs <- as.integer(rep(0,length(allmonths)))
     colnames(results) <- c("CAL","t-stat","p-value")
     rownames(results) <- c(ifelse(allmonths > 0, paste("+",allmonths,sep=""), allmonths),"Observations")
     colnames(results) <- c("CAR","t-stat","p-value")
@@ -606,7 +609,9 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
         summary(model)$coefficients[1,"p.value"]
       )
       betas[i,] <- summary(model)$coefficients[2:nrow(summary(model)$coefficients), "Estimate"]
-      betasstderr[i,] <- summary(model)$coefficients[2:nrow(summary(model)$coefficients), "StdErr"]    
+      betasstderr[i,] <- summary(model)$coefficients[2:nrow(summary(model)$coefficients), "StdErr"]  
+      dfs[i] = df.residual(model)
+      
     }
   }
   
@@ -615,7 +620,7 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
   results[nrow(results),] <- rep(length(Event.Date),ncol(results)) 
   colnames(betas) <- factors_used_noRF
   colnames(betasstderr) <- factors_used_noRF
-  all_results = list(results = results, betas = betas, betasstderr = betasstderr)
+  all_results = list(results = results, betas = betas, betasstderr = betasstderr,dfs=dfs)
   return(all_results)
 }
 
@@ -1072,4 +1077,41 @@ get_feature_results <- function(DATASET,feature_name, company_subset_undervalued
   )
 }
 
+##### CREATION OF DATASETS
+
+# A helper that creates yearly matrices for each firm characteristic,
+# aligned with the monthly data. Note the fiscal year use
+# (datadate is the end of the fiscal year)
+create_yearly_data <- function(value_used, template_matrix){
+  tmp_data = as.data.frame(dcast(all_compustat_data, datadate ~ LPERMNO,
+                                 fun.aggregate = function(r) ifelse(length(unique(r)) > 1, NA, unique(r)),
+                                 value.var=value_used)) 
+  # Convert tmp_data to matrix with dates as rownames
+  tmp = as.character(tmp_data$datadate)
+  tmp_data$datadate <- NULL
+  tmp_data <- as.matrix(tmp_data)
+  rownames(tmp_data) <- tmp
+  # Align with monthly data now
+  rownames(tmp_data) <- rownames(
+    template_matrix)[match(
+      str_sub(rownames(tmp_data),start=1,end=7),
+      str_sub(rownames(template_matrix),start=1,end=7))]
+  tmp_data = tmp_data[,intersect(colnames(tmp_data),
+                                 colnames(template_matrix))]
+  res = NA*template_matrix
+  res[rownames(tmp_data),colnames(tmp_data)] <- tmp_data  
+  # Fill in the gaps
+  # we need to start using the data from the "next month",
+  # after the fiscal year end
+  res = apply(res,2,function(r) {
+    x = fill_NA_previous(r);
+    if(is.na(tail(x,1)) & sum(!is.na(x))) {
+      x[pmin(length(x),tail(which(!is.na(x)),1):
+               (tail(which(!is.na(x)),1)+11))] <- x[tail(which(!is.na(x)),1)]
+    } 
+    c(NA,head(x,-1))
+  }) 
+  rownames(res) <- rownames(template_matrix)
+  res
+}
 
