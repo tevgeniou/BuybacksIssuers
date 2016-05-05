@@ -1082,7 +1082,7 @@ get_feature_results <- function(DATASET,feature_name, company_subset_undervalued
 # A helper that creates yearly matrices for each firm characteristic,
 # aligned with the monthly data. Note the fiscal year use
 # (datadate is the end of the fiscal year)
-create_yearly_data <- function(value_used, template_matrix){
+create_yearly_data <- function(value_used, template_matrix,all_compustat_data){
   tmp_data = as.data.frame(dcast(all_compustat_data, datadate ~ LPERMNO,
                                  fun.aggregate = function(r) ifelse(length(unique(r)) > 1, NA, unique(r)),
                                  value.var=value_used)) 
