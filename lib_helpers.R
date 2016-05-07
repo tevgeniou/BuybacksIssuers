@@ -1,3 +1,8 @@
+#  Copyright 2013, Satrapade
+#  by T. Evgeniou, V. Kapartzianis, N. Nassuphis and D. Spinellis
+#  Dual licensed under the MIT or GPL Version 2 licenses.
+#  11/2015 functions car_table and calendar_table added by T. Evgeniou and E. Junqué de Fortuny
+
 # Required R libraries (need to be installed - it can take a few minutes the first time you run the project)
 
 # installs all necessary libraries from CRAN
@@ -264,15 +269,52 @@ alpha_ff <- function(ri,RiskFactors,Risk_Factors_Equation) {
 ################################################################################################################
 
 
-get_cross_section_score <- function(therawdata, therawdata_used=NULL){
-  datacol = ncol(therawdata)
-  data_used = therawdata
-  if (!is.null(therawdata_used))
-    data_used = cbind(therawdata,therawdata_used)
+# A helper that creates yearly matrices for each firm characteristic,
+# aligned with the monthly data. Note the fiscal year use
+# (datadate is the end of the fiscal year)
+create_yearly_data <- function(value_used, template_matrix,all_compustat_data){
+  tmp_data = as.data.frame(dcast(all_compustat_data, datadate ~ LPERMNO,
+                                 fun.aggregate = function(r) ifelse(length(unique(r)) > 1, NA, unique(r)),
+                                 value.var=value_used)) 
+  # Convert tmp_data to matrix with dates as rownames
+  tmp = as.character(tmp_data$datadate)
+  tmp_data$datadate <- NULL
+  tmp_data <- as.matrix(tmp_data)
+  rownames(tmp_data) <- tmp
+  # Align with monthly data now
+  rownames(tmp_data) <- rownames(
+    template_matrix)[match(
+      str_sub(rownames(tmp_data),start=1,end=7),
+      str_sub(rownames(template_matrix),start=1,end=7))]
+  tmp_data = tmp_data[,intersect(colnames(tmp_data),
+                                 colnames(template_matrix))]
+  res = NA*template_matrix
+  res[rownames(tmp_data),colnames(tmp_data)] <- tmp_data  
+  # Fill in the gaps
+  # we need to start using the data from the "next month",
+  # after the fiscal year end
+  res = apply(res,2,function(r) {
+    x = fill_NA_previous(r);
+    if(is.na(tail(x,1)) & sum(!is.na(x))) {
+      x[pmin(length(x),tail(which(!is.na(x)),1):
+               (tail(which(!is.na(x)),1)+11))] <- x[tail(which(!is.na(x)),1)]
+    } 
+    c(NA,head(x,-1))
+  }) 
+  rownames(res) <- rownames(template_matrix)
+  res
+}
+
+# Creates cross-sectional percentile based scores for a given company characteristic. 
+get_cross_section_score <- function(company_feature_matrix, company_feature_matrix_used=NULL){
+  datacol = ncol(company_feature_matrix)
+  data_used = company_feature_matrix
+  if (!is.null(company_feature_matrix_used))
+    data_used = cbind(company_feature_matrix,company_feature_matrix_used)
   tmp = t(apply(data_used,1,function(r){
     r_scored = scrub(r[1:datacol]) # Note: we don't score NAs and 0s
     r_ecdf = r_scored
-    if (!is.null(therawdata_used))
+    if (!is.null(company_feature_matrix_used))
       r_ecdf = scrub(r[(datacol+1):length(r)]) # Note: we don't use NAs and 0s
     if (sum(r_ecdf !=0)){ 
       score_fun = ecdf(r_ecdf[r_ecdf!=0])
@@ -282,7 +324,7 @@ get_cross_section_score <- function(therawdata, therawdata_used=NULL){
     }
     res
   }))
-  rownames(tmp) <- rownames(therawdata)
+  rownames(tmp) <- rownames(company_feature_matrix)
   tmp
 }
 
@@ -367,9 +409,10 @@ beta_expost <- function(ri,Riskfactors) {
 ################################################################################################################
 
 
-############################
-#Builds a car table like PV2009. Returns need to be monthly, same for the risk factors
-############################
+################################################################################################################
+#Builds an IRATS table. Returns need to be monthly, 
+# same for the risk factors. See description of method in the table captions of http://tevgeniou.github.io/BuybacksIssuers/
+################################################################################################################
 car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, max_window = 48,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA",value.weights = 1) {
   #data check
   if (class(Risk_Factors_Monthly) != "data.frame") {
@@ -444,21 +487,20 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   match_ini =  match(Event.Date_number, Row.Date_number)
   for (i in 1:length(allmonths)) {
     if (allmonths[i] !=0) { #we do not consider the month of the event
-      #tmpdate = AddMonths(Event.Date,allmonths[i])    
-      #ret <- EVENT_ALIGNED[i,(tmpdate <= tail(rownames(returns),1)) & (tmpdate >= head(rownames(returns),1)),]
       hitnow = match_ini + allmonths[i]
       ret <- EVENT_ALIGNED[i,,]
       non_zeros = which(ret[,"ri"]!=0 & (hitnow <= length(Row.Date_number)) & (hitnow >= 1))
       ret <- ret[non_zeros,]  # WE NEED THIS HERE!!!!!
-      #ret <- ret[ret[,"ri"] <1,]  # WE NEED THIS HERE!!!!!
       if (nrow(ret) > ncol(ret)){
         model = fastLm(form,data=data.frame(ret,row.names = NULL))
         model.summary = summary(model)
+
         alphas[i] = model.summary$coefficients[1,"Estimate"] 
+        stderr[i] = model.summary$coefficients[1, "StdErr"]
+
         the_betas = model.summary$coefficients[2:nrow(model.summary$coefficients), "Estimate"]
         betas[i,] <- the_betas
         betasstderr[i,] <- model.summary$coefficients[2:nrow(model.summary$coefficients), "StdErr"]    
-        stderr[i] = coef(model.summary)[1, "StdErr"]
         dfs[i] = df.residual(model)
         event_alphas[non_zeros,i] <- ret[,"ri"] - ret[,"RF"] - ret[,names(the_betas)]%*%matrix(the_betas,ncol=1)
       } else{
@@ -471,9 +513,7 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
       }
     }
   }
-  
   event_alphas_aggregate = 0*event_alphas
-  
   #summary CAR output: aggregate results for all windows
   results <- array(0,c(length(allmonths)+1,3))
   if (0 %in% allmonths){
@@ -487,7 +527,6 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
         2 * pt(abs(tstat), df = dfs[i], lower.tail = FALSE)    #pvalue
       )
     }
-    #results[1:(which(allmonths==0)-1),1] <- -results[1:(which(allmonths==0)-1),1] # AS WE NEED TO START FROM HIGH AND END TO 0! - we do this only for the plots, so we fix it there only
     for (i in (which(allmonths==0)+1):length(allmonths)){
       thealpha = sum(alphas[(which(allmonths==0)+1):i])
       thestderr = sqrt(sum(stderr[(which(allmonths==0)+1):i]*stderr[(which(allmonths==0)+1):i]))
@@ -521,9 +560,10 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
 }
 
 
-############################
-#Builds a calendar table like PV2009. Returns need to be monthly, same for the risk factors
-############################
+################################################################################################################
+# Builds a Calendar Time table. Returns need to be monthly, 
+# same for the risk factors. See description of method in the table captions of http://tevgeniou.github.io/BuybacksIssuers/
+################################################################################################################
 calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window = -6, max_window = 48,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA",value.weights = 1) {
   #data check
   if (class(Risk_Factors_Monthly) != "data.frame") {
@@ -624,13 +664,13 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
   return(all_results)
 }
 
-############################
+####################################################################################
 #Builds a stock specific regression like Brennan, Chordia and Subrahmanyam (1998)
-############################
+####################################################################################
 # Split in two parts as the first one is more generic 
 
-# PART I OF BSC1998_event_study
-event_study_returns_estimates <- function(returns,Event.Date,company_features, Risk_Factors_Monthly,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA", rolling_window=60, min_window = -6, max_window = 48, min_data = 30){
+# PART I OF BSC1998_event_study: This is a general function that gets the betas and actual returns for a series of months for the events
+event_study_factor_coeffs <- function(returns,Event.Date, Risk_Factors_Monthly,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA", rolling_window=60, timeperiods_requested = 1:48, min_data = 10){
   # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
   # Keep track also of the risk and stock returns the next month - where we will do the predictions
   factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
@@ -646,76 +686,57 @@ event_study_returns_estimates <- function(returns,Event.Date,company_features, R
     colnames(Risk_Factors_Monthly)[ncol(Risk_Factors_Monthly)] <- "RF"
   }
   
-  Event.Date_month = str_sub(Event.Date,start=1,end=7)
-  returns_month = str_sub(rownames(returns), start=1,end=7)
   
-  ## Step 1: Estimate Factor Loadings, starting min_window months before the event announcement (so month 0 is the event month)
+  #Step 1: Build an event matrix, where all the events are aligned by event month as opposed to calendar month
+  returns_month = str_sub(rownames(returns), start=1,end=7)
+  Event.Date = str_sub(Event.Date,start=1,end=7)
+  firstHit = match(Event.Date,returns_month)
+  res_init = structure(rep(NA,number_of_factors + (number_of_factors+1) + 1), .Names = c(factors_used_noRF, paste(factors_used,"ret", sep="_"), "actual_ret"))
+  max_time = length(returns_month)
+  
+  ## Step 1: Estimate Factor Loadings for the requested months (month 0 is the event month)
   lapply(1:length(Event.Date), function(i){
     if (i%%50 == 1) cat(i,",")
     stock_returns = structure(returns[,i], .Names = returns_month)
-    event_row = which(returns_month == Event.Date_month[1])
-    t(Reduce(cbind,lapply((min_window-1):(max_window-1), function(themonth){ # Note we use the "-1" here as we will be using the estimates till the previous month. We may want to use -2 here to be 100% safe. to check.
+    event_row = firstHit[i]
+    stock_factors = t(Reduce(cbind,lapply(timeperiods_requested, function(themonth){ 
       #cat(themonth,",")
-      res = structure(rep(NA,number_of_factors + (number_of_factors+1) + 1), .Names = c(factors_used_noRF, paste(factors_used,"ret", sep="_"), "actual_ret"))
-      period_used = min(length(returns_month), max(1,event_row+themonth - rolling_window)):min(length(returns_month), max(1,event_row+themonth -1))
-      period_to_predict = min(length(returns_month), max(1,event_row+themonth))
+      res = res_init
+      period_used = min(max_time, max(1,event_row+themonth - rolling_window)):min(max_time, max(1,event_row+themonth -1)) # We use -1 but can also use -2 to use till two months before
+      period_to_predict = min(max_time, max(1,event_row+themonth))
+      
       if (length(period_used) > min_data & tail(period_used,1) < period_to_predict){ # in case we are at the last month available for this stocks
-        ret = cbind(Risk_Factors_Monthly,scrub(returns[,i]))[period_used,] # Ignore NAs and 0s
+        ret = cbind(Risk_Factors_Monthly,stock_returns)[period_used,] # Ignore NAs and 0s
         colnames(ret)[ncol(ret)]<- "ri"
-        if (sum(ret[,"ri"]!=0) >= min_data){
-          ret <- ret[ret[,"ri"]!=0,] 
+        if (sum(!is.na(ret[,"ri"])) >= min_data){
+          ret <- ret[!is.na(ret[,"ri"]),] 
           model = fastLm(form,data=data.frame(ret,row.names = NULL))
           thebetas = summary(model)$coefficients[2:nrow(summary(model)$coefficients), "Estimate"]
-          res = c(thebetas,as.numeric(Risk_Factors_Monthly[period_to_predict,]), returns[period_to_predict,i])
+          res = c(thebetas,as.numeric(Risk_Factors_Monthly[period_to_predict,]), stock_returns[period_to_predict])
           names(res) <- c(factors_used_noRF, paste(factors_used,"ret", sep="_"), "actual_ret")
         }
       }
       res
     })))
+    rownames(stock_factors) <- timeperiods_requested
+    stock_factors
   })
-  
 }
+
 # PART II OF BSC1998_event_study
-BSC1998_event_study_coeffs <- function(factor_loadings,returns,Event.Date,company_features, Risk_Factors_Monthly,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA", rolling_window=60, min_window = -6, max_window = 48, min_data = 30){
+BSC1998_event_study_coeffs <- function(Estimated_returns,returns,Event.Date,company_features, Risk_Factors_Monthly,factors_used_noRF=c("Delta","SMB","HML","RMW","CMA"),timeperiods_requested = 1:48){
   # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
-  # Assumes factor_loadings comes from BSC1998_event_study_returns_estimates using the exact same inputs!
-  
-  # Keep track also of the risk and stock returns the next month - where we will do the predictions
-  factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
-  if (sum(!(factors_used %in% colnames(Risk_Factors_Monthly))))
-    stop(paste("BSC1998_event_study misses the risk factors: ",factors_used[!(factors_used %in% colnames(Risk_Factors_Monthly))]))
-  
-  factors_used_noRF = setdiff(factors_used, "RF")
-  number_of_factors = length(factors_used_noRF)
-  form  = as.formula(formula_used)
-  Risk_Factors_Monthly = Risk_Factors_Monthly[,factors_used]
-  if (!("RF" %in% factors_used)){
-    Risk_Factors_Monthly = cbind(Risk_Factors_Monthly,matrix(0,nrow=nrow(Risk_Factors_Monthly)))
-    colnames(Risk_Factors_Monthly)[ncol(Risk_Factors_Monthly)] <- "RF"
-  }
-  
-  Event.Date_month = str_sub(Event.Date,start=1,end=7)
-  returns_month = str_sub(rownames(returns), start=1,end=7)
-  
-  ## Step 1: Estimate Factor Loadings, starting min_window months before the event announcement (so month 0 is the event month)
-  # Assumes these are inputs!
-  
-  ## Step 2: Calculate Monthly Estimated Risk-adjusted Return 
-  months_used = min_window:max_window
-  Estimated_returns = Reduce(rbind,lapply(1:length(factor_loadings), function(thestock){
-    this_stock_data = factor_loadings[[thestock]]
-    apply(this_stock_data, 1, function(r)
-      ifelse(!is.na(sum(r)), r["actual_ret"] - r["RF_ret"] - sum(r[factors_used_noRF]*r[paste(factors_used_noRF,"ret", sep="_")]), NA)
-    )
-  }))
-  
+  # Assumes factor_loadings comes from event_study_factor_coeffs using the exact same inputs
+  ## Step 1: Estimate Factor Loadings for the requested months (so month 0 is the event month)
+  # Assumes these are inputs: It is done using the function event_study_factor_coeffs above
+  ## Step 2: Calculate Monthly Estimated Risk-adjusted Return (Given as input)
   ## Step 3: Run Cross-Section Regression in Each Post-Event Month, from 1-48 months
   C_mt_coefficients = Reduce(cbind,lapply(1:ncol(Estimated_returns), function(month){
     month_returns = Estimated_returns[,month]
-    useonly = which(!is.na(month_returns))
+    useonly = which(!is.na(month_returns) & !is.na(apply(company_features,1,sum)))
     res = rep(NA, ncol(company_features)+1)
     if (length(useonly) > ncol(company_features) + 1){
-      cross_sectional_data = cbind(company_features[useonly,], month_returns[useonly])
+      cross_sectional_data = cbind(company_features[useonly,,drop=F], month_returns[useonly])
       colnames(cross_sectional_data) <- c(paste("Ind", 1:ncol(company_features), sep=""), "ret")
       cross_setional_form = as.formula(paste("ret", str_c(paste("Ind", 1:ncol(company_features), sep=""), collapse=" + "), sep=" ~ "))
       model = fastLm(cross_setional_form,data=data.frame(cross_sectional_data,row.names = NULL))
@@ -723,15 +744,44 @@ BSC1998_event_study_coeffs <- function(factor_loadings,returns,Event.Date,compan
     }
     res
   }))
-  
-  colnames(C_mt_coefficients) <- months_used
+  colnames(C_mt_coefficients) <- timeperiods_requested
   if (!is.null(colnames(company_features)))
     rownames(C_mt_coefficients) <- c("alpha_intercept", colnames(company_features))
   C_mt_coefficients
   ## Step 4: Aggregate  C_mt_coefficients over 48 Post-Event Months: Time-Series Average of C_mt_coefficients (This can be done outside, for whatever months one needs)
 }
 
-
+## Step 4: Aggregate  C_mt_coefficients over 48 Post-Event Months: Time-Series Average of C_mt_coefficients (This can be done outside, for whatever months one needs)
+BSC1998_coeffs_tmp_aggregator <- function(BSC1998_coefficients,company_features,the_months_needed = c("12", "24", "36","48")){
+  BSC1998_coeffs = t(Reduce(cbind,lapply(the_months_needed, function(i){
+    apply(BSC1998_coefficients,1,function(r){
+      useonly = which(colnames(BSC1998_coefficients)=="1"):which(colnames(BSC1998_coefficients)==i)
+      mean(r[useonly])
+    }) 
+  })))
+  rownames(BSC1998_coeffs) <- paste("month", the_months_needed)
+  
+  BSC1998_tstats = t(Reduce(cbind,lapply(the_months_needed, function(i){
+    apply(BSC1998_coefficients,1,function(r){
+      useonly = which(colnames(BSC1998_coefficients)=="1"):which(colnames(BSC1998_coefficients)==i)
+      mean(r[useonly])/(sd(r[useonly])/sqrt(length(useonly)))
+    }) 
+  })))
+  rownames(BSC1998_tstats) <- rep("t-stat", nrow(BSC1998_tstats))
+  
+  BSC1998_pvalue = t(Reduce(cbind,lapply(the_months_needed, function(i){
+    apply(BSC1998_coefficients,1,function(r){
+      useonly = which(colnames(BSC1998_coefficients)=="1"):which(colnames(BSC1998_coefficients)==i)
+      x = mean(r[useonly])/(sd(r[useonly])/sqrt(length(useonly)))
+      ifelse(x > 0, 1-pt(x,df=length(useonly-1)), pt(x,df=length(useonly-1)))
+    }) 
+  })))
+  rownames(BSC1998_pvalue) <- rep("p-value", nrow(BSC1998_tstats))
+  
+  BSC1998<- Reduce(rbind,lapply(1:nrow(BSC1998_coeffs), function(i) {res = rbind(100*BSC1998_coeffs[i,],BSC1998_tstats[i,],BSC1998_pvalue[i,]); rownames(res)<-c(rownames(BSC1998_coeffs)[i], rownames(BSC1998_tstats)[i],rownames(BSC1998_pvalue)[i]); res}))
+  colnames(BSC1998) <- c("Intercept", colnames(company_features))
+  t(BSC1998)
+}
 
 ################################################################################################################
 #####################################################################################
@@ -928,10 +978,6 @@ plot_crisis_dates <- function(all_ret_values, monthly = 1){
       abline(v=which.min(abs(as.numeric(format(as.Date(thenames), "%Y%m")) - as.numeric(format(as.Date(BEAR_YEARS[[i]][2]), "%Y%m")))),lwd=3, col= "red", lty="solid")
     }
   }
-  #for (i in 1:length(RECESSION_YEARS)){
-  #  abline(v=which.min(abs(as.Date(thenames) - RECESSION_YEARS[[i]][1])),lwd=1, col= "black", lty="dotted")
-  #  abline(v=which.min(abs(as.Date(thenames) - RECESSION_YEARS[[i]][2])),lwd=1, col= "red", lty="dotted")    
-  #}
 }
 
 exit_helper_rnw <- function(event,exit_signal_name,holding_period_pnl = "Four.Years.After",pnl_hedge_factors_used=pnl_hedge_factors){
@@ -989,8 +1035,6 @@ get_feature_results <- function(DATASET,feature_name, company_subset_undervalued
   
   if (method == "Simple"){
     thefeature = DATASET$boardex[[which(names(DATASET$boardex) == feature_name)]]  
-    #High_feature_events = which(scrub(thefeature) > 1-quantile_feature & !is.na(thefeature))
-    #Low_feature_events = which(scrub(thefeature) < quantile_feature & !is.na(thefeature))
     High_feature_events = which(scrub(thefeature) > quantile(thefeature[!is.na(thefeature)],1-quantile_feature) & !is.na(thefeature))
     Low_feature_events = which(scrub(thefeature) < quantile(thefeature[!is.na(thefeature)],quantile_feature) & !is.na(thefeature))
   } else {
@@ -1077,41 +1121,5 @@ get_feature_results <- function(DATASET,feature_name, company_subset_undervalued
   )
 }
 
-##### CREATION OF DATASETS
 
-# A helper that creates yearly matrices for each firm characteristic,
-# aligned with the monthly data. Note the fiscal year use
-# (datadate is the end of the fiscal year)
-create_yearly_data <- function(value_used, template_matrix,all_compustat_data){
-  tmp_data = as.data.frame(dcast(all_compustat_data, datadate ~ LPERMNO,
-                                 fun.aggregate = function(r) ifelse(length(unique(r)) > 1, NA, unique(r)),
-                                 value.var=value_used)) 
-  # Convert tmp_data to matrix with dates as rownames
-  tmp = as.character(tmp_data$datadate)
-  tmp_data$datadate <- NULL
-  tmp_data <- as.matrix(tmp_data)
-  rownames(tmp_data) <- tmp
-  # Align with monthly data now
-  rownames(tmp_data) <- rownames(
-    template_matrix)[match(
-      str_sub(rownames(tmp_data),start=1,end=7),
-      str_sub(rownames(template_matrix),start=1,end=7))]
-  tmp_data = tmp_data[,intersect(colnames(tmp_data),
-                                 colnames(template_matrix))]
-  res = NA*template_matrix
-  res[rownames(tmp_data),colnames(tmp_data)] <- tmp_data  
-  # Fill in the gaps
-  # we need to start using the data from the "next month",
-  # after the fiscal year end
-  res = apply(res,2,function(r) {
-    x = fill_NA_previous(r);
-    if(is.na(tail(x,1)) & sum(!is.na(x))) {
-      x[pmin(length(x),tail(which(!is.na(x)),1):
-               (tail(which(!is.na(x)),1)+11))] <- x[tail(which(!is.na(x)),1)]
-    } 
-    c(NA,head(x,-1))
-  }) 
-  rownames(res) <- rownames(template_matrix)
-  res
-}
 

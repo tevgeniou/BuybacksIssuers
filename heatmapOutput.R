@@ -2,7 +2,7 @@
 #  Copyright 2013, Satrapade
 #  by V. Kapartzianis 
 #  Dual licensed under the MIT or GPL Version 2 licenses.
-#  01/2016 Patched to handle NA's E. Junqué de Fortuny
+
 library(shiny)
 library(htmlwidgets)
 renderHeatmapX <- function(data, style="norm", include.rownames = TRUE, include.colnames=TRUE, nsmall=2, border=0) {

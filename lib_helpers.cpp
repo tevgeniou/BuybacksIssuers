@@ -1,3 +1,7 @@
+//  Copyright 2016, INSEAD
+//  by V. Kapartzianis 
+//  Dual licensed under the MIT or GPL Version 2 licenses.
+
 #include <Rcpp.h>
 using namespace Rcpp;
 

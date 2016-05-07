@@ -1,3 +1,9 @@
+#  Copyright 2013, Satrapade
+#  by T. Evgeniou, V. Kapartzianis, N. Nassuphis and D. Spinellis
+#  Dual licensed under the MIT or GPL Version 2 licenses.
+#  11/2015 functions printLatexTable and printLatexTable2 added by T. Evgeniou and E. Junqué de Fortuny
+
+
 ######################################################################################
 ## Latex commands
 ######################################################################################
