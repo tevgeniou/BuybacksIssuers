@@ -1,4 +1,4 @@
-# Share Buyback and Equity Issue Anomalies Revisited
+# Volatility and the Buyback Anomaly
 *Theodoros Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, and Theo Vermaelen*
 
 <hr>
