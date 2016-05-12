@@ -1,3 +1,6 @@
+%  Copyright 2015, INSEAD
+%  by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
+%  Dual licensed under the MIT or GPL Version 2 licenses.
 
 << eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 #dev.off();
