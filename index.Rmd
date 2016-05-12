@@ -1,3 +1,8 @@
+<!--
+ Copyright 2015, INSEAD
+ by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
+ Dual licensed under the MIT or GPL Version 2 licenses.  -->
+  
 ---
 title: "Volatility and the Buyback Anomaly: Interactive Tool"
 author: "[Theodoros Evgeniou](http://faculty.insead.edu/theodoros-evgeniou/), [Enric Junqué de Fortuny](http://ciri.be/), [Nick Nassuphis](https://www.linkedin.com/in/nick-nassuphis-8029372), and [Theo Vermaelen](http://faculty.insead.edu/theo-vermaelen/)"
@@ -11,13 +16,20 @@ output:
 runtime: shiny
 ---
 
+```{r, eval=TRUE, echo = FALSE,message=FALSE}
+# need this to avoid loading the R libraries when the tool is deployed on shinyapps (needs to be 1 when run localy, 1 when deployed on a shinyapps server)
+
+run_shiny_tool = 0 
+
+```
 
 
 ```{r, eval=TRUE, echo = FALSE,message=FALSE}
 # rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 load("bb_issuersTOOL.Rdata")
 
-if(T) {
+
+if(run_shiny_tool) {
   library(googleVis)
   library("shiny")
   library("reshape2")  
@@ -31,16 +43,14 @@ if(T) {
   library("gtools")
   library("timeDate")
   library("dygraphs")
-  library("reshape")
+  #library("reshape")
   library("ggplot2")
 }
 
-source("../FinanceLibraries/lib_helpers.R", chdir=TRUE)
-source("../FinanceLibraries/latex_code.R")
-source("../FinanceData/rawdata_fama_french/ff_industries_sic.R")
+source("interactive_tool_files/lib_helpers.R", chdir=TRUE)
+source("interactive_tool_files/ff_industries_sic.R")
 source("Paper_global_parameters.R")
-source("../FinanceLibraries/heatmapOutput.R") 
-source("../FinanceLibraries/shiny_plots.R")
+source("interactive_tool_files/heatmapOutput.R") 
 
 report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
 BUYBACK_DATA_TOOL$None <- 1:length(BUYBACK_DATA_TOOL$Prior.Returns.Score)
@@ -55,13 +65,9 @@ acceptaple_features = setdiff(names(BUYBACK_DATA_TOOL),c("Event.Date", "Industry
 
 <hr>
 
-This is an interactive tool for the article [Share Buyback and Equity Issue Anomalies Revisited](http://tevgeniou.github.io/BuybacksIssuers/). Users can explore the effects of various parameters as well as data filtering choices. For any given choices, users can generate and download a new **customized pdf version of the paper** by clicking the buttons which will appear below at any time. 
-
-<br>
+This is an interactive tool for the article [Volatility and the Buyback Anomaly](http://tevgeniou.github.io/BuybacksIssuers/). Users can explore the effects of various parameters as well as data filtering choices. For any given choices, users can generate and download a new **customized pdf version of the paper** (work in progress) by clicking the button below at any time. 
 
 **Note that it takes a few minutes (possibly more than five) to create and download the new paper (work in progress). Please wait without changing any parameters until you are prompted to download the new paper.**
-
-<br>
 
 
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
@@ -121,11 +127,10 @@ shinyApp(
 ```
 
 <hr>
-<hr>
 
 ### Dataset Filtering
 
-You can select some filters for the dataset. All analyses below will be done only for the companies that are selected. 
+You can select some filters for the dataset. All analyses below will be done only for the events that are selected. 
 
 Every time you change these filters you may **need to wait a few seconds** until all results of this tool are updated (all tables/figures "fade in").
 
@@ -152,7 +157,7 @@ dateInput("enddate", "End Date (allow at least 3 years from the starting day you
 
 <br>
 
-Selet the minimum size of the firms (in $millions) for which you would like to do the analyses below. The maximum selected should be larger than the minimum, else the maximum is automatically set to 10e6: 
+Selet the minimum size of the firms (in $millions) for which you would like to do the analyses below. The maximum selected should be larger than the minimum, else the maximum is automatically set to infinity: 
 
 
 ```{r, eval=TRUE, echo = FALSE}
@@ -160,9 +165,17 @@ selectInput("market_cap_min","Enter the Minimum Market Cap allowed (in millions)
 ```
 <br>
 ```{r, eval=TRUE, echo = FALSE}
-selectInput("market_cap_max","Enter the Maximum Market Cap allowed (in millions):", choices = as.character(c(0,50*(1:20), 500*(1:20), ceiling(max(BUYBACK_DATA_TOOL$Market.Cap)))), selected = as.character(ceiling(max(BUYBACK_DATA_TOOL$Market.Cap))), width = "1000px")
+selectInput("market_cap_max","Enter the Maximum Market Cap allowed (in millions):", choices = as.character(c(0,50*(1:20), 500*(1:20), 10e10)), selected = as.character(10e10), width = "1000px")
 ```
 
+We can also see the effects of removing some industries: we can select industries to remove here (make sure there are enough data left for the analysis):
+
+<br>
+
+```{r, eval=TRUE, echo = FALSE}
+selectInput("industry", "Select Industries to remove:", choices = unique(BUYBACK_DATA_TOOL$Industry_name),selected = NULL,multiple=TRUE,width="100%") 
+```
+<br>
 
 ```{r, eval=TRUE, echo = FALSE}
 DATASET_NEW <- reactive({
@@ -176,12 +189,18 @@ DATASET_NEW <- reactive({
   if (market_cap_max < market_cap_min)
     market_cap_max = ceiling(max(BUYBACK_DATA_TOOL$Market.Cap))
   
-  useonly_report = which(BUYBACK_DATA_TOOL$Event.Date >= starting & BUYBACK_DATA_TOOL$Event.Date <= ending & scrub(BUYBACK_DATA_TOOL$Market.Cap) >= market_cap_min & scrub(BUYBACK_DATA_TOOL$Market.Cap) <= market_cap_max) 
+  useonly_industry = !(BUYBACK_DATA_TOOL$Industry_name %in% input$industry) 
+  
+  useonly_report = which(BUYBACK_DATA_TOOL$Event.Date >= starting & BUYBACK_DATA_TOOL$Event.Date <= ending &
+                           scrub(BUYBACK_DATA_TOOL$Market.Cap) >= market_cap_min & 
+                           scrub(BUYBACK_DATA_TOOL$Market.Cap) <= market_cap_max &
+                           useonly_industry) 
   
   list(
     BUYBACK_DATA_TOOL=BUYBACK_DATA_TOOL[useonly_report,],
     returns_by_event_monthly = returns_by_event_monthly[,useonly_report],
     DatesMonth  = DatesMonth[,useonly_report],
+    value.weights = value.weights[useonly_report],
     subset = useonly_report
   )
 })
@@ -191,139 +210,156 @@ DATASET_NEW <- reactive({
 
 
 <hr>
-<hr>
 
 ### Descriptive Statistics
 
-This tool allows the user to explore descriptive statistics of some of the key firm characteristics. When the name of the firm characteristics ends with ".Score" it is  either the 1-5 score relative to the Fama-French breakpoints (e.g. for Size, Prior returns, and BE/ME ratio) or the percentile relative to all firms in the CRSP universe at the time of the buyback announcement, as discussed in the paper. Otherwise it is the raw value of the firm characteristic. 
+This tool allows the user to explore descriptive statistics of some of the key firm characteristics. When the name of the firm characteristics ends with ".Score" it is the percentile (0 to 1) relative to all firms in the CRSP universe at the time of the buyback announcement, as discussed in the paper. Otherwise it is the raw value of the firm characteristic. 
 
+<br>
 
 
 ```{r, eval=TRUE, echo = FALSE}
 fluidPage(
-  selectInput("characteristic", "Select Firm Characteristic:", choices = acceptaple_features,selected = acceptaple_features[4]),
+  selectInput("characteristic", "Select Firm Characteristic:", choices = acceptaple_features,selected = "EU.Index"),
   mainPanel(
-    tabsetPanel("Example",
-                tabPanel("Histogram",
-                         busyIndicator("Please wait while we load the data for you... This shouldn't take more than a few seconds...",wait = 0),
-                         renderPlot({
-                           feature = DATASET_NEW()$BUYBACK_DATA_TOOL[,which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic)]
-                           feature = feature[!is.na(feature)]
-                           if (!is.numeric(feature))
-                             feature = 1
-                           hist(feature, density = 100, breaks = 100)
-                         })),
-                tabPanel("Summary Statistics",
-                         renderDataTable({
-                           feature = DATASET_NEW()$BUYBACK_DATA_TOOL[,which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic)]
-                           feature = feature[!is.na(feature)]
-                           if (length(unique(feature)) > 20 & is.numeric(feature)){
-                             res = t(as.matrix(summary(feature)))
-                             colnames(res) <- c("Minimum", "1st Quantile", "Median", "Mean", "3rd Quantile", "Max")
-                           }
-                           if (is.character(feature) | length(unique(feature)) <= 20){
-                             tmp = sort(table(feature), decreasing = TRUE)
-                             res = t(as.matrix(tmp))
-                           }
-                           as.data.frame(res)
-                           #m1<-gvisTable(show_data,options=list(showRowNumber=TRUE,width=1220, height=min(400,27*(nrow(show_data)+1)),allowHTML=TRUE,page='disable'))
-                           #print(m1,'chart')
-                         })
-                )
-    ),
+    navlistPanel(
+      tabPanel("Histogram",
+               busyIndicator("Please wait while we load the data for you... This shouldn't take more than a few seconds...",wait = 0),
+               renderPlot({
+                 feature = DATASET_NEW()$BUYBACK_DATA_TOOL[,which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic)]
+                 feature = feature[!is.na(feature)]
+                 if (!is.numeric(feature))
+                   feature = 1
+                 hist(feature, density = 100, breaks = 100)
+               })),
+      tabPanel("Summary Statistics",
+               renderDataTable({
+                 feature = DATASET_NEW()$BUYBACK_DATA_TOOL[,which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic)]
+                 feature = feature[!is.na(feature)]
+                 if (length(unique(feature)) > 20 & is.numeric(feature)){
+                   res = t(round(as.matrix(summary(feature)),2))
+                   colnames(res) <- c("Minimum", "1st Quantile", "Median", "Mean", "3rd Quantile", "Max")
+                 }
+                 if (is.character(feature) | length(unique(feature)) <= 20){
+                   tmp = table(feature)
+                   res = t(as.matrix(tmp))
+                 }
+                 as.data.frame(res)
+                 #m1<-gvisTable(show_data,options=list(showRowNumber=TRUE,width=1220, height=min(400,27*(nrow(show_data)+1)),allowHTML=TRUE,page='disable'))
+                 #print(m1,'chart')
+               })
+      ),
+      widths = c(3, 9)),
     style='width: 100%;'))
 ```
 
 <hr>
-<hr>
 
 
-### Industry Robustness Analysis of U-Index
+### The EU-Index
 
-Two types of robustness analysis has been considered in the paper: over different time periods, and across industries. We can select industries to remove here (make sure there are enough data left for the analysis):
+For the subset of events selected the High/Low EU index events (for the selected thresholds) have the abnormal returns below:
 
 <br>
-
 ```{r, eval=TRUE, echo = FALSE}
-checkboxGroupInput("industry", "Select Industries to remove:", choices = unique(BUYBACK_DATA_TOOL$Industry_name),selected = NULL,inline=TRUE) 
+selectInput("high_EU_index_thres","Enter the EU index threshold above which (>=) we define the High EU-Index firms (need minimum 10 firms High EU firms):", choices = sort(unique(BUYBACK_DATA_TOOL$EU.Index)), selected = "5", width = "1000px")
 ```
-<br>
-<br>
+
 ```{r, eval=TRUE, echo = FALSE}
-selectInput("quantile_used_industry","Enter the quantile to use to define High and Low Firms for this analysis:", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
+selectInput("low_EU_index_thres","Enter the EU index threshold below which (<=) we define the Low EU-Index firms (need minimum 10 firms Low EU firms):", choices = sort(unique(BUYBACK_DATA_TOOL$EU.Index)), selected = "1", width = "1000px")
 ```
 
 <br>
 
+
 ```{r, eval=TRUE, echo = FALSE}
+EU_index_table <- reactive({
+  thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == "EU.Index")]]
+  res = matrix(table(thefeature),nrow=1)
+  colnames(res) <- paste("EU Index", names(table(thefeature)), sep=": ")
+  rownames(res) <- "# of Events"
+  res
+})
 
 feature_IRATStable_industry <- reactive({
-  useonly_industry = !(DATASET_NEW()$BUYBACK_DATA_TOOL$Industry_name %in% input$industry) 
-  thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == "Valuation.Index")]]
-  #quantile_used_ind = as.numeric(0.2)
-  quantile_used_ind = as.numeric(input$quantile_used_industry)
+  thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == "EU.Index")]]
   
-  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
-  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
+  high_EU_index_thres = as.numeric(input$high_EU_index_thres)
+  low_EU_index_thres = as.numeric(input$low_EU_index_thres)
+  
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= high_EU_index_thres
+  if (sum(High_feature_events) < 10)
+    High_feature_events = !is.na(thefeature) & scrub(thefeature) >= high_EU_index_thres-1
+  
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= low_EU_index_thres
+  if (sum(Low_feature_events) < 10)
+    Low_feature_events = !is.na(thefeature) & scrub(thefeature) <= Low_feature_events+1
   
   res = round(cbind(
-    car_table(returns_by_event_monthly[,useonly_industry & Low_feature_events],
-              BUYBACK_DATA_TOOL$Event.Date[useonly_industry & Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results,
-    car_table(returns_by_event_monthly[,useonly_industry & High_feature_events],
-              BUYBACK_DATA_TOOL$Event.Date[useonly_industry & High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results
+    car_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events],
+              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results,
+    car_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events],
+              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results
   ),2)[reported_times,]
-  colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
+  colnames(res) <- c("Low EU: CAR", "t-stat","p-value", "High EU: CAR", "t-stat","p-value")
   as.data.frame(res)
 })
 
 feature_CALtable_industry <- reactive({
-  useonly_industry = !(DATASET_NEW()$BUYBACK_DATA_TOOL$Industry_name %in% input$industry) 
-  thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == "Valuation.Index")]]
-  #quantile_used_ind = as.numeric(0.2)
-  quantile_used_ind = as.numeric(input$quantile_used_industry)
+  thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == "EU.Index")]]
   
-  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
-  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
+  high_EU_index_thres = as.numeric(input$high_EU_index_thres)
+  low_EU_index_thres = as.numeric(input$low_EU_index_thres)
+  
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= high_EU_index_thres
+  if (sum(High_feature_events) < 10)
+    High_feature_events = !is.na(thefeature) & scrub(thefeature) >= high_EU_index_thres-1
+  
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= low_EU_index_thres
+  if (sum(Low_feature_events) < 10)
+    Low_feature_events = !is.na(thefeature) & scrub(thefeature) <= Low_feature_events+1
   
   res = round(cbind(
-    calendar_table(returns_by_event_monthly[,useonly_industry & Low_feature_events],
-                   BUYBACK_DATA_TOOL$Event.Date[useonly_industry & Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = value.weights[useonly_industry & Low_feature_events])$results,
-    calendar_table(returns_by_event_monthly[,useonly_industry & High_feature_events],
-                   BUYBACK_DATA_TOOL$Event.Date[useonly_industry & High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = value.weights[useonly_industry & Low_feature_events])$results
+    calendar_table(DATASET_NEW()$returns_by_event_monthly[,Low_feature_events],
+                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[Low_feature_events])$results,
+    calendar_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events],
+                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[High_feature_events])$results
   ),2)[reported_times,]
-  colnames(res) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
+  colnames(res) <- c("Low EU: CAL", "t-stat","p-value", "High EU: CAL", "t-stat","p-value")
   as.data.frame(res)
 })
 
 fluidPage(
   mainPanel(
-    tabsetPanel("Example",
-                tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderTable({
-                           feature_IRATStable_industry()
-                         })),
-                tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderTable({
-                           feature_CALtable_industry()
-                         }))    
-    ),style='width: 100%;'))
+    navlistPanel(
+      tabPanel("Number of Firms per EU Index Value",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderTable({
+                 EU_index_table()
+               })),
+      tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderTable({
+                 feature_IRATStable_industry()
+               })),
+      tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderTable({
+                 feature_CALtable_industry()
+               })),
+      widths = c(3, 9)),style='width: 100%;'))
 ```
 
 <hr>
-<hr>
-
-
 
 ### Buybacks and Firm Characteristics
 
-The article relates 5 firm characteristics (pre-buyback-announcement returns, idiosyncratic volatility, and volatility, as well as BE/ME and Firm Size). This tool allows the user to study the effects of combining any of these firm characteristics, as well as some other ones not discussed in the paper. 
+The article relates 5 firm characteristics (pre-buyback-announcement returns, idiosyncratic volatility, and volatility, as well as BE/ME and Firm Size). This tool allows the user to study the effects of combining any of these firm characteristics, as well as others not discussed in the paper. We consider here high/low events defined using the quantiles of the selected event charactetistic. 
 
 ```{r, eval=TRUE, echo = FALSE}
-selectInput("characteristic_irats", "Select Firm Characteristic to Define High/Low Firms:", choices = acceptaple_features,selected = acceptaple_features[4], width = "1000px")
+selectInput("characteristic_irats", "Select Firm Characteristic to Define High/Low Firms:", choices = acceptaple_features,selected = "EU.Index", width = "1000px")
 
-selectInput("quantile_used","Enter the quantile to use to define High and Low Firms:", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
+selectInput("quantile_used","Enter the quantile to use to define High (>=) and Low (<=) Firms:", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
 
 checkboxInput("characteristic_irats_sign", "If you would like to change the sign of the firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
 
@@ -338,10 +374,10 @@ feature_IRATStable <- reactive({
   Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
   
   res = round(cbind(
-    car_table(returns_by_event_monthly[, Low_feature_events],
-              BUYBACK_DATA_TOOL$Event.Date[ Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results,
-    car_table(returns_by_event_monthly[, High_feature_events],
-              BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results
+    car_table(DATASET_NEW()$returns_by_event_monthly[, Low_feature_events],
+              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[ Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results,
+    car_table(DATASET_NEW()$returns_by_event_monthly[, High_feature_events],
+              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results
   ),2)[reported_times,]
   
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
@@ -350,16 +386,20 @@ feature_IRATStable <- reactive({
 
 
 feature_CALtable <- reactive({
-  thesign = ifelse(input$characteristic_irats_sign, -1, +1)
+   thesign = ifelse(input$characteristic_irats_sign, -1, +1)
   thefeature = thesign*DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_irats)]]  
-  High_feature_events = which(scrub(thefeature) > quantile(thefeature[!is.na(thefeature)],1-as.numeric(input$quantile_used)) & !is.na(thefeature))
-  Low_feature_events = which(scrub(thefeature) < quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
+  
+  thefeature = as.numeric(scrub(thefeature))
+  quantile_used_ind = as.numeric(input$quantile_used)
+  
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
   
   res = round(cbind(
-    calendar_table(returns_by_event_monthly[, Low_feature_events],
-                   BUYBACK_DATA_TOOL$Event.Date[Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = value.weights[Low_feature_events])$results,
-    calendar_table(returns_by_event_monthly[,High_feature_events],
-                   BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = value.weights[High_feature_events])$results
+    calendar_table(DATASET_NEW()$returns_by_event_monthly[, Low_feature_events],
+                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[Low_feature_events])$results,
+    calendar_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events],
+                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[High_feature_events])$results
   ),2)[reported_times,]
   
   colnames(res) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
@@ -378,7 +418,7 @@ High_feature_Hedged_react <- reactive({
 
 Low_feature_Hedged_react <- reactive({
   thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_irats)]]  
-  Low_feature_events = which(scrub(thefeature) < quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
+  Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
   Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET_NEW()$DatesMonth, DATASET_NEW()$returns_by_event_monthly,event=1),1,non_zero_mean)
   remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
 })
@@ -390,38 +430,38 @@ Low_feature_Hedged_react <- reactive({
 ```{r, eval=TRUE, echo = FALSE}
 fluidPage(
   mainPanel(
-    tabsetPanel("Example",
-                tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderTable({
-                           feature_IRATStable()
-                         })),
-                tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderTable({
-                           feature_CALtable()
-                         })),
-                tabPanel("Cumulative Abnormal Returns,High, 12m hold",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderDygraph({
-                           pnl_plot_interactive(High_feature_Hedged_react())
-                         })),
-                tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderDygraph({
-                           pnl_plot_interactive(Low_feature_Hedged_react())
-                         })),
-                tabPanel("Monthly and Yearly Returns, High, 12m hold",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderUI({
-                           renderHeatmapX(pnl_matrix(High_feature_Hedged_react()))
-                         })),
-                tabPanel("Monthly and Yearly Returns, Low, 12m hold",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderUI({
-                           renderHeatmapX(pnl_matrix(Low_feature_Hedged_react()))
-                         }))
-    ),style='width: 100%;'))
+    navlistPanel(
+      tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderTable({
+                 feature_IRATStable()
+               })),
+      tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderTable({
+                 feature_CALtable()
+               })),
+      tabPanel("Cumulative Abnormal Returns,High, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderDygraph({
+                 pnl_plot_interactive(High_feature_Hedged_react())
+               })),
+      tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderDygraph({
+                 pnl_plot_interactive(Low_feature_Hedged_react())
+               })),
+      tabPanel("Monthly and Yearly Returns, High, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderUI(
+                 HTML(renderHeatmapX(pnl_matrix(High_feature_Hedged_react())))
+               )),
+      tabPanel("Monthly and Yearly Returns, Low, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderUI(
+                 HTML(renderHeatmapX(pnl_matrix(Low_feature_Hedged_react())))
+               )),
+      widths = c(3, 9)),style='width: 100%;'))
 ```
 
 
@@ -429,7 +469,7 @@ fluidPage(
 <hr>
 <hr>
 
-### Customized Buyback Index
+### Customized Buyback Indices
 
 Much like the EU-index in the paper, one can create other indices by combining different firm characteristics as needed. You can select your own firm characteristics below and also indicate whether you would like to reverse the sign of this firm characteristic (Low will be High and vice versa).
 
@@ -440,7 +480,7 @@ fluidPage(
   h4("Firm Characteristics of the new index"),
   fluidRow(
     column(6,
-           selectInput("characteristic_irats1", "First Firm Characteristic:", choices = acceptaple_features,selected = acceptaple_features[4], width = "425px"),
+           selectInput("characteristic_irats1", "First Firm Characteristic:", choices = acceptaple_features,selected = "EU.Index", width = "425px"),
            checkboxInput("characteristic_irats1_sign", "Reverse", value = FALSE),
            selectInput("characteristic_irats2", "Second Firm Characteristic:", choices = acceptaple_features,selected ="None", width = "425px"),
            checkboxInput("characteristic_irats2_sign", "Reverse", value = FALSE),
@@ -461,13 +501,13 @@ fluidPage(
 
 <br>
 ```{r, eval=TRUE, echo = FALSE}
-selectInput("quantile_used_ind","Enter the quantile to use to define the 0 (Low), 1 (middle), 2 (High) scores for each of the selected characteristics:", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
+selectInput("quantile_used_ind","Enter the quantile to use to define the 0 (Low, <=), 1 (middle), 2 (High, >=) scores for each of the selected characteristics:", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
 ```
 
 <br>
 ```{r, eval=TRUE, echo = FALSE}
 
-selectInput("quantile_used_all","Enter the quantile to use to define High and Low Firms for the total index created (sum of the scores of the firm characteristics selected):", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
+selectInput("quantile_used_all","Enter the quantile to use to define High (>=) and Low (<=) Firms for the total index created (sum of the scores of the firm characteristics selected):", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
 ```
 
 ```{r, eval=TRUE, echo = FALSE}
@@ -480,7 +520,7 @@ selected_features = reactive({
 <br>
 
 <br> 
-Here are the results for your new index:
+Here are the results for your new customized index:
 
 <br>
 ```{r, eval=TRUE, echo = FALSE}
@@ -537,12 +577,6 @@ Index_Score_rect <- reactive({
     (input$characteristic_irats5 != "None")*(2*High_feature_events5 + 1*(!High_feature_events5 & !Low_feature_events5) ) + 
     (input$characteristic_irats6 != "None")*(2*High_feature_events6 + 1*(!High_feature_events6 & !Low_feature_events6) ) 
   
-  Index_score = thefeature1 + 
-    ifelse(input$characteristic_irats2 != "None",thefeature2,0)+ 
-    ifelse(input$characteristic_irats3 != "None",thefeature3,0) + 
-    ifelse(input$characteristic_irats4 != "None",thefeature4,0) + 
-    ifelse(input$characteristic_irats5 != "None",thefeature5,0) + 
-    ifelse(input$characteristic_irats6 != "None",thefeature6,0)
   Index_score
   
 })
@@ -553,10 +587,10 @@ feature_IRATStable_index <- reactive({
   Low_feature_events = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_all)) & !is.na(thefeature))
   
   res = round(cbind(
-    car_table(returns_by_event_monthly[, Low_feature_events],
-              BUYBACK_DATA_TOOL$Event.Date[ Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results,
-    car_table(returns_by_event_monthly[, High_feature_events],
-              BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results
+    car_table(DATASET_NEW()$returns_by_event_monthly[, Low_feature_events],
+              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[ Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results,
+    car_table(DATASET_NEW()$returns_by_event_monthly[, High_feature_events],
+              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results
   ),2)[reported_times,]
   colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
   res
@@ -568,10 +602,10 @@ feature_CALtable_index <- reactive({
   Low_feature_events = (scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used_all)) & !is.na(thefeature))
   
   res = round(cbind(
-    calendar_table(returns_by_event_monthly[, Low_feature_events],
-                   BUYBACK_DATA_TOOL$Event.Date[Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = value.weights[Low_feature_events])$results,
-    calendar_table(returns_by_event_monthly[,High_feature_events],
-                   BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = value.weights[High_feature_events])$results
+    calendar_table(DATASET_NEW()$returns_by_event_monthly[, Low_feature_events],
+                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[Low_feature_events])$results,
+    calendar_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events],
+                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[High_feature_events])$results
   ),2)[reported_times,]
   
   colnames(res) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
@@ -598,52 +632,52 @@ Low_feature_Hedged_react_index <- reactive({
 ```{r, eval=TRUE, echo = FALSE}
 fluidPage(
   mainPanel(
-    tabsetPanel("Example",
-                tabPanel("Histogram of the New Index",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderPlot({
-                           feature = Index_Score_rect()
-                           feature = feature[!is.na(feature)]
-                           if (!is.numeric(feature))
-                             feature = 1
-                           hist(feature, density = 100, breaks = 20,main="Index Histogram",xlab="Score")
-                         })),
-                tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderTable({
-                           feature_IRATStable_index()
-                         })),
-                tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderTable({
-                           feature_CALtable_index()
-                         })),
-                tabPanel("Cumulative Abnormal Returns,High, 12m hold",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderDygraph({
-                           pnl_plot_interactive(High_feature_Hedged_react_index())
-                         })),
-                tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderDygraph({
-                           pnl_plot_interactive(Low_feature_Hedged_react_index())
-                         })),
-                tabPanel("Monthly and Yearly Returns, High, 12m hold",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderUI({
-                           renderHeatmapX(pnl_matrix(High_feature_Hedged_react_index()))
-                         })),
-                tabPanel("Monthly and Yearly Returns, Low, 12m hold",
-                         busyIndicator("Calculating results ...",wait = 0),
-                         renderUI({
-                           renderHeatmapX(pnl_matrix(Low_feature_Hedged_react_index()))
-                         }))
-    ),style='width: 100%;'))
+    navlistPanel(
+      tabPanel("Histogram of the New Index",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderPlot({
+                 feature = Index_Score_rect()
+                 feature = feature[!is.na(feature)]
+                 if (!is.numeric(feature))
+                   feature = 1
+                 hist(feature, density = 100, breaks = 20,main="Index Histogram",xlab="Score")
+               })),
+      tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderTable({
+                 feature_IRATStable_index()
+               })),
+      tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderTable({
+                 feature_CALtable_index()
+               })),
+      tabPanel("Cumulative Abnormal Returns,High, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderDygraph({
+                 pnl_plot_interactive(High_feature_Hedged_react_index())
+               })),
+      tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderDygraph({
+                 pnl_plot_interactive(Low_feature_Hedged_react_index())
+               })),
+      tabPanel("Monthly and Yearly Returns, High, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderUI(
+                 HTML(renderHeatmapX(pnl_matrix(High_feature_Hedged_react_index())))
+               )),
+      tabPanel("Monthly and Yearly Returns, Low, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderUI(
+                 HTML(renderHeatmapX(pnl_matrix(Low_feature_Hedged_react_index())))
+               )),
+      widths = c(3, 9)),style='width: 100%;'))
 ```
 
 <br>
 <hr>
-As noted above **you can interactively change various report parameters throughout this document, and for any of your choices create a customized paper using the button at the begining of this page at any time.**
+As noted above **you can interactively change various report parameters throughout this tool, and for any of your choices create a customized paper using the button at the begining of this page at any time.**
 <br>
 
 <hr>

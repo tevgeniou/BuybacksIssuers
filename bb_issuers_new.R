@@ -1,3 +1,7 @@
+#  Copyright 2015, INSEAD
+#  by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
+#  Dual licensed under the MIT or GPL Version 2 licenses.
+
 
 ####################################################################################
 # These are one by one the tables in the .Rnw. 
@@ -108,6 +112,12 @@ Low_LEV_eventsBB  = scrub(tmp) < quantile(tmp[!is.na(tmp)], quantile_LEV)  & !is
 tmp = BUYBACK_DATA$DATASET$ibes$month_minus1$mean_rec_score
 High_EPS_eventsBB = scrub(tmp) > quantile(tmp[!is.na(tmp)], 1-quantile_EPS)  & !is.na(tmp)
 Low_EPS_eventsBB  = scrub(tmp) < quantile(tmp[!is.na(tmp)], quantile_EPS)  & !is.na(tmp)
+EUindex_bb = sapply(1:length(BUYBACK_DATA$DATASET$SDC$Event.Date), function(i){
+  ifelse(High_Idiosyncr_eventsBB[i], 2, ifelse(Low_Idiosyncr_eventsBB[i], 0, 1)) +
+    ifelse(High_VOL_eventsBB[i], 2, ifelse(Low_VOL_eventsBB[i], 0, 1)) +
+    ifelse(company_subset_undervalued_bb[i], 2, ifelse(company_subset_overvalued_bb[i], 0, 1))
+})
+
 rm("tmp")
 
 
@@ -497,11 +507,6 @@ Under_IdioBB_cor = cor(EU_index_features)
 
 ####################################################################################
 #round(EU_relations,1), 
-EUindex_bb = sapply(1:length(BUYBACK_DATA$DATASET$SDC$Event.Date), function(i){
-  ifelse(High_Idiosyncr_eventsBB[i], 2, ifelse(Low_Idiosyncr_eventsBB[i], 0, 1)) +
-    ifelse(High_VOL_eventsBB[i], 2, ifelse(Low_VOL_eventsBB[i], 0, 1)) +
-    ifelse(company_subset_undervalued_bb[i], 2, ifelse(company_subset_overvalued_bb[i], 0, 1))
-})
 
 all_fund_sources = unique(unlist(sapply(BUYBACK_DATA$DATASET$SDC$Source...of..Funds..Code, function(i) unlist(str_split(i,"\\+")))))
 cash_funds = c("CR")

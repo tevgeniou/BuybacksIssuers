@@ -1,3 +1,7 @@
+#  Copyright 2015, INSEAD
+#  by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
+#  Dual licensed under the MIT or GPL Version 2 licenses.
+
 ############################################################################################ 
 # All global parameters of the project
 ############################################################################################ 
@@ -59,7 +63,7 @@ years_across_cross_events = 4 # for BB then ISS or vice verca years.
 # Industries and industry filter
 
 All = 1:9999
-source("../../FinanceData/rawdata_fama_french/ff_industries_sic.R")
+source("../FinanceData/rawdata_fama_french/ff_industries_sic.R")
 Finance1 = 6000:6799
 # Select the industries to use
 Industries = All
@@ -118,26 +122,3 @@ BEAR_YEARS_text = list( #http://www.gold-eagle.com/article/history-us-bear-bull-
   dotcom = c("March 2000", "October 2002"),
   financial1 = c("October 2007", "March 2009")
 )
-
-
-if (0){
-  ##########################################################################################
-  ### OTHER THAT WE USED IN EARLIER VERSIONS. We may need these for earlier versions of the code
-  R2window = 180 # rolling window to get the R2 thresholds
-  VOLwindow = 180 # rolling window to get the R2 thresholds
-  LEVwindow = 180 # rolling window to get the R2 thresholds
-  EPSwindow = 180 # rolling window to get the R2 thresholds
-  randomizationiterations = 10 # how many times to run the volatility randomization test
-  MIN_ME_quantile = 0 # the minimum ff ME quantile
-  MAX_ME_quantile = 20 # the maximum ff ME quantile
-  MIN_BEME_quantile = 0 # the minimum ff BE/ME quantile
-  MAX_BEME_quantile = 20 # the maximum ff BE/ME quantile
-  days_live = 0 # minimum number of days a stock needs to be live before announcement date
-  remove_returns_outliers = 0 # remove the reutrns outliers?
-  MAX_DR_abs = 100 # Max absolute daily return to consider a stock is an outliers
-  max_vol_outlier = 100000.1 # max daily standard deviation in 6 months before announcement
-  MINIMUM_PERIOD_SINCE_LAST_EVENT = 0# we require that there were at least that many days before the previous event
-  CRISIS_SLACK_pre = 0 # in case we want to add some window around the recession years
-  CRISIS_SLACK_post = 0 # in case we want to add some window around the recession years
-  end_date_event = "Three.Month.After"
-}

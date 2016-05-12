@@ -1,3 +1,7 @@
+#  Copyright 2015, INSEAD
+#  by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
+#  Dual licensed under the MIT or GPL Version 2 licenses.
+
 
 ##########################################################################################
 ##########################################################################################
@@ -62,6 +66,52 @@ if (length(to_remove) > 0){
   rm("field","field1")
 }
 ISSUERS_DATA$cleanupMissingSomeValues = length(to_remove)
+
+
+############################################################################################################
+
+if (remove_missing_permnosV2){
+  
+  # Buybacks first
+  to_remove = which(is.na(BUYBACK_DATA$DATASET$SDC$permnoV2))
+  if (length(to_remove) > 0){
+    # just in alphabetic order not to forget any    
+    BUYBACK_DATA$BEME_used <- BUYBACK_DATA$BEME_used[-to_remove]
+    BUYBACK_DATA$Performance_used <- BUYBACK_DATA$Performance_used[-to_remove]
+    BUYBACK_DATA$Size_used <- BUYBACK_DATA$Size_used[-to_remove]
+    BUYBACK_DATA$Valuation_Index <- BUYBACK_DATA$Valuation_Index[-to_remove]
+    
+    BUYBACK_DATA$DATASET$returns_by_event_monthly <- BUYBACK_DATA$DATASET$returns_by_event_monthly[,-to_remove]
+    BUYBACK_DATA$DATASET$SDC <- BUYBACK_DATA$DATASET$SDC[-to_remove,]
+    for(field in ls(BUYBACK_DATA$DATASET$CRSP))  BUYBACK_DATA$DATASET$CRSP[[field]] <- BUYBACK_DATA$DATASET$CRSP[[field]][-to_remove]
+    for(field1 in ls(BUYBACK_DATA$DATASET$ibes))  
+      for (field in ls(BUYBACK_DATA$DATASET$ibes[[field1]])) 
+        BUYBACK_DATA$DATASET$ibes[[field1]][[field]]<- BUYBACK_DATA$DATASET$ibes[[field1]][[field]][-to_remove]
+    rm("field","field1")
+  }
+  BUYBACK_DATA$cleanupNoPermno = BUYBACK_DATA$cleanupNoPermno + length(to_remove)
+  
+  # Issuers now
+  to_remove = which(is.na(ISSUERS_DATA$DATASET$SDC$permnoV2))
+  if (length(to_remove) > 0){
+    # just in alphabetic order not to forget any    
+    ISSUERS_DATA$BEME_used <- ISSUERS_DATA$BEME_used[-to_remove]
+    ISSUERS_DATA$Performance_used <- ISSUERS_DATA$Performance_used[-to_remove]
+    ISSUERS_DATA$Size_used <- ISSUERS_DATA$Size_used[-to_remove]
+    ISSUERS_DATA$Valuation_Index <- ISSUERS_DATA$Valuation_Index[-to_remove]
+    
+    ISSUERS_DATA$DATASET$returns_by_event_monthly <- ISSUERS_DATA$DATASET$returns_by_event_monthly[,-to_remove]
+    ISSUERS_DATA$DATASET$SDC <- ISSUERS_DATA$DATASET$SDC[-to_remove,]
+    for(field in ls(ISSUERS_DATA$DATASET$CRSP))  ISSUERS_DATA$DATASET$CRSP[[field]] <- ISSUERS_DATA$DATASET$CRSP[[field]][-to_remove]
+    for(field1 in ls(ISSUERS_DATA$DATASET$ibes))  
+      for (field in ls(ISSUERS_DATA$DATASET$ibes[[field1]])) 
+        ISSUERS_DATA$DATASET$ibes[[field1]][[field]]<- ISSUERS_DATA$DATASET$ibes[[field1]][[field]][-to_remove]
+    rm("field","field1")
+  }
+  ISSUERS_DATA$cleanupNoPermno = ISSUERS_DATA$cleanupNoPermno + length(to_remove)
+  
+  rm("to_remove")
+}
 
 ##########################################################################################
 # Project specific filters now 
@@ -233,51 +283,6 @@ if (remove_financials_utilities){
     rm("field","field1")
   }
   ISSUERS_DATA$cleanupBIZ$Industry_filter = sum(!Industry_filter)
-  
-  rm("to_remove")
-}
-
-############################################################################################################
-
-if (remove_missing_permnosV2){
-  
-  # Buybacks first
-  to_remove = which(is.na(BUYBACK_DATA$DATASET$SDC$permnoV2))
-  if (length(to_remove) > 0){
-    # just in alphabetic order not to forget any    
-    BUYBACK_DATA$BEME_used <- BUYBACK_DATA$BEME_used[-to_remove]
-    BUYBACK_DATA$Performance_used <- BUYBACK_DATA$Performance_used[-to_remove]
-    BUYBACK_DATA$Size_used <- BUYBACK_DATA$Size_used[-to_remove]
-    BUYBACK_DATA$Valuation_Index <- BUYBACK_DATA$Valuation_Index[-to_remove]
-    
-    BUYBACK_DATA$DATASET$returns_by_event_monthly <- BUYBACK_DATA$DATASET$returns_by_event_monthly[,-to_remove]
-    BUYBACK_DATA$DATASET$SDC <- BUYBACK_DATA$DATASET$SDC[-to_remove,]
-    for(field in ls(BUYBACK_DATA$DATASET$CRSP))  BUYBACK_DATA$DATASET$CRSP[[field]] <- BUYBACK_DATA$DATASET$CRSP[[field]][-to_remove]
-    for(field1 in ls(BUYBACK_DATA$DATASET$ibes))  
-      for (field in ls(BUYBACK_DATA$DATASET$ibes[[field1]])) 
-        BUYBACK_DATA$DATASET$ibes[[field1]][[field]]<- BUYBACK_DATA$DATASET$ibes[[field1]][[field]][-to_remove]
-    rm("field","field1")
-  }
-  BUYBACK_DATA$cleanupNoPermno = BUYBACK_DATA$cleanupNoPermno + length(to_remove)
-  
-  # Issuers now
-  to_remove = which(is.na(ISSUERS_DATA$DATASET$SDC$permnoV2))
-  if (length(to_remove) > 0){
-    # just in alphabetic order not to forget any    
-    ISSUERS_DATA$BEME_used <- ISSUERS_DATA$BEME_used[-to_remove]
-    ISSUERS_DATA$Performance_used <- ISSUERS_DATA$Performance_used[-to_remove]
-    ISSUERS_DATA$Size_used <- ISSUERS_DATA$Size_used[-to_remove]
-    ISSUERS_DATA$Valuation_Index <- ISSUERS_DATA$Valuation_Index[-to_remove]
-    
-    ISSUERS_DATA$DATASET$returns_by_event_monthly <- ISSUERS_DATA$DATASET$returns_by_event_monthly[,-to_remove]
-    ISSUERS_DATA$DATASET$SDC <- ISSUERS_DATA$DATASET$SDC[-to_remove,]
-    for(field in ls(ISSUERS_DATA$DATASET$CRSP))  ISSUERS_DATA$DATASET$CRSP[[field]] <- ISSUERS_DATA$DATASET$CRSP[[field]][-to_remove]
-    for(field1 in ls(ISSUERS_DATA$DATASET$ibes))  
-      for (field in ls(ISSUERS_DATA$DATASET$ibes[[field1]])) 
-        ISSUERS_DATA$DATASET$ibes[[field1]][[field]]<- ISSUERS_DATA$DATASET$ibes[[field1]][[field]][-to_remove]
-    rm("field","field1")
-  }
-  ISSUERS_DATA$cleanupNoPermno = ISSUERS_DATA$cleanupNoPermno + length(to_remove)
   
   rm("to_remove")
 }

@@ -1,3 +1,7 @@
+#  Copyright 2015, INSEAD
+#  by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
+#  Dual licensed under the MIT or GPL Version 2 licenses.
+
 if (memory.limit()<40*1024) memory.limit(40*1024) # allow at least 40GB of memory to be allocated (Windows)
 ##########################################################################################
 # Creates the data for the Buybacks-Issuers paper
@@ -12,7 +16,7 @@ source("../FinanceLibraries/latex_code.R")
 source("../FinanceData/rawdata_fama_french/ff_industries_sic.R")
 source("Paper_global_parameters.R")
 # Used to get WRDS data through the API
-source("../financedataDev/wrds_helpers.R", chdir=TRUE)
+source("../FinanceLibraries/wrds_helpers.R", chdir=TRUE)
 source("~/Documents/WRDS_Drivers/startWRDSconnection.R") # This file has the username pasword for WRDS. These lines below. See wrds_config.R in FinanceLibraries
 # wrds_user <- "my_username"
 # wrds_pass <- "{SAS002}DBCC5712369DE1C65B19864C1564FB850F398DCF"
@@ -31,7 +35,7 @@ if (1){
   GLOBAL_DAILY_DATABASE$volume_daily <- NULL
   GLOBAL_DAILY_DATABASE$recent_volatility_daily <- NULL
   GLOBAL_DAILY_DATABASE$FamaFrench_five_factors <- NULL
-} else{  # For next version of creating data directly from WRDS
+} else{ 
   GLOBAL_DAILY_DATABASE = list()
   GLOBAL_DAILY_DATABASE$returns_daily <- wrdsQueryStockFieldMatrix(wrds_handle, colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly), "RET",start=as.Date("1980-01-01"))
 }
