@@ -363,7 +363,7 @@ The article relates 5 firm characteristics (pre-buyback-announcement returns, id
 ```{r, eval=TRUE, echo = FALSE}
 selectInput("characteristic_irats", "Select Firm Characteristic to Define High/Low Firms:", choices = acceptaple_features,selected = "EU.Index", width = "1000px")
 
-selectInput("quantile_used","Enter the quantile to use to define High (>=) and Low (<=) Firms:", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
+selectInput("quantile_used","Enter the quantile to use to define High (>=) and Low (<=) Firms:", choices = 0.02*(1:20), selected = "0.1", width = "1000px")
 
 checkboxInput("characteristic_irats_sign", "If you would like to change the sign of the firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
 
@@ -505,13 +505,13 @@ fluidPage(
 
 <br>
 ```{r, eval=TRUE, echo = FALSE}
-selectInput("quantile_used_ind","Enter the quantile to use to define the 0 (Low, <=), 1 (middle), 2 (High, >=) scores for each of the selected characteristics:", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
+selectInput("quantile_used_ind","Enter the quantile to use to define the 0 (Low, <=), 1 (middle), 2 (High, >=) scores for each of the selected characteristics:", choices = 0.02*(1:20), selected = "0.1", width = "1000px")
 ```
 
 <br>
 ```{r, eval=TRUE, echo = FALSE}
 
-selectInput("quantile_used_all","Enter the quantile to use to define High (>=) and Low (<=) Firms for the total index created (sum of the scores of the firm characteristics selected):", choices = 0.02*(1:20), selected = "0.2", width = "1000px")
+selectInput("quantile_used_all","Enter the quantile to use to define High (>=) and Low (<=) Firms for the total index created (sum of the scores of the firm characteristics selected):", choices = 0.02*(1:20), selected = "0.1", width = "1000px")
 ```
 
 ```{r, eval=TRUE, echo = FALSE}
