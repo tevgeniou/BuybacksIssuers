@@ -1,7 +1,3 @@
-%  Copyright 2015, INSEAD
-%  by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
-%  Dual licensed under the MIT or GPL Version 2 licenses.
-
 
 << eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 #dev.off();
@@ -207,7 +203,14 @@ Nick Nassuphis$^{***}$,} and \uppercase{Theo Vermaelen}\thanks{INSEAD, Bd de Con
 
 
 \clearpage
+\thispagestyle{empty}
+\section*{Conflict-of-interest disclosure.}
+\paragraph{Theodoros Evgeniou} I have nothing to disclose.
+\paragraph{Enric Junqu\'e de Fortuny}  I have nothing to disclose.
+\paragraph{Nick Nassuphis}  I have nothing to disclose.
+\paragraph{Theo Vermaelen}  I have nothing to disclose.
 
+\clearpage
 
 \onehalfspacing
 \setcounter{footnote}{0}
