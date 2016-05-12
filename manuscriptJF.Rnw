@@ -192,8 +192,12 @@ Nick Nassuphis$^{***}$,} and \uppercase{Theo Vermaelen}\thanks{INSEAD, Bd de Con
 \vspace{-.2in}
 \begin{abstract}
 \noindent  We find that, inconsistent with the low volatility anomaly, post-buyback announcement long-term abnormal returns are higher when the pre-announcement (idiosyncratic) volatility is high. This is consistent with \cite{Stambaugh2015} who find a positive relation between returns and idiosyncratic volatility for undervalued stocks, and with the prediction that a repurchase authorization is an option for undervalued stocks \citep{IkenberryVermaelen1996}. The buyback anomaly also survives  when using the five-factor model of Fama and French (2015a).  Combining volatility with undervaluation indicators proposed by \cite{PeyerVermaelen2009} improves the predictive power of excess returns after buyback announcements.
+
+
 \end{abstract}
 \vspace{2cm}
+
+\noindent An interactive online tool to explore data variations and robustness analyses of all results in this paper, as well as all the source code, is available at \href{http://tevgeniou.github.io/BuybacksIssuers/}{tevgeniou.github.io/BuybacksIssuers.}
 
 \medskip
 
