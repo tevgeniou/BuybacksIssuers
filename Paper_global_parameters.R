@@ -63,7 +63,6 @@ years_across_cross_events = 4 # for BB then ISS or vice verca years.
 # Industries and industry filter
 
 All = 1:9999
-source("../FinanceData/rawdata_fama_french/ff_industries_sic.R")
 Finance1 = 6000:6799
 # Select the industries to use
 Industries = All

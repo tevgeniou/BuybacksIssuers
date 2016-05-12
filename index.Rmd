@@ -1,8 +1,4 @@
-<!--
- Copyright 2015, INSEAD
- by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
- Dual licensed under the MIT or GPL Version 2 licenses.  -->
-  
+
 ---
 title: "Volatility and the Buyback Anomaly: Interactive Tool"
 author: "[Theodoros Evgeniou](http://faculty.insead.edu/theodoros-evgeniou/), [Enric Junqué de Fortuny](http://ciri.be/), [Nick Nassuphis](https://www.linkedin.com/in/nick-nassuphis-8029372), and [Theo Vermaelen](http://faculty.insead.edu/theo-vermaelen/)"
@@ -17,9 +13,16 @@ runtime: shiny
 ---
 
 ```{r, eval=TRUE, echo = FALSE,message=FALSE}
+# Copyright 2015, INSEAD
+# by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
+# Dual licensed under the MIT or GPL Version 2 licenses.  
+```  
+  
+  
+```{r, eval=TRUE, echo = FALSE,message=FALSE}
 # need this to avoid loading the R libraries when the tool is deployed on shinyapps (needs to be 1 when run localy, 1 when deployed on a shinyapps server)
 
-run_shiny_tool = 0 
+run_shiny_tool = 1
 
 ```
 
@@ -51,6 +54,7 @@ source("interactive_tool_files/lib_helpers.R", chdir=TRUE)
 source("interactive_tool_files/ff_industries_sic.R")
 source("Paper_global_parameters.R")
 source("interactive_tool_files/heatmapOutput.R") 
+source("interactive_tool_files/ff_industries_sic.R")
 
 report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
 BUYBACK_DATA_TOOL$None <- 1:length(BUYBACK_DATA_TOOL$Prior.Returns.Score)
