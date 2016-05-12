@@ -1,3 +1,6 @@
+%  Copyright 2015, INSEAD
+%  by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
+%  Dual licensed under the MIT or GPL Version 2 licenses.
 
 << eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 #dev.off();
@@ -20,9 +23,9 @@ if (generate_rnw_data == 1){
   load("bb_issuers_new.Rdata")
 }
 
-source("../FinanceLibraries/lib_helpers.R", chdir=TRUE)
-source("../FinanceLibraries/latex_code.R")
-source("../FinanceData/rawdata_fama_french/ff_industries_sic.R")
+source("interactive_tool_files/lib_helpers.R", chdir=TRUE)
+source("interactive_tool_files/latex_code.R")
+source("interactive_tool_files/ff_industries_sic.R")
 source("Paper_global_parameters.R")
 
 firstyear = as.character(format(FirstTrade,"%Y"))
@@ -200,15 +203,6 @@ Nick Nassuphis$^{***}$,} and \uppercase{Theo Vermaelen}\thanks{INSEAD, Bd de Con
 %\noindent \textit{Keywords}: Share Buybacks; Seasoned Equity Offerings; Anomalies; Volatility
 
 \thispagestyle{empty}
-
-
-\clearpage
-\thispagestyle{empty}
-\section*{Conflict-of-interest disclosure.}
-\paragraph{Theodoros Evgeniou} I have nothing to disclose.
-\paragraph{Enric Junqu\'e de Fortuny}  I have nothing to disclose.
-\paragraph{Nick Nassuphis}  I have nothing to disclose.
-\paragraph{Theo Vermaelen}  I have nothing to disclose.
 
 \clearpage
 
