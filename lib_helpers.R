@@ -149,14 +149,17 @@ scrub<-function(x){
 
 # Fill NAs with earlier values
 
-fill_NA_previous <- function(x){
+fill_NA_previous <- function(x, lastfill = F){
   if (sum(!is.na(x)) == 0)
     return(x)
   non_na = which(!is.na(x))
   if (length(non_na) == 1)
     return(c(rep(x[non_na], non_na-1), x[non_na:length(x)]))
   if (!(1 %in% non_na))  non_na = c(1,non_na)
-  c(unlist(lapply(1:(length(non_na)-1), function(i) rep(x[non_na[i]],non_na[i+1] - non_na[i]))), x[tail(non_na,1):length(x)])
+  x = c(unlist(lapply(1:(length(non_na)-1), function(i) rep(x[non_na[i]],non_na[i+1] - non_na[i]))), x[tail(non_na,1):length(x)])
+  if (lastfill)
+    x[tail(non_na,1):length(x)] <- x[tail(non_na,1)]
+  x
 }
 
 ######
@@ -306,21 +309,30 @@ create_yearly_data <- function(value_used, template_matrix,all_compustat_data){
 }
 
 # Creates cross-sectional percentile based scores for a given company characteristic. 
-get_cross_section_score <- function(company_feature_matrix, company_feature_matrix_used=NULL){
+get_cross_section_score <- function(company_feature_matrix, company_feature_matrix_used=NULL, zero_special = F){
   datacol = ncol(company_feature_matrix)
   data_used = company_feature_matrix
   if (!is.null(company_feature_matrix_used))
     data_used = cbind(company_feature_matrix,company_feature_matrix_used)
   tmp = t(apply(data_used,1,function(r){
-    r_scored = scrub(r[1:datacol]) # Note: we don't score NAs and 0s
+    r_scored = r[1:datacol] 
     r_ecdf = r_scored
     if (!is.null(company_feature_matrix_used))
-      r_ecdf = scrub(r[(datacol+1):length(r)]) # Note: we don't use NAs and 0s
-    if (sum(r_ecdf !=0)){ 
-      score_fun = ecdf(r_ecdf[r_ecdf!=0])
-      res = ifelse(r_scored!=0, score_fun(r_scored),NA)
+      r_ecdf = r[(datacol+1):length(r)]
+    res = r_scored*NA
+    
+    if (!zero_special){
+      r_scored = scrub(r_scored)
+      r_ecdf = scrub(r_ecdf)
+      if (sum(r_ecdf !=0)) {   # Note: we don't use both NAs and 0s
+        score_fun = ecdf(r_ecdf[r_ecdf!=0])
+        res = ifelse(r_scored!=0, score_fun(r_scored),NA)
+      }
     } else {
-      res = r_scored*NA
+      if (sum(!is.na(r_ecdf))) {   # Note: we don't use NAs only here
+        score_fun = ecdf(r_ecdf[!is.na(r_ecdf)])
+        res = ifelse(!is.na(r_scored), score_fun(r_scored),NA)
+      }
     }
     res
   }))
@@ -494,10 +506,10 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
       if (nrow(ret) > ncol(ret)){
         model = fastLm(form,data=data.frame(ret,row.names = NULL))
         model.summary = summary(model)
-
+        
         alphas[i] = model.summary$coefficients[1,"Estimate"] 
         stderr[i] = model.summary$coefficients[1, "StdErr"]
-
+        
         the_betas = model.summary$coefficients[2:nrow(model.summary$coefficients), "Estimate"]
         betas[i,] <- the_betas
         betasstderr[i,] <- model.summary$coefficients[2:nrow(model.summary$coefficients), "StdErr"]    
@@ -691,6 +703,8 @@ event_study_factor_coeffs <- function(returns,Event.Date, Risk_Factors_Monthly,f
   returns_month = str_sub(rownames(returns), start=1,end=7)
   Event.Date = str_sub(Event.Date,start=1,end=7)
   firstHit = match(Event.Date,returns_month)
+  if (sum(is.na(firstHit)) !=0)
+    print("\nSOME EVENTS SEEM TO BE OUTISDE THE RANGE OF DATES OF THE RISK FACTORS...\n")
   res_init = structure(rep(NA,number_of_factors + (number_of_factors+1) + 1), .Names = c(factors_used_noRF, paste(factors_used,"ret", sep="_"), "actual_ret"))
   max_time = length(returns_month)
   
@@ -724,21 +738,33 @@ event_study_factor_coeffs <- function(returns,Event.Date, Risk_Factors_Monthly,f
 }
 
 # PART II OF BSC1998_event_study
-BSC1998_event_study_coeffs <- function(Estimated_returns,returns,Event.Date,company_features, Risk_Factors_Monthly,factors_used_noRF=c("Delta","SMB","HML","RMW","CMA"),timeperiods_requested = 1:48){
+BSC1998_event_study_coeffs <- function(Estimated_returns,company_features,timeperiods_requested = 1:48,square_features=NULL){
   # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
   # Assumes factor_loadings comes from event_study_factor_coeffs using the exact same inputs
   ## Step 1: Estimate Factor Loadings for the requested months (so month 0 is the event month)
   # Assumes these are inputs: It is done using the function event_study_factor_coeffs above
   ## Step 2: Calculate Monthly Estimated Risk-adjusted Return (Given as input)
   ## Step 3: Run Cross-Section Regression in Each Post-Event Month, from 1-48 months
+  features_to_square = intersect(colnames(company_features),square_features)
+  colnames_used = colnames(company_features)
+  if (length(features_to_square) !=0)
+    colnames_used = c(colnames_used,paste(features_to_square,"square",sep=" "))
   C_mt_coefficients = Reduce(cbind,lapply(1:ncol(Estimated_returns), function(month){
     month_returns = Estimated_returns[,month]
     useonly = which(!is.na(month_returns) & !is.na(apply(company_features,1,sum)))
     res = rep(NA, ncol(company_features)+1)
     if (length(useonly) > ncol(company_features) + 1){
-      cross_sectional_data = cbind(company_features[useonly,,drop=F], month_returns[useonly])
-      colnames(cross_sectional_data) <- c(paste("Ind", 1:ncol(company_features), sep=""), "ret")
-      cross_setional_form = as.formula(paste("ret", str_c(paste("Ind", 1:ncol(company_features), sep=""), collapse=" + "), sep=" ~ "))
+      company_features_used = company_features[useonly,,drop=F]
+      # square and demean what is needed
+      if (!is.null(features_to_square)){
+        for (square_i in features_to_square){
+          company_features_used[,square_i] <- company_features_used[,square_i] - mean(company_features_used[,square_i])
+          company_features_used = cbind(company_features_used,company_features_used[,square_i]*company_features_used[,square_i])
+        }
+      }
+      cross_sectional_data = cbind(company_features_used, month_returns[useonly])
+      colnames(cross_sectional_data) <- c(paste("Ind", 1:ncol(company_features_used), sep=""), "ret")
+      cross_setional_form = as.formula(paste("ret", str_c(paste("Ind", 1:ncol(company_features_used), sep=""), collapse=" + "), sep=" ~ "))
       model = fastLm(cross_setional_form,data=data.frame(cross_sectional_data,row.names = NULL))
       res = summary(model)$coefficients[,1]
     }
@@ -746,13 +772,13 @@ BSC1998_event_study_coeffs <- function(Estimated_returns,returns,Event.Date,comp
   }))
   colnames(C_mt_coefficients) <- timeperiods_requested
   if (!is.null(colnames(company_features)))
-    rownames(C_mt_coefficients) <- c("alpha_intercept", colnames(company_features))
+    rownames(C_mt_coefficients) <- c("Intercept", colnames_used)
   C_mt_coefficients
   ## Step 4: Aggregate  C_mt_coefficients over 48 Post-Event Months: Time-Series Average of C_mt_coefficients (This can be done outside, for whatever months one needs)
 }
 
 ## Step 4: Aggregate  C_mt_coefficients over 48 Post-Event Months: Time-Series Average of C_mt_coefficients (This can be done outside, for whatever months one needs)
-BSC1998_coeffs_tmp_aggregator <- function(BSC1998_coefficients,company_features,the_months_needed = c("12", "24", "36","48")){
+BSC1998_coeffs_tmp_aggregator <- function(BSC1998_coefficients,the_months_needed = c("12", "24", "36","48")){
   BSC1998_coeffs = t(Reduce(cbind,lapply(the_months_needed, function(i){
     apply(BSC1998_coefficients,1,function(r){
       useonly = which(colnames(BSC1998_coefficients)=="1"):which(colnames(BSC1998_coefficients)==i)
@@ -779,7 +805,7 @@ BSC1998_coeffs_tmp_aggregator <- function(BSC1998_coefficients,company_features,
   rownames(BSC1998_pvalue) <- rep("p-value", nrow(BSC1998_tstats))
   
   BSC1998<- Reduce(rbind,lapply(1:nrow(BSC1998_coeffs), function(i) {res = rbind(100*BSC1998_coeffs[i,],BSC1998_tstats[i,],BSC1998_pvalue[i,]); rownames(res)<-c(rownames(BSC1998_coeffs)[i], rownames(BSC1998_tstats)[i],rownames(BSC1998_pvalue)[i]); res}))
-  colnames(BSC1998) <- c("Intercept", colnames(company_features))
+  colnames(BSC1998) <- rownames(BSC1998_coefficients)
   t(BSC1998)
 }
 
@@ -1031,7 +1057,7 @@ get_pnl_results_stock_subset <- function(DATASET,High_feature_events,Low_feature
   ) 
 }
 
-get_feature_results <- function(DATASET,feature_name, company_subset_undervalued,company_subset_overvalued,quantile_feature,featurewindow, method="Complex"){
+get_feature_results <- function(DATASET,feature_name, company_subset_undervalued,company_subset_overvalued,quantile_feature,featurewindow, value.weights,method="Complex"){
   
   if (method == "Simple"){
     thefeature = DATASET$boardex[[which(names(DATASET$boardex) == feature_name)]]  
@@ -1094,14 +1120,14 @@ get_feature_results <- function(DATASET,feature_name, company_subset_undervalued
   ),3)
   #calendar
   feature_IRATStable_cal = round(cbind(
-    calendar_table(DATASET$returns_by_event_monthly[,Low_feature_events], DATASET$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET$returns_by_event_monthly[,High_feature_events], DATASET$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly)$results
+    calendar_table(DATASET$returns_by_event_monthly[,Low_feature_events], DATASET$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly,value.weights = value.weights[Low_feature_events])$results,
+    calendar_table(DATASET$returns_by_event_monthly[,High_feature_events], DATASET$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly,value.weights = value.weights[High_feature_events])$results
   ),3)
   feature_IRATStable_under_cal = round(cbind(
-    calendar_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly)$results,
-    calendar_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly)$results
+    calendar_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly,value.weights = value.weights[intersect(Low_feature_events, which(company_subset_undervalued))])$results,
+    calendar_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly,value.weights = value.weights[intersect(Low_feature_events, which(company_subset_overvalued))])$results,
+    calendar_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly,value.weights = value.weights[intersect(High_feature_events, which(company_subset_undervalued))])$results,
+    calendar_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly,value.weights = value.weights[intersect(High_feature_events, which(company_subset_overvalued))])$results
   ),3)
   list(
     High_feature_events    = High_feature_events,
