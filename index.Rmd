@@ -17,8 +17,8 @@ runtime: shiny
 # by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
 # Dual licensed under the MIT or GPL Version 2 licenses.  
 ```  
-  
-  
+
+
 ```{r, eval=TRUE, echo = FALSE,message=FALSE}
 # need this to avoid loading the R libraries when the tool is deployed on shinyapps (needs to be 1 when run localy, 1 when deployed on a shinyapps server)
 
@@ -259,10 +259,131 @@ fluidPage(
 
 <hr>
 
+### Buybacks and Firm Characteristics
+
+The article relates 5 firm characteristics (pre-buyback-announcement returns, idiosyncratic volatility, and volatility, as well as BE/ME and Firm Size). This tool allows the user to study the effects of combining any of these firm characteristics, as well as others not discussed in the paper. We consider here high/low events defined using the quantiles of the selected event charactetistic. 
+
+```{r, eval=TRUE, echo = FALSE}
+selectInput("characteristic_single_analysis", "Select Firm Characteristic to Define High/Low Firms:", choices = acceptaple_features,selected = "EU.Index", width = "1000px")
+
+selectInput("quantile_used","Enter the quantile to use to define High (>=) and Low (<=) Firms:", choices = 0.02*(1:20), selected = "0.1", width = "1000px")
+
+checkboxInput("characteristic_single_analysis_sign", "If you would like to change the sign of the firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
+
+feature_IRATStable <- reactive({
+  thesign = ifelse(input$characteristic_single_analysis_sign, -1, +1)
+  thefeature = thesign*DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_single_analysis)]]
+  thefeatureQ = thesign*BUYBACK_DATA_TOOL[[which(names(BUYBACK_DATA_TOOL) == input$characteristic_single_analysis)]]  
+  quantile_used_ind = as.numeric(input$quantile_used)
+  
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeatureQ[!is.na(thefeatureQ)]),1-quantile_used_ind)
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeatureQ[!is.na(thefeatureQ)]),quantile_used_ind)
+  
+  res = round(cbind(
+    car_table(DATASET_NEW()$returns_by_event_monthly[, Low_feature_events],
+              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[ Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results,
+    car_table(DATASET_NEW()$returns_by_event_monthly[, High_feature_events],
+              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results
+  ),2)[reported_times,]
+  
+  colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
+  as.data.frame(res)
+})
+
+
+feature_CALtable <- reactive({
+  thesign = ifelse(input$characteristic_single_analysis_sign, -1, +1)
+  thefeature = thesign*DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_single_analysis)]]
+  thefeatureQ = thesign*BUYBACK_DATA_TOOL[[which(names(BUYBACK_DATA_TOOL) == input$characteristic_single_analysis)]]  
+  quantile_used_ind = as.numeric(input$quantile_used)
+  
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeatureQ[!is.na(thefeatureQ)]),1-quantile_used_ind)
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeatureQ[!is.na(thefeatureQ)]),quantile_used_ind)
+  
+  res = round(cbind(
+    calendar_table(DATASET_NEW()$returns_by_event_monthly[, Low_feature_events],
+                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[Low_feature_events])$results,
+    calendar_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events],
+                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[High_feature_events])$results
+  ),2)[reported_times,]
+  
+  colnames(res) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
+  as.data.frame(res)
+})
+
+High_feature_Hedged_react <- reactive({
+  thesign = ifelse(input$characteristic_single_analysis_sign, -1, +1)
+  thefeature = thesign*DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_single_analysis)]]
+  thefeatureQ = thesign*BUYBACK_DATA_TOOL[[which(names(BUYBACK_DATA_TOOL) == input$characteristic_single_analysis)]]  
+  quantile_used_ind = as.numeric(input$quantile_used)
+  
+  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeatureQ[!is.na(thefeatureQ)]),1-quantile_used_ind)
+  
+  High_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", High_feature_events,  DATASET_NEW()$DatesMonth, DATASET_NEW()$returns_by_event_monthly,event=1),1,non_zero_mean)
+  remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
+})
+
+Low_feature_Hedged_react <- reactive({
+  thesign = ifelse(input$characteristic_single_analysis_sign, -1, +1)
+  thefeature = thesign*DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_single_analysis)]]
+  thefeatureQ = thesign*BUYBACK_DATA_TOOL[[which(names(BUYBACK_DATA_TOOL) == input$characteristic_single_analysis)]]  
+  quantile_used_ind = as.numeric(input$quantile_used)
+  
+  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeatureQ[!is.na(thefeatureQ)]),quantile_used_ind)
+  
+  Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET_NEW()$DatesMonth, DATASET_NEW()$returns_by_event_monthly,event=1),1,non_zero_mean)
+  remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
+})
+
+```
+
+<br> 
+
+```{r, eval=TRUE, echo = FALSE}
+fluidPage(
+  mainPanel(
+    navlistPanel(
+      tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderTable({
+                 feature_IRATStable()
+               })),
+      tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderTable({
+                 feature_CALtable()
+               })),
+      tabPanel("Cumulative Abnormal Returns,High, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderDygraph({
+                 pnl_plot_interactive(High_feature_Hedged_react())
+               })),
+      tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderDygraph({
+                 pnl_plot_interactive(Low_feature_Hedged_react())
+               })),
+      tabPanel("Monthly and Yearly Returns, High, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderUI(
+                 HTML(renderHeatmapX(pnl_matrix(High_feature_Hedged_react())))
+               )),
+      tabPanel("Monthly and Yearly Returns, Low, 12m hold",
+               busyIndicator("Calculating results ...",wait = 0),
+               renderUI(
+                 HTML(renderHeatmapX(pnl_matrix(Low_feature_Hedged_react())))
+               )),
+      widths = c(3, 9)),style='width: 100%;'))
+```
+
+
+
+<hr>
+
 
 ### The EU-Index
 
-For the subset of events selected the High/Low EU index events (for the selected thresholds) have the abnormal returns below:
+For the subset of events selected the High/Low EU index events (for the selected EU thresholds below - you may need to change them depending on the sample of events used) have these abnormal returns:
 
 <br>
 ```{r, eval=TRUE, echo = FALSE}
@@ -356,122 +477,6 @@ fluidPage(
 
 <hr>
 
-### Buybacks and Firm Characteristics
-
-The article relates 5 firm characteristics (pre-buyback-announcement returns, idiosyncratic volatility, and volatility, as well as BE/ME and Firm Size). This tool allows the user to study the effects of combining any of these firm characteristics, as well as others not discussed in the paper. We consider here high/low events defined using the quantiles of the selected event charactetistic. 
-
-```{r, eval=TRUE, echo = FALSE}
-selectInput("characteristic_irats", "Select Firm Characteristic to Define High/Low Firms:", choices = acceptaple_features,selected = "EU.Index", width = "1000px")
-
-selectInput("quantile_used","Enter the quantile to use to define High (>=) and Low (<=) Firms:", choices = 0.02*(1:20), selected = "0.1", width = "1000px")
-
-checkboxInput("characteristic_irats_sign", "If you would like to change the sign of the firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
-
-feature_IRATStable <- reactive({
-  thesign = ifelse(input$characteristic_irats_sign, -1, +1)
-  thefeature = thesign*DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_irats)]]  
-  
-  thefeature = as.numeric(scrub(thefeature))
-  quantile_used_ind = as.numeric(input$quantile_used)
-  
-  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
-  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
-  
-  res = round(cbind(
-    car_table(DATASET_NEW()$returns_by_event_monthly[, Low_feature_events],
-              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[ Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results,
-    car_table(DATASET_NEW()$returns_by_event_monthly[, High_feature_events],
-              DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model)$results
-  ),2)[reported_times,]
-  
-  colnames(res) <- c("Low: CAR", "t-stat","p-value", "High: CAR", "t-stat","p-value")
-  as.data.frame(res)
-})
-
-
-feature_CALtable <- reactive({
-   thesign = ifelse(input$characteristic_irats_sign, -1, +1)
-  thefeature = thesign*DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_irats)]]  
-  
-  thefeature = as.numeric(scrub(thefeature))
-  quantile_used_ind = as.numeric(input$quantile_used)
-  
-  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used_ind)
-  Low_feature_events  = !is.na(thefeature) & scrub(thefeature) <= quantile(scrub(thefeature[!is.na(thefeature)]),quantile_used_ind)
-  
-  res = round(cbind(
-    calendar_table(DATASET_NEW()$returns_by_event_monthly[, Low_feature_events],
-                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[Low_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[Low_feature_events])$results,
-    calendar_table(DATASET_NEW()$returns_by_event_monthly[,High_feature_events],
-                   DATASET_NEW()$BUYBACK_DATA_TOOL$Event.Date[High_feature_events],Risk_Factors_Monthly,formula_used = five_factor_model, value.weights = DATASET_NEW()$value.weights[High_feature_events])$results
-  ),2)[reported_times,]
-  
-  colnames(res) <- c("Low: CAL", "t-stat","p-value", "High: CAL", "t-stat","p-value")
-  as.data.frame(res)
-})
-
-High_feature_Hedged_react <- reactive({
-  thefeature = as.numeric(DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_irats)]])
-  quantile_used <- as.numeric(input$quantile_used)
-  
-  High_feature_events = !is.na(thefeature) & scrub(thefeature) >= quantile(scrub(thefeature[!is.na(thefeature)]),1-quantile_used)
-  
-  High_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", High_feature_events,  DATASET_NEW()$DatesMonth, DATASET_NEW()$returns_by_event_monthly,event=1),1,non_zero_mean)
-  remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-})
-
-Low_feature_Hedged_react <- reactive({
-  thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_irats)]]  
-  Low_feature_events = which(scrub(thefeature) <= quantile(thefeature[!is.na(thefeature)],as.numeric(input$quantile_used)) & !is.na(thefeature))
-  Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET_NEW()$DatesMonth, DATASET_NEW()$returns_by_event_monthly,event=1),1,non_zero_mean)
-  remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
-})
-
-```
-
-<br> 
-
-```{r, eval=TRUE, echo = FALSE}
-fluidPage(
-  mainPanel(
-    navlistPanel(
-      tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
-               busyIndicator("Calculating results ...",wait = 0),
-               renderTable({
-                 feature_IRATStable()
-               })),
-      tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
-               busyIndicator("Calculating results ...",wait = 0),
-               renderTable({
-                 feature_CALtable()
-               })),
-      tabPanel("Cumulative Abnormal Returns,High, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
-               renderDygraph({
-                 pnl_plot_interactive(High_feature_Hedged_react())
-               })),
-      tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
-               renderDygraph({
-                 pnl_plot_interactive(Low_feature_Hedged_react())
-               })),
-      tabPanel("Monthly and Yearly Returns, High, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
-               renderUI(
-                 HTML(renderHeatmapX(pnl_matrix(High_feature_Hedged_react())))
-               )),
-      tabPanel("Monthly and Yearly Returns, Low, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
-               renderUI(
-                 HTML(renderHeatmapX(pnl_matrix(Low_feature_Hedged_react())))
-               )),
-      widths = c(3, 9)),style='width: 100%;'))
-```
-
-
-
-<hr>
-<hr>
 
 ### Customized Buyback Indices
 
@@ -534,8 +539,9 @@ Index_Score_rect <- reactive({
   
   thesign = ifelse(input$characteristic_irats1_sign, -1, +1)
   thefeature1 = (thesign==-1) + thesign*DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_irats1)]]  
-  High_feature_events1 = (scrub(thefeature1) >= quantile(thefeature1[!is.na(thefeature1)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature1))
-  Low_feature_events1 = (scrub(thefeature1) <= quantile(thefeature1[!is.na(thefeature1)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature1))
+  thefeature1Q = (thesign==-1) + thesign*BUYBACK_DATA_TOOL[[which(names(BUYBACK_DATA_TOOL) == input$characteristic_irats1)]]  
+  High_feature_events1 = (scrub(thefeature1) >= quantile(thefeature1Q[!is.na(thefeature1Q)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature1))
+  Low_feature_events1 = (scrub(thefeature1) <= quantile(thefeature1Q[!is.na(thefeature1Q)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature1))
   
   thefeature2 <- thefeature3 <- thefeature4 <- thefeature5 <- thefeature6 <- rep(0,length(High_feature_events1))
   High_feature_events2 <- High_feature_events3 <- High_feature_events4 <- High_feature_events5 <- High_feature_events6 <- rep(FALSE,length(High_feature_events1))
@@ -545,8 +551,9 @@ Index_Score_rect <- reactive({
   if (input$characteristic_irats2 != "None"){
     thesign = ifelse(input$characteristic_irats2_sign, -1, +1)
     thefeature2 = (thesign==-1) + thesign*DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic_irats2)]]  
-    High_feature_events2 = (scrub(thefeature2) >= quantile(thefeature2[!is.na(thefeature2)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature2))
-    Low_feature_events2 = (scrub(thefeature2) <= quantile(thefeature2[!is.na(thefeature2)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature2))
+    thefeature2Q = (thesign==-1) + thesign*BUYBACK_DATA_TOOL[[which(names(BUYBACK_DATA_TOOL) == input$characteristic_irats2)]]  
+    High_feature_events2 = (scrub(thefeature2) >= quantile(thefeature2Q[!is.na(thefeature2Q)],1-as.numeric(input$quantile_used_ind)) & !is.na(thefeature2))
+    Low_feature_events2 = (scrub(thefeature2) <= quantile(thefeature2Q[!is.na(thefeature2Q)],as.numeric(input$quantile_used_ind)) & !is.na(thefeature2))
   }
   if (input$characteristic_irats3 != "None"){
     thesign = ifelse(input$characteristic_irats3_sign, -1, +1)
