@@ -50,11 +50,11 @@ if(run_shiny_tool) {
   library("ggplot2")
 }
 
-source("interactive_tool_files/lib_helpers.R", chdir=TRUE)
-source("interactive_tool_files/ff_industries_sic.R")
+source("library_files/lib_helpers.R", chdir=TRUE)
+source("library_files/ff_industries_sic.R")
 source("Paper_global_parameters.R")
-source("interactive_tool_files/heatmapOutput.R") 
-source("interactive_tool_files/ff_industries_sic.R")
+source("library_files/heatmapOutput.R") 
+source("library_files/ff_industries_sic.R")
 
 report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
 BUYBACK_DATA_TOOL$None <- 1:length(BUYBACK_DATA_TOOL$Prior.Returns.Score)

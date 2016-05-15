@@ -11,9 +11,9 @@ rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 
 use_major_market_score = 0 # We use all CRSP universe for the scores 
 
-source("../FinanceLibraries/lib_helpers.R", chdir=TRUE)
-source("../FinanceLibraries/latex_code.R")
-source("../FinanceData/rawdata_fama_french/ff_industries_sic.R")
+source("library_files/lib_helpers.R", chdir=TRUE)
+source("library_files/latex_code.R")
+source("library_files/ff_industries_sic.R")
 source("Paper_global_parameters.R")
 # Used to get WRDS data through the API
 source("../FinanceLibraries/wrds_helpers.R", chdir=TRUE)
