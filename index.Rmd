@@ -20,7 +20,7 @@ runtime: shiny
 
 
 ```{r, eval=TRUE, echo = FALSE,message=FALSE}
-# need this to avoid loading the R libraries when the tool is deployed on shinyapps (needs to be 1 when run localy, 1 when deployed on a shinyapps server)
+# need this to avoid loading the R libraries when the tool is deployed on shinyapps (needs to be 0 when run localy, 1 when deployed on a shinyapps server)
 
 run_shiny_tool = 1
 
@@ -32,7 +32,7 @@ run_shiny_tool = 1
 load("bb_issuersTOOL.Rdata")
 
 
-if(run_shiny_tool) {
+if(!run_shiny_tool) {
   library(googleVis)
   library("shiny")
   library("reshape2")  
@@ -48,7 +48,9 @@ if(run_shiny_tool) {
   library("dygraphs")
   #library("reshape")
   library("ggplot2")
-}
+} #else{
+  #install.packages("Rcpp")
+#}
 
 source("library_files/lib_helpers.R", chdir=TRUE)
 source("library_files/ff_industries_sic.R")
@@ -104,11 +106,11 @@ shinyApp(
       #first check if we didn't already create a paper with these parameters, if so, load from cache
       #filename <- paste("reports/")
       #file.exists()
-      tosave= list("startdate","enddate","market_cap_min","market_cap_max","quantile_used_ind","quantile_used_all","characteristic_irats1","characteristic_irats2","characteristic_irats3","characteristic_irats4","characteristic_irats5","characteristic_irats6","characteristic_irats1_sign","characteristic_irats2_sign","characteristic_irats3_sign","characteristic_irats4_sign","characteristic_irats5_sign","characteristic_irats6_sign")
-      newinput <- list()
-      for(i in tosave) {
-        newinput[[i]] <- input[[i]]
-      }
+      #tosave= list("startdate","enddate","market_cap_min","market_cap_max","quantile_used_ind","quantile_used_all","characteristic_irats1","characteristic_irats2","characteristic_irats3","characteristic_irats4","characteristic_irats5","characteristic_irats6","characteristic_irats1_sign","characteristic_irats2_sign","characteristic_irats3_sign","characteristic_irats4_sign","characteristic_irats5_sign","characteristic_irats6_sign")
+      #newinput <- list()
+      #for(i in tosave) {
+      #  newinput[[i]] <- input[[i]]
+      #}
       # Not yet available
       #knitr::knit2pdf("report.Rnw",envir=globalenv())
     })

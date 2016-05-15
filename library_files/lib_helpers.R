@@ -15,7 +15,7 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
     })
   }
   libraries_used=c("stringr","gtools","foreign","reshape2","digest","timeDate","devtools","knitr","graphics",
-                   "grDevices","xtable","sqldf","stargazer","data.table",
+                   "grDevices","xtable","sqldf","stargazer","data.table","shiny","htmlwidgets",
                    "Hmisc","vegan","fpc","GPArotation","FactoMineR","cluster",
                    "psych","stringr","googleVis", "png","ggplot2","googleVis", "gridExtra","RcppArmadillo","xts","DescTools")
   
