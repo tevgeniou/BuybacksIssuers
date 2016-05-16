@@ -9,9 +9,9 @@
 
 rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 
-source("library_files/lib_helpers.R", chdir=TRUE)
-source("library_files/latex_code.R")
-source("library_files/ff_industries_sic.R")
+source("lib_helpers.R", chdir=TRUE)
+source("latex_code.R")
+source("ff_industries_sic.R")
 source("Paper_global_parameters.R")
 
 initial_vars = ls(all = TRUE) # takes time to save and load, so we save only what is needed at the end. 
