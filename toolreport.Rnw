@@ -1,6 +1,18 @@
 
 << eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
+load("bb_issuersTOOL.Rdata")
+run_shiny_tool = 1
+if(run_shiny_tool) suppressPackageStartupMessages({
+  library(Rcpp)
+  library(RcppArmadillo)
+  library(stringr)
+  library(gtools)
+  library(timeDate)
+  library(Hmisc)
+})
 
+library(knitr)
+opts_chunk$set(cache=FALSE)
 inline_hook <- function (x) {
   if (is.numeric(x)) {
     # ifelse does a vectorized comparison
@@ -19,7 +31,7 @@ knit_hooks$set(inline = inline_hook)
 
 ###
 
-source("lib_helpers.R", chdir=TRUE)
+suppressPackageStartupMessages(source("lib_helpers.R", chdir=TRUE))
 source("latex_code.R")
 source("ff_industries_sic.R")
 source("Paper_global_parameters.R")
@@ -76,6 +88,7 @@ useonly_report = which(BUYBACK_DATA_TOOL$Event.Date >= starting & BUYBACK_DATA_T
                          scrub(BUYBACK_DATA_TOOL$Market.Cap) <= market_cap_max &
                          useonly_industry) 
 
+value.weights = rep(1, length(BUYBACK_DATA_TOOL$Prior.Returns.Score))
 DATASET_NEW = list(
   BUYBACK_DATA_TOOL=BUYBACK_DATA_TOOL[useonly_report,],
   returns_by_event_monthly = returns_by_event_monthly[,useonly_report],
@@ -88,7 +101,7 @@ DATASET_NEW = list(
 
 << eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 
-firstyear = as.character(format(stardate,"%Y"))
+firstyear = as.character(format(startdate,"%Y"))
 lastyear = as.character(format(enddate,"%Y"))
 report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
 value.weights = rep(1,length(BUYBACK_DATA_TOOL$Prior.Returns.Score))
@@ -96,6 +109,9 @@ value.weights = rep(1,length(BUYBACK_DATA_TOOL$Prior.Returns.Score))
 @
 
 \documentclass{article}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{float}
 
 \begin{document}
 
@@ -230,15 +246,15 @@ label = "tbl:indcharacteristic",
 titleontop=T,
 metric = "CAR",
 scale=1,
-lastSpecial=T,
-dorotate=F
+lastSpecial=T#,
+#dorotate=F
 )
 @
 
 
 \begin{figure}[H]
 \centering
-<< BBISSpnl, fig.width=10, fig.height=7, out.width='\\textwidth', echo=F >>=
+<< BBISSpnl1, fig.width=10, fig.height=7, out.width='\\textwidth', echo=F >>=
 
 plot(cumsum(100*Low_feature_Hedged_react),type="l",ylab="CAR", xlab = "",main = paste("Excess Returns of a Buyback Strategy based on ",gsub("\\."," ", characteristic_single_analysis),sep=" "), axes = FALSE, ylim=c(min(c(100*cumsum(Low_feature_Hedged_react),cumsum(100*High_feature_Hedged_react))), max(c(cumsum(100*Low_feature_Hedged_react),cumsum(100*High_feature_Hedged_react)))), cex.lab=1.1)
 axis(1,at=seq(1,length(Low_feature_Hedged_react),length.out=10),labels=str_sub(names(Low_feature_Hedged_react)[seq(1,length(Low_feature_Hedged_react),length.out=10)], start = 1, end=4),cex.axis=1,las=3)
@@ -271,7 +287,7 @@ latex_render_data_frame(
   show_rownames=TRUE,
   scale = 0.9,
   digits=1,
-  lastSpecial=F,dorotate=F
+  lastSpecial=F#,dorotate=F
 )
 
 @
@@ -422,15 +438,15 @@ label = "tbl:CUcharacteristic",
 titleontop=T,
 metric = "CAR",
 scale=1,
-lastSpecial=T,
-dorotate=F
+lastSpecial=T#,
+#dorotate=F
 )
 @
 
 
 \begin{figure}[H]
 \centering
-<< BBISSpnl, fig.width=10, fig.height=7, out.width='\\textwidth', echo=F >>=
+<< BBISSpnl2, fig.width=10, fig.height=7, out.width='\\textwidth', echo=F >>=
 
 plot(cumsum(100*Low_feature_Hedged_react_index),type="l",ylab="CAR", xlab = "",main = "Excess Returns of a Buyback Strategy based on the Customized Undervaluation Index", axes = FALSE, ylim=c(min(c(100*cumsum(Low_feature_Hedged_react_index),cumsum(100*High_feature_Hedged_react_index))), max(c(cumsum(100*Low_feature_Hedged_react_index),cumsum(100*High_feature_Hedged_react_index)))), cex.lab=1.1)
 axis(1,at=seq(1,length(Low_feature_Hedged_react_index),length.out=10),labels=str_sub(names(Low_feature_Hedged_react_index)[seq(1,length(Low_feature_Hedged_react_index),length.out=10)], start = 1, end=4),cex.axis=1,las=3)
@@ -463,7 +479,7 @@ latex_render_data_frame(
   show_rownames=TRUE,
   scale = 0.9,
   digits=1,
-  lastSpecial=F,dorotate=F
+  lastSpecial=F#,dorotate=F
 )
 
 @

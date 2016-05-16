@@ -22,7 +22,7 @@ runtime: shiny
 ```{r, eval=TRUE, echo = FALSE,message=FALSE}
 # need this to avoid loading the R libraries when the tool is deployed on shinyapps (needs to be 0 when run localy, 1 when deployed on a shinyapps server)
 
-run_shiny_tool = 0
+run_shiny_tool = 1
 
 ```
 
@@ -31,26 +31,18 @@ run_shiny_tool = 0
 # rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 load("bb_issuersTOOL.Rdata")
 
-if(!run_shiny_tool) {
-  library(googleVis)
-  library("shiny")
-  library("reshape2")  
-  library("ggplot2")
-  # Why are these not found when deployed?!
-  suppressWarnings(library("shiny"))
-  suppressWarnings(library("shinyjs"))
-  suppressWarnings(library("shinysky")) #  devtools::install_github("AnalytixWare/ShinySky")
-  suppressWarnings(library("htmlwidgets"))
-  library("stringr")
-  library("RcppArmadillo")
-  library("gtools")
-  library("timeDate")
-  library("dygraphs")
-  #library("reshape")
-  library("ggplot2")
-} #else{
-#install.packages("Rcpp")
-#}
+if(run_shiny_tool) suppressPackageStartupMessages({
+  library(htmlwidgets)
+  library(shiny)
+  library(shinyjs)
+  library(shinysky) #  devtools::install_github("AnalytixWare/ShinySky")
+  library(dygraphs)
+  library(Rcpp)
+  library(RcppArmadillo)
+  library(stringr)
+  library(gtools)
+  library(timeDate)
+})
 
 source("lib_helpers.R", local = TRUE)
 source("latex_code.R")
@@ -74,44 +66,66 @@ acceptaple_features = setdiff(names(BUYBACK_DATA_TOOL),c("Event.Date", "Industry
 
 This is an interactive tool for the article [Volatility and the Buyback Anomaly](http://tevgeniou.github.io/BuybacksIssuers/). Users can explore the effects of various parameters as well as data filtering choices. For any given choices, users can generate and download a new **customized pdf version of the paper** (work in progress) by clicking the button below at any time. 
 
-**Note that it takes a few minutes (possibly more than five) to create and download the new paper (work in progress). Please wait without changing any parameters until you are prompted to download the new paper.**
+**Note that it takes a few minutes (possibly more than five) to compile the new paper. Please wait until the option to download the paper, becomes available.**
 
 
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
-shinyApp(
-  ui = fluidPage(
-    useShinyjs(),
-    actionButton("compileReport","Compile Report",icon=icon("spinner")),
-    downloadButton("downloadReport", "Download Report")
-  ),
-  server = function(input, output, session) {
+useShinyjs(rmd=TRUE)
+fluidPage(
+  shiny::actionButton("compileReport","Compile Paper",icon=icon("spinner")),
+  shiny::downloadButton("downloadReport", "Download Paper")
+)
+report.data <- paste0("session.", session$token, ".report.data.Rdata")
+report.script <- paste0("session.", session$token, ".report.script.R")
+report.source <- paste0("session.", session$token, ".report.Rnw")
+report.file <- paste0("session.", session$token, ".report.pdf")
+observeEvent(input$compileReport, {
+  disable("compileReport")
+  with(report.list <- new.env(), {
+    startdate <- isolate(input$startdate)
+    enddate <- isolate(input$enddate)
+    market_cap_min <- isolate(input$market_cap_min)
+    market_cap_max <- isolate(input$market_cap_max)
+    characteristic <- isolate(input$characteristic)
+    characteristic_single_analysis <- isolate(input$characteristic_single_analysis)
+    quantile_used <- isolate(input$quantile_used)
+    characteristic_single_analysis_sign <- isolate(input$characteristic_single_analysis_sign)
+    high_EU_index_thres <- isolate(input$high_EU_index_thres)
+    low_EU_index_thres <- isolate(input$low_EU_index_thres)
+    quantile_used_ind <- isolate(input$quantile_used_ind)
+    quantile_used_all <- isolate(input$quantile_used_all)
+    characteristic_irats1 <- isolate(input$characteristic_irats1)
+    characteristic_irats2 <- isolate(input$characteristic_irats2)
+    characteristic_irats3 <- isolate(input$characteristic_irats3)
+    characteristic_irats4 <- isolate(input$characteristic_irats4)
+    characteristic_irats5 <- isolate(input$characteristic_irats5)
+    characteristic_irats6 <- isolate(input$characteristic_irats6)
+    characteristic_irats1_sign <- isolate(input$characteristic_irats1_sign)
+    characteristic_irats2_sign <- isolate(input$characteristic_irats2_sign)
+    characteristic_irats3_sign <- isolate(input$characteristic_irats3_sign)
+    characteristic_irats4_sign <- isolate(input$characteristic_irats4_sign)
+    characteristic_irats5_sign <- isolate(input$characteristic_irats5_sign)
+    characteristic_irats6_sign <- isolate(input$characteristic_irats6_sign)
+    industry <- isolate(input$industry)
+  })
+  for (x in ls(report.list)) if (is.null(get(x, report.list))) warning(paste0("parameter '", x, "' is NULL"), call.=FALSE, immediate.=TRUE)
+  save(report.list, file=report.data)
+  file.copy("toolreport.Rnw", report.source)
+  cat(paste0("load ('", report.data, "')\n"), file=report.script)
+  cat(paste0("knitr::knit2pdf('", report.source,"', quiet=TRUE)\n"), file=report.script, append=TRUE)
+  system(paste0("Rscript --vanilla ", report.script), wait=FALSE)
+})
+observe({
+  invalidateLater(1000, session)
+  toggleState("downloadReport", condition=file.exists(report.file))
+})
+output$downloadReport <- downloadHandler(
+  filename = "report.pdf",
+  content = function(file) {
+    file.copy(report.file, file)
+    file.remove(list.files(pattern=paste0("session.", session$token)))
+    enable("compileReport")
     disable("downloadReport")
-    report.data <- paste0("session.", session$token, ".report.data.Rdata")
-    report.script <- paste0("session.", session$token, ".report.script.R")
-    report.source <- paste0("session.", session$token, ".report.Rnw")
-    report.file <- paste0("session.", session$token, ".report.pdf")
-    observeEvent(input$compileReport, {
-      disable("compileReport")
-      report.list <- list("startdate","enddate","market_cap_min","market_cap_max","characteristic", "characteristic_single_analysis", "quantile_used", "characteristic_single_analysis_sign", "high_EU_index_thres", "low_EU_index_thres", "quantile_used_ind","quantile_used_all","characteristic_irats1","characteristic_irats2","characteristic_irats3","characteristic_irats4","characteristic_irats5","characteristic_irats6","characteristic_irats1_sign","characteristic_irats2_sign","characteristic_irats3_sign","characteristic_irats4_sign","characteristic_irats5_sign","characteristic_irats6_sign")
-      save(report.list, file=report.data)
-      file.copy("toolreport.Rnw", report.source)
-      cat(paste0("load ('", report.data, "')\n"), file=report.script)
-      cat(paste0("knitr::knit2pdf('", report.source,"')\n"), file=report.script, append=TRUE)
-      system(paste0("Rscript --vanilla ", report.script), wait=FALSE)
-    })
-    observe({
-      invalidateLater(1000, session)
-      if (file.exists(report.file)) enable("downloadReport")
-    })
-    output$downloadReport <- downloadHandler(
-      filename = "report.pdf",
-      content = function(file) {
-        file.copy(report.file, file)
-        file.remove(list.files(pattern=paste0("session.", session$token)))
-        enable("compileReport")
-        disable("downloadReport")
-      }
-    )
   }
 )
 ```
