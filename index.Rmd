@@ -22,7 +22,7 @@ runtime: shiny
 ```{r, eval=TRUE, echo = FALSE,message=FALSE}
 # need this to avoid loading the R libraries when the tool is deployed on shinyapps (needs to be 0 when run localy, 1 when deployed on a shinyapps server)
 
-run_shiny_tool = 1
+run_shiny_tool = 0
 
 ```
 
@@ -31,16 +31,16 @@ run_shiny_tool = 1
 # rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 load("bb_issuersTOOL.Rdata")
 
-
 if(!run_shiny_tool) {
   library(googleVis)
   library("shiny")
   library("reshape2")  
   library("ggplot2")
   # Why are these not found when deployed?!
-  library("shiny") 
-  library("shinysky") #  devtools::install_github("AnalytixWare/ShinySky")
-  library("htmlwidgets")
+  suppressWarnings(library("shiny"))
+  suppressWarnings(library("shinyjs"))
+  suppressWarnings(library("shinysky")) #  devtools::install_github("AnalytixWare/ShinySky")
+  suppressWarnings(library("htmlwidgets"))
   library("stringr")
   library("RcppArmadillo")
   library("gtools")
@@ -52,12 +52,12 @@ if(!run_shiny_tool) {
 #install.packages("Rcpp")
 #}
 
-source("lib_helpers.R", chdir=TRUE, local = TRUE)
-source("latex_code.R", chdir=TRUE, local = TRUE)
-source("ff_industries_sic.R", chdir=TRUE, local = TRUE)
+source("lib_helpers.R", local = TRUE)
+source("latex_code.R")
+source("ff_industries_sic.R")
 source("Paper_global_parameters.R")
-source("heatmapOutput.R", chdir=TRUE, local = TRUE) 
-source("ff_industries_sic.R", chdir=TRUE, local = TRUE)
+source("heatmapOutput.R") 
+source("ff_industries_sic.R")
 
 report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
 BUYBACK_DATA_TOOL$None <- 1:length(BUYBACK_DATA_TOOL$Prior.Returns.Score)
@@ -78,7 +78,6 @@ This is an interactive tool for the article [Volatility and the Buyback Anomaly]
 
 
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
-suppressPackageStartupMessages(library(shinyjs))
 shinyApp(
   ui = fluidPage(
     useShinyjs(),
@@ -115,8 +114,6 @@ shinyApp(
     )
   }
 )
-
-
 ```
 
 <hr>
