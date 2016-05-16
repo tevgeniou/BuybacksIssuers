@@ -40,7 +40,7 @@ if(!run_shiny_tool) {
   # Why are these not found when deployed?!
   library("shiny") 
   library("shinysky") #  devtools::install_github("AnalytixWare/ShinySky")
-  
+  library("htmlwidgets")
   library("stringr")
   library("RcppArmadillo")
   library("gtools")
@@ -49,14 +49,15 @@ if(!run_shiny_tool) {
   #library("reshape")
   library("ggplot2")
 } #else{
-  #install.packages("Rcpp")
+#install.packages("Rcpp")
 #}
 
-source("library_files/lib_helpers.R", chdir=TRUE)
-source("library_files/ff_industries_sic.R")
+source("lib_helpers.R", chdir=TRUE, local = TRUE)
+source("latex_code.R", chdir=TRUE, local = TRUE)
+source("ff_industries_sic.R", chdir=TRUE, local = TRUE)
 source("Paper_global_parameters.R")
-source("library_files/heatmapOutput.R") 
-source("library_files/ff_industries_sic.R")
+source("heatmapOutput.R", chdir=TRUE, local = TRUE) 
+source("ff_industries_sic.R", chdir=TRUE, local = TRUE)
 
 report_months_cal = c(as.numeric(reported_times[1:(length(reported_times)-1)]),1)
 BUYBACK_DATA_TOOL$None <- 1:length(BUYBACK_DATA_TOOL$Prior.Returns.Score)
@@ -77,56 +78,42 @@ This is an interactive tool for the article [Volatility and the Buyback Anomaly]
 
 
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
+suppressPackageStartupMessages(library(shinyjs))
 shinyApp(
   ui = fluidPage(
-    fluidRow(
-      column(2,
-             conditionalPanel(
-               condition = "!$('makeReport').hasClass('shiny-busy')",
-               actionButton("makeReport","Generate Report (Work in Progress)",icon=icon("file"))
-             )
-      ),
-      column(4,
-             conditionalPanel(
-               condition = "!$('makeReport').hasClass('shiny-busy')",
-               uiOutput("downloadButton")
-               #downloadButton("downloadReport", "Download Report")
-             )
-      )
-    ),
-    busyIndicator("Please wait while we prepare the report ...",wait = 0)
+    useShinyjs(),
+    actionButton("compileReport","Compile Report",icon=icon("spinner")),
+    downloadButton("downloadReport", "Download Report")
   ),
-  server = function(input, output) {
-    output$download_button <- renderUI({
-      downloadButton("downloadReport", "Download Results")
+  server = function(input, output, session) {
+    disable("downloadReport")
+    report.data <- paste0("session.", session$token, ".report.data.Rdata")
+    report.script <- paste0("session.", session$token, ".report.script.R")
+    report.source <- paste0("session.", session$token, ".report.Rnw")
+    report.file <- paste0("session.", session$token, ".report.pdf")
+    observeEvent(input$compileReport, {
+      disable("compileReport")
+      report.list <- list("startdate","enddate","market_cap_min","market_cap_max","characteristic", "characteristic_single_analysis", "quantile_used", "characteristic_single_analysis_sign", "high_EU_index_thres", "low_EU_index_thres", "quantile_used_ind","quantile_used_all","characteristic_irats1","characteristic_irats2","characteristic_irats3","characteristic_irats4","characteristic_irats5","characteristic_irats6","characteristic_irats1_sign","characteristic_irats2_sign","characteristic_irats3_sign","characteristic_irats4_sign","characteristic_irats5_sign","characteristic_irats6_sign")
+      save(report.list, file=report.data)
+      file.copy("toolreport.Rnw", report.source)
+      cat(paste0("load ('", report.data, "')\n"), file=report.script)
+      cat(paste0("knitr::knit2pdf('", report.source,"')\n"), file=report.script, append=TRUE)
+      system(paste0("Rscript --vanilla ", report.script), wait=FALSE)
     })
-    makeReportAction <- eventReactive(input$makeReport, {
-      #Create the pdf here
-      #Sys.sleep(1);return()
-      #first check if we didn't already create a paper with these parameters, if so, load from cache
-      #filename <- paste("reports/")
-      #file.exists()
-      #tosave= list("startdate","enddate","market_cap_min","market_cap_max","quantile_used_ind","quantile_used_all","characteristic_irats1","characteristic_irats2","characteristic_irats3","characteristic_irats4","characteristic_irats5","characteristic_irats6","characteristic_irats1_sign","characteristic_irats2_sign","characteristic_irats3_sign","characteristic_irats4_sign","characteristic_irats5_sign","characteristic_irats6_sign")
-      #newinput <- list()
-      #for(i in tosave) {
-      #  newinput[[i]] <- input[[i]]
-      #}
-      # Not yet available
-      #knitr::knit2pdf("report.Rnw",envir=globalenv())
-    })
-    output$downloadButton <- renderUI({
-      makeReportAction() #only appear after first click on generate
-      downloadButton("downloadReport", "Download Report")
+    observe({
+      invalidateLater(1000, session)
+      if (file.exists(report.file)) enable("downloadReport")
     })
     output$downloadReport <- downloadHandler(
       filename = "report.pdf",
       content = function(file) {
-        cat(paste("Does the pdf exist?",file.exists("report.pdf")))
-        file.rename(normalizePath('report.pdf'), file)
+        file.copy(report.file, file)
+        file.remove(list.files(pattern=paste0("session.", session$token)))
+        enable("compileReport")
+        disable("downloadReport")
       }
     )
-  },
-  options = list(height = 120,width=800)
+  }
 )
 
 
