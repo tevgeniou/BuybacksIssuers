@@ -227,6 +227,7 @@ Low_feature_Hedged_react = remove_initialization_time(suppressWarnings(scrub(alp
 
 @
 
+\clearpage
 
 <<   eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 tmp = cbind(feature_IRATStable,feature_CALtable)[reported_times,]
@@ -253,6 +254,7 @@ lastSpecial=T#,
 )
 @
 
+\clearpage
 
 \begin{figure}[H]
 \centering
@@ -277,6 +279,8 @@ legend(x="topleft",
 \label{fig:indcharacteristic}
 \end{figure}
 
+
+\clearpage
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 latex_render_data_frame(
@@ -402,6 +406,8 @@ Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_featur
 Low_feature_Hedged_react_index = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
 @
 
+\clearpage
+
 \begin{figure}[H]
 \centering
 <<  fig.width=10, fig.height=5, out.width='\\textwidth', echo=F >>=
@@ -418,6 +424,8 @@ rm("tmp")
 \caption{Distribution of the Customized Undervaluation Index of all buyback events.}
 \label{fig:undervaluationindex}
 \end{figure}
+
+\clearpage
 
 
 <<   eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
@@ -445,6 +453,7 @@ lastSpecial=T#,
 )
 @
 
+\clearpage
 
 \begin{figure}[H]
 \centering
@@ -469,6 +478,7 @@ legend(x="topleft",
 \label{fig:CUcharacteristic}
 \end{figure}
 
+\clearpage
 
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 latex_render_data_frame(
