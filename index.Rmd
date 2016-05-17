@@ -44,6 +44,11 @@ if(run_shiny_tool) suppressPackageStartupMessages({
   library(timeDate)
 })
 
+div(
+  style = "width:32px; height:32px; position:fixed; top:0; bottom:0; left:0; right:0; margin: auto; z-index:9999",
+  busyIndicator("", wait=111)
+)
+
 source("lib_helpers.R", local = TRUE)
 source("latex_code.R")
 source("ff_industries_sic.R")
@@ -228,7 +233,6 @@ fluidPage(
   mainPanel(
     navlistPanel(
       tabPanel("Histogram",
-               busyIndicator("Please wait while we load the data for you... This shouldn't take more than a few seconds...",wait = 0),
                renderPlot({
                  feature = DATASET_NEW()$BUYBACK_DATA_TOOL[,which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == input$characteristic)]
                  feature = feature[!is.na(feature)]
@@ -344,32 +348,26 @@ fluidPage(
   mainPanel(
     navlistPanel(
       tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
-               busyIndicator("Calculating results ...",wait = 0),
                renderTable({
                  feature_IRATStable()
                })),
       tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
-               busyIndicator("Calculating results ...",wait = 0),
                renderTable({
                  feature_CALtable()
                })),
       tabPanel("Cumulative Abnormal Returns,High, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
                renderDygraph({
                  pnl_plot_interactive(High_feature_Hedged_react())
                })),
       tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
                renderDygraph({
                  pnl_plot_interactive(Low_feature_Hedged_react())
                })),
       tabPanel("Monthly and Yearly Returns, High, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
                renderUI(
                  HTML(renderHeatmapX(pnl_matrix(High_feature_Hedged_react())))
                )),
       tabPanel("Monthly and Yearly Returns, Low, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
                renderUI(
                  HTML(renderHeatmapX(pnl_matrix(Low_feature_Hedged_react())))
                )),
@@ -458,17 +456,14 @@ fluidPage(
   mainPanel(
     navlistPanel(
       tabPanel("Number of Firms per EU Index Value",
-               busyIndicator("Calculating results ...",wait = 0),
                renderTable({
                  EU_index_table()
                })),
       tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
-               busyIndicator("Calculating results ...",wait = 0),
                renderTable({
                  feature_IRATStable_industry()
                })),
       tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
-               busyIndicator("Calculating results ...",wait = 0),
                renderTable({
                  feature_CALtable_industry()
                })),
@@ -645,7 +640,6 @@ fluidPage(
   mainPanel(
     navlistPanel(
       tabPanel("Histogram of the New Index",
-               busyIndicator("Calculating results ...",wait = 0),
                renderPlot({
                  feature = Index_Score_rect()
                  feature = feature[!is.na(feature)]
@@ -654,32 +648,26 @@ fluidPage(
                  hist(feature, density = 100, breaks = 20,main="Index Histogram",xlab="Score")
                })),
       tabPanel("Five-Factor IRATS Cumulative Abnormal Returns",
-               busyIndicator("Calculating results ...",wait = 0),
                renderTable({
                  feature_IRATStable_index()
                })),
       tabPanel("Five-Factor Calendar Method Monthly Abnormal Returns",
-               busyIndicator("Calculating results ...",wait = 0),
                renderTable({
                  feature_CALtable_index()
                })),
       tabPanel("Cumulative Abnormal Returns,High, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
                renderDygraph({
                  pnl_plot_interactive(High_feature_Hedged_react_index())
                })),
       tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
                renderDygraph({
                  pnl_plot_interactive(Low_feature_Hedged_react_index())
                })),
       tabPanel("Monthly and Yearly Returns, High, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
                renderUI(
                  HTML(renderHeatmapX(pnl_matrix(High_feature_Hedged_react_index())))
                )),
       tabPanel("Monthly and Yearly Returns, Low, 12m hold",
-               busyIndicator("Calculating results ...",wait = 0),
                renderUI(
                  HTML(renderHeatmapX(pnl_matrix(Low_feature_Hedged_react_index())))
                )),
