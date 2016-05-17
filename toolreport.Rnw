@@ -136,6 +136,8 @@ Nick Nassuphis$^{***}$,} and \uppercase{Theo Vermaelen}\thanks{INSEAD, Bd de Con
 \begin{abstract}
 \noindent This is a customized report of the online interactive tool for the paper "{\it Volatility and the Buyback Anomaly}" by T. Evgeniou, Enric Junqu\'e de Fortuny, Nick Nassuphis, and Theo Vermaelen. 
 
+There is no guarantee that there is no error in all possible customized reports. 
+
 
 \end{abstract}
 \vspace{2cm}
