@@ -134,13 +134,13 @@ Nick Nassuphis$^{***}$,} and \uppercase{Theo Vermaelen}\thanks{INSEAD, Bd de Con
 
 \vspace{-.2in}
 \begin{abstract}
-\noindent This is a customized report of the online interactive tool for the paper "{\it Volatility and the Buyback Anomaly}" by T. Evgeniou, Enric Junqu\'e de Fortuny, Nick Nassuphis, and Theo Vermaelen. 
+\noindent This is a customized report of the online interactive tool for the paper {\it ``Volatility and the Buyback Anomaly''} by T. Evgeniou, Enric Junqu\'e de Fortuny, Nick Nassuphis, and Theo Vermaelen. 
 
 There is no guarantee that there is no error in all possible customized reports. 
 
 
 \end{abstract}
-\vspace{2cm}
+%\vspace{2cm}
 
 \medskip
 %\noindent \textit{Keywords}: Share Buybacks; Seasoned Equity Offerings; Anomalies; Volatility
@@ -155,12 +155,12 @@ There is no guarantee that there is no error in all possible customized reports.
 \section{Report Parameters}
 \label{sec:parameters}
 
-The time period used in this report is from \Sexpr{startdate} to \Sexpr{enddate}. We only consider firms with a market capitalization the month before the event being between \Sexpr{market_cap_min} and \Sexpr{market_cap_max}. In addition to the financial and utilities sectors, we also remove the following sectors: \Sexpr{paste(industry, collapse=", ")}. This leaves a total of \Sexpr{length(DATASET_NEW$value.weights)} buyback events. 
+The time period used in this report is from \Sexpr{startdate} to \Sexpr{enddate}. We only consider firms with a market capitalization the month before the event being between \Sexpr{market_cap_min} and \Sexpr{market_cap_max}. In addition to the financial and utilities sectors, we also remove the following sectors: \Sexpr{ifelse(length(industry) == 0, "None", paste(industry, collapse=", "))}. This leaves a total of \Sexpr{length(DATASET_NEW$value.weights)} buyback events. 
 
 
 \section{\Sexpr{gsub("\\.", " ", characteristic_single_analysis)} and Excess Returns}
 
-Ww consider the IRATS Cumulative Abnormal Returns (CAR) and Calendar Time method Abnormal Returns (AR) of the quantiles of events defined using the selected event characteristic, namely \Sexpr{gsub("\\.", " ", characteristic_single_analysis)}. Table \ref{tbl:indcharacteristic} shows the results. Figure \ref{fig:indcharacteristic} shows the excess returns of a strategy for that trades only the high or low quantile stocks for this event characteristics (the strategy is designed as described in the paper). Table \ref{tbl:indcharacteristicpnl} shows the monthly and yearly returns of the "high" events strategy. 
+We consider the IRATS Cumulative Abnormal Returns (CAR) and Calendar Time method Abnormal Returns (AR) of the high and low quantiles of events defined using the selected event characteristic, namely \Sexpr{gsub("\\.", " ", characteristic_single_analysis)}. Table \ref{tbl:indcharacteristic} shows the results. Figure \ref{fig:indcharacteristic} shows the excess returns of a strategy  that trades only the high or low quantile stocks for this event characteristic (the strategy is designed as described in the paper). Table \ref{tbl:indcharacteristicpnl} shows the monthly and yearly returns of the high quantile events strategy. 
 
 
 <<   eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
@@ -304,10 +304,10 @@ latex_render_data_frame(
 
 \section{Customized Undervaluation Indicator and Excess Returns}
 
-We define a customized Undervaluation index using the following event characteristics: \Sexpr{gsub("\\.", " ", characteristic_irats1)} (sign is \Sexpr{ifelse(characteristic_irats1_sign, -1, +1)}), \Sexpr{gsub("\\.", " ", characteristic_irats2)} (sign is \Sexpr{ifelse(characteristic_irats2_sign, -1, +1)}),\Sexpr{gsub("\\.", " ", characteristic_irats3)} (sign is \Sexpr{ifelse(characteristic_irats3_sign, -1, +1)}), \Sexpr{gsub("\\.", " ", characteristic_irats4)} (sign is \Sexpr{ifelse(characteristic_irats4_sign, -1, +1)}), \Sexpr{gsub("\\.", " ", characteristic_irats5)} (sign is \Sexpr{ifelse(characteristic_irats5_sign, -1, +1)}), \Sexpr{gsub("\\.", " ", characteristic_irats6)} (sign is \Sexpr{ifelse(characteristic_irats6_sign, -1, +1)}). For each of these characteristics we define the high and low events as those that are in the top or bottom \Sexpr{100*quantile_used_ind}$\%$ of the events. We then assign a score of 2 for the high, 0 for the low, and 1 for the rest of the events for each of these characteristics, and we add up these scores to create the customized undervaluation index. Figure \ref{fig:undervaluationindex} shows the number of events for each of the values of this customized index. 
+We define a customized Undervaluation index using the following event characteristics: \Sexpr{ifelse(characteristic_irats1 != "None",  paste(gsub("\\.", " ", characteristic_irats1), " (sign is ", ifelse(characteristic_irats1_sign, "-1","+1"),")",sep = ""), " ") } \Sexpr{ifelse(characteristic_irats2 != "None",  paste(",", gsub("\\.", " ", characteristic_irats2), " (sign is ", ifelse(characteristic_irats2_sign, "-1","+1"),")",collapse = ""), " ") }  \Sexpr{ifelse(characteristic_irats3 != "None",  paste(",", gsub("\\.", " ", characteristic_irats3), " (sign is ", ifelse(characteristic_irats3_sign, "-1","+1"),")",collapse = ""), " ") } \Sexpr{ifelse(characteristic_irats4 != "None",  paste(",", gsub("\\.", " ", characteristic_irats4), " (sign is ", ifelse(characteristic_irats4_sign, "-1","+1"),")",collapse = ""), " ") } \Sexpr{ifelse(characteristic_irats5 != "None",  paste(",", gsub("\\.", " ", characteristic_irats5), " (sign is ", ifelse(characteristic_irats5_sign, "-1","+1"),")",collapse = ""), " ") } \Sexpr{ifelse(characteristic_irats6 != "None",  paste(",", gsub("\\.", " ", characteristic_irats6), " (sign is ", ifelse(characteristic_irats6_sign, "-1","+1"),")",collapse = ""), " ") }. For each of these characteristics we define the high and low events as those that are in the top or bottom \Sexpr{100*quantile_used_ind}$\%$ of the events. We then assign a score of 2 for the high, 0 for the low, and 1 for the rest of the events for each of these characteristics, and we add up these scores to create the customized undervaluation index. Figure \ref{fig:undervaluationindex} shows the number of events for each of the values of this customized index. 
 
 
-We then consider the IRATS Cumulative Abnormal Returns (CAR) and Calendar Time method Abnormal Returns (AR) of the quantiles of events defined using this customized Undervaluation Index. Table \ref{tbl:CUcharacteristic} shows the results. Figure \ref{fig:CUcharacteristic} shows the excess returns of a strategy for that trades only the high or low quantile stocks for this customized undervaluation index (the strategy is designed as described in the paper). Table \ref{tbl:CUcharacteristicpnl} shows the monthly and yearly returns of the "high" events strategy. 
+We then consider the IRATS Cumulative Abnormal Returns (CAR) and Calendar Time method Abnormal Returns (AR) of the high/low quantiles of events defined using this customized Undervaluation Index. Table \ref{tbl:CUcharacteristic} shows the results. Figure \ref{fig:CUcharacteristic} shows the excess returns of a strategy that trades only the high or low quantile stocks for this customized undervaluation index (the strategy is designed as described in the paper). Table \ref{tbl:CUcharacteristicpnl} shows the monthly and yearly returns of the high quantile events strategy. 
 
 <<   eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 
