@@ -30,7 +30,6 @@ run_shiny_tool = 1
 ```{r, eval=TRUE, echo = FALSE,message=FALSE}
 # rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 load("bb_issuersTOOL.Rdata")
-BUYBACK_DATA_TOOL$Industry_name <- as.character(BUYBACK_DATA_TOOL$Industry_name)
 
 if(run_shiny_tool) suppressPackageStartupMessages({
   library(htmlwidgets)
@@ -72,7 +71,7 @@ This is an interactive tool for the article [Volatility and the Buyback Anomaly]
 
 
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
-fluidPage(shiny::actionButton("computeButton","Update Results",icon=icon("spinner")) )
+fluidPage(shiny::actionButton("computeButtonALL","Update Results",icon=icon("spinner")) )
 ```
 <br>
 
@@ -172,7 +171,8 @@ output$downloadReport <- downloadHandler(
 
 ```{r, eval=TRUE, echo = FALSE}
 DATASET_NEW <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
   isolate({
     
     starting = input$startdate 
@@ -206,7 +206,7 @@ DATASET_NEW <- reactive({
 ```
 
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
-fluidPage(shiny::actionButton("computeButton","Update Results",icon=icon("spinner")) )
+fluidPage(shiny::actionButton("computeButtonALL2","Update Results",icon=icon("spinner")) )
 ```
 
 <hr>
@@ -266,7 +266,10 @@ selectInput("quantile_used","Enter the quantile to use to define High (>=) and L
 checkboxInput("characteristic_single_analysis_sign", "If you would like to change the sign of the firm characteristic (Low will be High and vice versa), select here:", value = FALSE, width = "1000px")
 
 feature_IRATStable <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonindi
+
   isolate({
     
     thesign = ifelse(input$characteristic_single_analysis_sign, -1, +1)
@@ -292,7 +295,10 @@ feature_IRATStable <- reactive({
 
 
 feature_CALtable <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonindi
+
   isolate({
     
     thesign = ifelse(input$characteristic_single_analysis_sign, -1, +1)
@@ -316,7 +322,10 @@ feature_CALtable <- reactive({
 })
 
 High_feature_Hedged_react <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonindi
+
   isolate({
     
     thesign = ifelse(input$characteristic_single_analysis_sign, -1, +1)
@@ -332,7 +341,10 @@ High_feature_Hedged_react <- reactive({
 })
 
 Low_feature_Hedged_react <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonindi
+  
   isolate({
     
     thesign = ifelse(input$characteristic_single_analysis_sign, -1, +1)
@@ -352,7 +364,7 @@ Low_feature_Hedged_react <- reactive({
 
 <br> 
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
-fluidPage(shiny::actionButton("computeButton","Update Results",icon=icon("spinner")) )
+fluidPage(shiny::actionButton("computeButtonindi","Update Results",icon=icon("spinner")) )
 ```
 <br>
 
@@ -407,14 +419,16 @@ selectInput("low_EU_index_thres","Enter the EU index threshold below which (<=) 
 
 <br>
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
-fluidPage(shiny::actionButton("computeButton","Update Results",icon=icon("spinner")) )
+fluidPage(shiny::actionButton("computeButtonEU","Update Results",icon=icon("spinner")) )
 ```
 <br>
 
 
 ```{r, eval=TRUE, echo = FALSE}
 EU_index_table <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonEU
   isolate({
     
     thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == "EU.Index")]]
@@ -426,7 +440,9 @@ EU_index_table <- reactive({
 })
 
 feature_IRATStable_industry <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonEU
   isolate({
     
     thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == "EU.Index")]]
@@ -454,7 +470,9 @@ feature_IRATStable_industry <- reactive({
 })
 
 feature_CALtable_industry <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonEU
   isolate({
     
     thefeature = DATASET_NEW()$BUYBACK_DATA_TOOL[[which(names(DATASET_NEW()$BUYBACK_DATA_TOOL) == "EU.Index")]]
@@ -545,13 +563,15 @@ selectInput("quantile_used_all","Enter the quantile to use to define High (>=) a
 
 <br>
 ```{r, fig.width=6, fig.height=5,echo=FALSE}
-fluidPage(shiny::actionButton("computeButton","Update Results",icon=icon("spinner")) )
+fluidPage(shiny::actionButton("computeButtonCU","Update Results",icon=icon("spinner")) )
 ```
 <br>
 
 ```{r, eval=TRUE, echo = FALSE}
 selected_features = reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonCU
   isolate({
     
     paste(setdiff(unique(c(input$characteristic_irats1,input$characteristic_irats2,input$characteristic_irats3,input$characteristic_irats4,input$characteristic_irats5,input$characteristic_irats6)), "None"), sep=",")
@@ -569,7 +589,9 @@ Here are the results for your new customized index:
 
 
 Index_Score_rect <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonCU
   isolate({
     
     thesign = ifelse(input$characteristic_irats1_sign, -1, +1)
@@ -629,7 +651,9 @@ Index_Score_rect <- reactive({
 })
 
 feature_IRATStable_index <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonCU
   isolate({
     
     thefeature = Index_Score_rect()
@@ -648,7 +672,9 @@ feature_IRATStable_index <- reactive({
 })
 
 feature_CALtable_index <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonCU
   isolate({
     
     thefeature = Index_Score_rect()
@@ -668,7 +694,9 @@ feature_CALtable_index <- reactive({
 })
 
 High_feature_Hedged_react_index <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonCU
   isolate({
     
     thefeature = Index_Score_rect()
@@ -678,7 +706,9 @@ High_feature_Hedged_react_index <- reactive({
   })
 })
 Low_feature_Hedged_react_index <- reactive({
-  input$computeButton
+  input$computeButtonALL
+  input$computeButtonALL2
+  input$computeButtonCU
   isolate({
     
     thefeature = Index_Score_rect()

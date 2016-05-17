@@ -30,7 +30,9 @@ BUYBACK_DATA_TOOL = data.frame(
   leverage.ratio = BUYBACK_DATA$DATASET$CRSP$leverage_lt_over_lt_plus_e,
   Event.Date = BUYBACK_DATA$DATASET$SDC$Event.Date,
   Event.Size = BUYBACK_DATA$DATASET$SDC$Event.Size,
-  Industry_name = as.character(BUYBACK_DATA$DATASET$SDC$Industry_name)
+  Industry_name = as.character(BUYBACK_DATA$DATASET$SDC$Industry_name), 
+  
+  stringsAsFactors = F
   
 )
 Risk_Factors_Monthly <- BUYBACK_DATA$Risk_Factors_Monthly
