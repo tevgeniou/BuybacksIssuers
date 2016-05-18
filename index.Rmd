@@ -191,10 +191,13 @@ DATASET_NEW <- reactive({
                              scrub(BUYBACK_DATA_TOOL$Market.Cap) >= market_cap_min & 
                              scrub(BUYBACK_DATA_TOOL$Market.Cap) <= market_cap_max &
                              useonly_industry) 
-    
+    # shiny seems to change the class of this matrix. needs investigation. 
+    tmp = apply(returns_by_event_monthly[,useonly_report,drop=F], 2, function(r) as.numeric(r))
+    colnames(tmp) <- colnames(returns_by_event_monthly[,useonly_report,drop=F])
+    rownames(tmp) <- rownames(returns_by_event_monthly[,useonly_report,drop=F])
     list(
       BUYBACK_DATA_TOOL=BUYBACK_DATA_TOOL[useonly_report,],
-      returns_by_event_monthly = returns_by_event_monthly[,useonly_report],
+      returns_by_event_monthly = tmp,
       DatesMonth  = DatesMonth[,useonly_report],
       value.weights = value.weights[useonly_report],
       subset = useonly_report

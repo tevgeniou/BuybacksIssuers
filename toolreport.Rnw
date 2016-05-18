@@ -160,7 +160,7 @@ The time period used in this report is from \Sexpr{startdate} to \Sexpr{enddate}
 
 \section{\Sexpr{gsub("\\.", " ", characteristic_single_analysis)} and Excess Returns}
 
-We consider the IRATS Cumulative Abnormal Returns (CAR) and Calendar Time method Abnormal Returns (AR) of the high and low quantiles of events defined using the selected event characteristic, namely \Sexpr{gsub("\\.", " ", characteristic_single_analysis)}. Table \ref{tbl:indcharacteristic} shows the results. Figure \ref{fig:indcharacteristic} shows the excess returns of a strategy  that trades only the high or low quantile stocks for this event characteristic (the strategy is designed as described in the paper). Table \ref{tbl:indcharacteristicpnl} shows the monthly and yearly returns of the high quantile events strategy. 
+We consider the IRATS Cumulative Abnormal Returns (CAR) and Calendar Time method Abnormal Returns (AR) of the high and low quantiles of events defined using the selected event characteristic, namely \Sexpr{gsub("\\.", " ", characteristic_single_analysis)}. Table \ref{tbl:indcharacteristic} shows the results. Figure \ref{fig:indcharacteristic} shows the excess returns of a strategy  that trades only the high or low percentile stocks for this event characteristic (the strategy is designed as described in the paper). Table \ref{tbl:indcharacteristicpnl} shows the monthly and yearly returns of the high percentile events strategy. 
 
 
 <<   eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
@@ -235,19 +235,19 @@ colnames(tmp)[1]<-colnames(tmp)[4] <-  "CAR"
 
 printLatexTable(
   tmp,
-  columns = c("IRATS CAR","Calendar Time AR"),
+  columns = c("IRATS CAR: LOW","HIGH","Calendar Time AR: LOW","HIGH"),
   title= paste("Buyback IRATS and Calendar Time Abnormals Returns for ",gsub("\\."," ", characteristic_single_analysis),sep=" "),
-  caption= "The tables presents the abnormal returns for firms after issue announcements from the announcement date until $t$ months after the announcement. Left table reports monthly cumulative average abnormal returns (CAR) in percent using \\cite{ibbotson1975} returns across time and security (IRATS) method combined with the \\cite{FamaFrench1993} three-factor model and the Fama French (2015) five-factor model for the sample of firms that announced equity issuance plus various subsamples. The following regressions are run each event month~$j$:
+  caption= "The tables presents the abnormal returns for firms after repurchase announcements from the announcement date until $t$ months after the announcement. Left tables report monthly cumulative average abnormal returns (CAR) in percent using Ibbotson (1975) returns across time and security (IRATS) method combined with the Fama French (2015) five-factor model for the low and high prcentile sample of firms using the selected ctiretion that announced an open market share repurchase. The following regressions are run each event month~$j$:
 \\begin{eqnarray*}
 (R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + \\epsilon_{i,t}, \\\\
 (R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + e_t {RMW}_t + f_t {CMA}_t + \\epsilon_{i,t},
 \\end{eqnarray*}
-where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors. Right table reports monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the \\cite{FamaFrench2015a} five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors as the independent variables. The significance levels are indicated by +, *, and ** and correspond to a significance level of $10\\%$, $5\\%$, and $1\\%$ respectively, using a two-tailed test.
+where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors. Right tables report monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the Fama and French (2015a) five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors as the independent variables. The significance levels are indicated by +, *, and ** and correspond to a significance level of $10\\%$, $5\\%$, and $1\\%$ respectively, using a two-tailed test.
 ",
 
 label = "tbl:indcharacteristic",
 titleontop=T,
-metric = "CAR",
+metric = "Ret.",
 scale=1,
 lastSpecial=T#,
 #dorotate=F
@@ -274,7 +274,7 @@ legend(x="topleft",
        cex=1,bg="white",inset=0.01)
 
 @
-\caption{Buybacks: Returns of five-factor rolling hedged portfolio for only the buyback events for high and low quantile events. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio. 
+\caption{Buybacks: Returns of five-factor rolling hedged portfolio for only the buyback events for high and low percentile events. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio. 
 }
 \label{fig:indcharacteristic}
 \end{figure}
@@ -285,7 +285,7 @@ legend(x="topleft",
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 latex_render_data_frame(
   pnl_matrix(remove_initialization_time(High_feature_Hedged_react,min_date=FirstTrade)), 
-  title = paste("Monthly and Yearly Five Factor Abnormal Rerurns of a strategy investing in the high quantile buybacks defined using the event characteristic",gsub("\\."," ", characteristic_single_analysis), sep=" "),
+  title = paste("Monthly and Yearly Five Factor Abnormal Rerurns of a strategy investing in the high percentile buybacks defined using the event characteristic",gsub("\\."," ", characteristic_single_analysis), sep=" "),
   caption="Monthly and yearly five-factor rolling hedged abnormal returns of an equally weighted (with monthly rebalancing) portfolio of selected buybacks. The holding period for each buyback is 12 months per event.",
   label="tbl:indcharacteristicpnl", 
   columns=NULL,
@@ -304,10 +304,10 @@ latex_render_data_frame(
 
 \section{Customized Undervaluation Indicator and Excess Returns}
 
-We define a customized Undervaluation index using the following event characteristics: \Sexpr{ifelse(characteristic_irats1 != "None",  paste(gsub("\\.", " ", characteristic_irats1), " (sign is ", ifelse(characteristic_irats1_sign, "-1","+1"),")",sep = ""), " ") } \Sexpr{ifelse(characteristic_irats2 != "None",  paste(",", gsub("\\.", " ", characteristic_irats2), " (sign is ", ifelse(characteristic_irats2_sign, "-1","+1"),")",collapse = ""), " ") }  \Sexpr{ifelse(characteristic_irats3 != "None",  paste(",", gsub("\\.", " ", characteristic_irats3), " (sign is ", ifelse(characteristic_irats3_sign, "-1","+1"),")",collapse = ""), " ") } \Sexpr{ifelse(characteristic_irats4 != "None",  paste(",", gsub("\\.", " ", characteristic_irats4), " (sign is ", ifelse(characteristic_irats4_sign, "-1","+1"),")",collapse = ""), " ") } \Sexpr{ifelse(characteristic_irats5 != "None",  paste(",", gsub("\\.", " ", characteristic_irats5), " (sign is ", ifelse(characteristic_irats5_sign, "-1","+1"),")",collapse = ""), " ") } \Sexpr{ifelse(characteristic_irats6 != "None",  paste(",", gsub("\\.", " ", characteristic_irats6), " (sign is ", ifelse(characteristic_irats6_sign, "-1","+1"),")",collapse = ""), " ") }. For each of these characteristics we define the high and low events as those that are in the top or bottom \Sexpr{100*quantile_used_ind}$\%$ of the events. We then assign a score of 2 for the high, 0 for the low, and 1 for the rest of the events for each of these characteristics, and we add up these scores to create the customized undervaluation index. Figure \ref{fig:undervaluationindex} shows the number of events for each of the values of this customized index. 
+We define a customized Undervaluation index using the following event characteristics: \Sexpr{ifelse(characteristic_irats1 != "None",  paste(gsub("\\.", " ", characteristic_irats1), " (sign is ", ifelse(characteristic_irats1_sign, "-1","+1"),")",collapse = ""), "") } \Sexpr{ifelse(characteristic_irats2 != "None",  paste(",", gsub("\\.", " ", characteristic_irats2), " (sign is ", ifelse(characteristic_irats2_sign, "-1","+1"),")",collapse = ""), "") }  \Sexpr{ifelse(characteristic_irats3 != "None",  paste(",", gsub("\\.", " ", characteristic_irats3), " (sign is ", ifelse(characteristic_irats3_sign, "-1","+1"),")",collapse = ""), "") } \Sexpr{ifelse(characteristic_irats4 != "None",  paste(",", gsub("\\.", " ", characteristic_irats4), " (sign is ", ifelse(characteristic_irats4_sign, "-1","+1"),")",collapse = ""), "") } \Sexpr{ifelse(characteristic_irats5 != "None",  paste(",", gsub("\\.", " ", characteristic_irats5), " (sign is ", ifelse(characteristic_irats5_sign, "-1","+1"),")",collapse = ""), "") } \Sexpr{ifelse(characteristic_irats6 != "None",  paste(",", gsub("\\.", " ", characteristic_irats6), " (sign is ", ifelse(characteristic_irats6_sign, "-1","+1"),")",collapse = ""), "") }. For each of these characteristics we define the high and low events as those that are in the top or bottom \Sexpr{100*quantile_used_ind}$\%$ of the events. We then assign a score of 2 for the high, 0 for the low, and 1 for the rest of the events for each of these characteristics, and we add up these scores to create the customized undervaluation index. Figure \ref{fig:undervaluationindex} shows the number of events for each of the values of this customized index. 
 
 
-We then consider the IRATS Cumulative Abnormal Returns (CAR) and Calendar Time method Abnormal Returns (AR) of the high/low quantiles of events defined using this customized Undervaluation Index. Table \ref{tbl:CUcharacteristic} shows the results. Figure \ref{fig:CUcharacteristic} shows the excess returns of a strategy that trades only the high or low quantile stocks for this customized undervaluation index (the strategy is designed as described in the paper). Table \ref{tbl:CUcharacteristicpnl} shows the monthly and yearly returns of the high quantile events strategy. 
+We then consider the IRATS Cumulative Abnormal Returns (CAR) and Calendar Time method Abnormal Returns (AR) of the high/low quantiles of events defined using this customized Undervaluation Index. Table \ref{tbl:CUcharacteristic} shows the results. Figure \ref{fig:CUcharacteristic} shows the excess returns of a strategy that trades only the high or low percentile stocks for this customized undervaluation index (the strategy is designed as described in the paper). Table \ref{tbl:CUcharacteristicpnl} shows the monthly and yearly returns of the high percentile events strategy. 
 
 <<   eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 
@@ -434,19 +434,19 @@ colnames(tmp)[1]<-colnames(tmp)[4] <-  "CAR"
 
 printLatexTable(
   tmp,
-  columns = c("IRATS CAR","Calendar Time AR"),
+  columns = c("IRATS CAR: LOW","HIGH","Calendar Time AR: LOW","HIGH"),
   title= "Buyback IRATS and Calendar Time Abnormals Returns for the Customized Undervaluation Index",
-  caption= "The tables presents the abnormal returns for firms after issue announcements from the announcement date until $t$ months after the announcement. Left table reports monthly cumulative average abnormal returns (CAR) in percent using \\cite{ibbotson1975} returns across time and security (IRATS) method combined with the \\cite{FamaFrench1993} three-factor model and the Fama French (2015) five-factor model for the sample of firms that announced equity issuance plus various subsamples. The following regressions are run each event month~$j$:
+  caption= "The tables presents the abnormal returns for firms after repurchase announcements from the announcement date until $t$ months after the announcement. Left tables report monthly cumulative average abnormal returns (CAR) in percent using Ibbotson (1975) returns across time and security (IRATS) method combined with the Fama French (2015) five-factor model for the low and high prcentile sample of firms using the customized undervaluation index that announced an open market share repurchase. The following regressions are run each event month~$j$:
 \\begin{eqnarray*}
 (R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + \\epsilon_{i,t}, \\\\
 (R_{i,t} - R_{f,t}) &=& a_j + b_j (R_{m,t} - R_{f,t}) + c_j {SMB}_t + d_j {HML}_t + e_t {RMW}_t + f_t {CMA}_t + \\epsilon_{i,t},
 \\end{eqnarray*}
-where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors. Right table reports monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the \\cite{FamaFrench2015a} five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors as the independent variables. The significance levels are indicated by +, *, and ** and correspond to a significance level of $10\\%$, $5\\%$, and $1\\%$ respectively, using a two-tailed test.
+where $R_{i,t}$ is the monthly return on security $i$ in the calendar month $t$ that corresponds to the event month $j$, with $j = 0$ being the month of the repurchase announcement. $R_{f,t}$ and $R_{m,t}$ are the risk-free rate and the return on the equally weighted CRSP index, respectively. ${SMB}_t$, ${HML_t}$, ${RMW}_t$, ${CMA}_t$ are the monthly returns on the size, book-to-market factor, profitability factor and investment factor in month $t$, respectively. The numbers reported are sums of the intercepts of cross-sectional regressions over the relevant event-time-periods expressed in percentage terms. The standard error (denominator of the $t$-statistic) for a window is the square root of the sum of the squares of the monthly standard errors. Right tables report monthly average abnormal returns (AR) of equally weighted Calendar Time portfolios using the Fama and French (2015a) five-factor model. In this method, event firms that have announced an open market buyback in the last calendar months form the basis of the calendar month portfolio. A single time-series regression is run with the excess returns of the calendar portfolio as the dependent variable and the returns of five factors as the independent variables. The significance levels are indicated by +, *, and ** and correspond to a significance level of $10\\%$, $5\\%$, and $1\\%$ respectively, using a two-tailed test.
 ",
 
 label = "tbl:CUcharacteristic",
 titleontop=T,
-metric = "CAR",
+metric = "Ret.",
 scale=1,
 lastSpecial=T#,
 #dorotate=F
@@ -473,7 +473,7 @@ legend(x="topleft",
        cex=1,bg="white",inset=0.01)
 
 @
-\caption{Buybacks: Returns of five-factor rolling hedged portfolio for only the buyback events for high and low quantile events defined using the Customized Undervaluation Index. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio. 
+\caption{Buybacks: Returns of five-factor rolling hedged portfolio for only the buyback events for high and low percentile events defined using the Customized Undervaluation Index. Solid line is ``high'' and a 12-months holding portfolio, dotted line is ``low'' and a 12-months holding portfolio. 
 }
 \label{fig:CUcharacteristic}
 \end{figure}
@@ -483,7 +483,7 @@ legend(x="topleft",
 <<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 latex_render_data_frame(
   pnl_matrix(remove_initialization_time(High_feature_Hedged_react_index,min_date=FirstTrade)), 
-  title = "Monthly and Yearly Five Factor Abnormal Rerurns of a strategy investing in the high quantile buybacks defined using the Customized Undervaluation Index",
+  title = "Monthly and Yearly Five Factor Abnormal Rerurns of a strategy investing in the high percentile buybacks defined using the Customized Undervaluation Index",
   caption="Monthly and yearly five-factor rolling hedged abnormal returns of an equally weighted (with monthly rebalancing) portfolio of selected buybacks. The holding period for each buyback is 12 months per event.",
   label="tbl:CUcharacteristicpnl", 
   columns=NULL,
