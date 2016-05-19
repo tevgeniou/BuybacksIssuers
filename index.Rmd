@@ -384,12 +384,12 @@ fluidPage(
                  feature_CALtable()
                })),
       tabPanel("Cumulative Abnormal Returns,High, 12m hold",
-               renderDygraph({
-                 pnl_plot_interactive(High_feature_Hedged_react())
+               renderPlot({
+                 pnl_plot(High_feature_Hedged_react())
                })),
       tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
-               renderDygraph({
-                 pnl_plot_interactive(Low_feature_Hedged_react())
+               renderPlot({
+                 pnl_plot(Low_feature_Hedged_react())
                })),
       tabPanel("Monthly and Yearly Returns, High, 12m hold",
                renderUI(
@@ -745,12 +745,12 @@ fluidPage(
                  feature_CALtable_index()
                })),
       tabPanel("Cumulative Abnormal Returns,High, 12m hold",
-               renderDygraph({
-                 pnl_plot_interactive(High_feature_Hedged_react_index())
+               renderPlot({
+                 pnl_plot(High_feature_Hedged_react_index())
                })),
       tabPanel("Cumulative Abnormal Returns,Low, 12m hold",
-               renderDygraph({
-                 pnl_plot_interactive(Low_feature_Hedged_react_index())
+               renderPlot({
+                 pnl_plot(Low_feature_Hedged_react_index())
                })),
       tabPanel("Monthly and Yearly Returns, High, 12m hold",
                renderUI(
