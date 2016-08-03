@@ -23,7 +23,7 @@ libraries_used=c("stringr","gtools","foreign","reshape2","digest","timeDate","de
                  "psych","stringr","googleVis", "png","ggplot2","googleVis", "gridExtra","RcppArmadillo","xts","DescTools")
 
 get_libraries(libraries_used)
-Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
+Rcpp::sourceCpp(file.path(dirname(sys.frame(1)$ofile),'lib_helpers.cpp'), embeddedR=FALSE)
 
 options(stringsAsFactors=FALSE)
 
