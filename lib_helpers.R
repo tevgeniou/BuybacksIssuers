@@ -9,8 +9,10 @@
 get_libraries <- function(filenames_list) { 
   lapply(filenames_list,function(thelibrary){    
     if (do.call(require,list(thelibrary)) == FALSE) 
-      do.call(install.packages,list(thelibrary)) 
-    do.call(library,list(thelibrary))
+      try ({
+        do.call(install.packages,list(thelibrary))
+        do.call(library,list(thelibrary))
+      })
   })
 }
 
