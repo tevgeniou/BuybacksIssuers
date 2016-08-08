@@ -26,6 +26,7 @@ get_libraries(libraries_used)
 
 lib_helpers_path <- try(suppressWarnings(dirname(sys.frame(1)$ofile)), silent=TRUE)
 if (class(lib_helpers_path) == "try-error") lib_helpers_path <- "."
+if (file.exists("lib_helpers.cpp")) lib_helpers_path <- "."
 Rcpp::sourceCpp(file.path(lib_helpers_path,'lib_helpers.cpp'), embeddedR=FALSE)
 
 options(stringsAsFactors=FALSE)
