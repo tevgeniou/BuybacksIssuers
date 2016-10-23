@@ -10,7 +10,7 @@ get_libraries <- function(filenames_list) {
   lapply(filenames_list,function(thelibrary){    
     if (do.call(require,list(thelibrary)) == FALSE) 
       try ({
-        do.call(install.packages,list(thelibrary))
+        do.call(install.packages,c(list(thelibrary),list(repos="http://cloud.r-project.org/")))
         do.call(library,list(thelibrary))
       })
   })
