@@ -33,6 +33,7 @@ if (length(to_remove) > 0){
   BUYBACK_DATA$DATASET$returns_by_event_monthly <- BUYBACK_DATA$DATASET$returns_by_event_monthly[,-to_remove]
   BUYBACK_DATA$DATASET$SDC <- BUYBACK_DATA$DATASET$SDC[-to_remove,]
   for(field in ls(BUYBACK_DATA$DATASET$CRSP))  BUYBACK_DATA$DATASET$CRSP[[field]] <- BUYBACK_DATA$DATASET$CRSP[[field]][-to_remove]
+  for(field in ls(BUYBACK_DATA$DATASET$institutional))  BUYBACK_DATA$DATASET$institutional[[field]] <- BUYBACK_DATA$DATASET$institutional[[field]][-to_remove]
   for(field1 in ls(BUYBACK_DATA$DATASET$ibes))  
     for (field in ls(BUYBACK_DATA$DATASET$ibes[[field1]])) 
       BUYBACK_DATA$DATASET$ibes[[field1]][[field]]<- BUYBACK_DATA$DATASET$ibes[[field1]][[field]][-to_remove]
@@ -84,6 +85,7 @@ if (remove_missing_permnosV2){
     BUYBACK_DATA$DATASET$returns_by_event_monthly <- BUYBACK_DATA$DATASET$returns_by_event_monthly[,-to_remove]
     BUYBACK_DATA$DATASET$SDC <- BUYBACK_DATA$DATASET$SDC[-to_remove,]
     for(field in ls(BUYBACK_DATA$DATASET$CRSP))  BUYBACK_DATA$DATASET$CRSP[[field]] <- BUYBACK_DATA$DATASET$CRSP[[field]][-to_remove]
+    for(field in ls(BUYBACK_DATA$DATASET$institutional))  BUYBACK_DATA$DATASET$institutional[[field]] <- BUYBACK_DATA$DATASET$institutional[[field]][-to_remove]
     for(field1 in ls(BUYBACK_DATA$DATASET$ibes))  
       for (field in ls(BUYBACK_DATA$DATASET$ibes[[field1]])) 
         BUYBACK_DATA$DATASET$ibes[[field1]][[field]]<- BUYBACK_DATA$DATASET$ibes[[field1]][[field]][-to_remove]
@@ -133,7 +135,7 @@ major_markets_only = sapply(events$SDC$Stock.Exchange, function(i) sum(str_split
 Technique_filter =  events$SDC$Tech..nique.Code %in% BB_allowed_techniques # OP, OPNG, and ""    
 TOTAL_FILTER_basic = No_filter & Basic_filter & Period_filter & Penny_stock_filter  & Industry_filter & US_only & major_markets_only & Technique_filter
 #Market_cap_filter =  (scrub(events$SDC$Market.Cap) >= MIN_SIZE) & (scrub(events$SDC$Market.Cap) <= MAX_SIZE)
-Market_cap_filter =  (scrub(events$CRSP$Market.Cap) >= MIN_SIZE) & (scrub(events$CRSP$Market.Cap) <= MAX_SIZE)
+Market_cap_filter =  (scrub(events$CRSP$Market.Cap) >= MIN_SIZE) & (scrub(events$CRSP$Market.Cap) <= MAX_SIZE) & (scrub(events$CRSP$Market.Cap_score) <= MAX_SIZE_SCORE)
 #Leverage_filter = (scrub(events$SDC$lt/events$SDC$at) > 0.5)*(!is.na(events$SDC$lt/events$SDC$at))
 EventSize_filter = (events$SDC$Event.Size >= MIN_EVENT_SIZE) & (events$SDC$Event.Size <= MAX_EVENT_SIZE)
 TOTAL_FILTER_complex = Market_cap_filter  & EventSize_filter 
@@ -151,6 +153,7 @@ if (length(to_remove) > 0){
   BUYBACK_DATA$DATASET$returns_by_event_monthly <- BUYBACK_DATA$DATASET$returns_by_event_monthly[,-to_remove]
   BUYBACK_DATA$DATASET$SDC <- BUYBACK_DATA$DATASET$SDC[-to_remove,]
   for(field in ls(BUYBACK_DATA$DATASET$CRSP))  BUYBACK_DATA$DATASET$CRSP[[field]] <- BUYBACK_DATA$DATASET$CRSP[[field]][-to_remove]
+  for(field in ls(BUYBACK_DATA$DATASET$institutional))  BUYBACK_DATA$DATASET$institutional[[field]] <- BUYBACK_DATA$DATASET$institutional[[field]][-to_remove]
   for(field1 in ls(BUYBACK_DATA$DATASET$ibes))  
     for (field in ls(BUYBACK_DATA$DATASET$ibes[[field1]])) 
       BUYBACK_DATA$DATASET$ibes[[field1]][[field]]<- BUYBACK_DATA$DATASET$ibes[[field1]][[field]][-to_remove]
@@ -257,6 +260,7 @@ if (remove_financials_utilities){
     BUYBACK_DATA$DATASET$returns_by_event_monthly <- BUYBACK_DATA$DATASET$returns_by_event_monthly[,-to_remove]
     BUYBACK_DATA$DATASET$SDC <- BUYBACK_DATA$DATASET$SDC[-to_remove,]
     for(field in ls(BUYBACK_DATA$DATASET$CRSP))  BUYBACK_DATA$DATASET$CRSP[[field]] <- BUYBACK_DATA$DATASET$CRSP[[field]][-to_remove]
+    for(field in ls(BUYBACK_DATA$DATASET$institutional))  BUYBACK_DATA$DATASET$institutional[[field]] <- BUYBACK_DATA$DATASET$institutional[[field]][-to_remove]
     for(field1 in ls(BUYBACK_DATA$DATASET$ibes))  
       for (field in ls(BUYBACK_DATA$DATASET$ibes[[field1]])) 
         BUYBACK_DATA$DATASET$ibes[[field1]][[field]]<- BUYBACK_DATA$DATASET$ibes[[field1]][[field]][-to_remove]
@@ -303,6 +307,7 @@ if (remove_CRSP_minor_markets){
     BUYBACK_DATA$DATASET$returns_by_event_monthly <- BUYBACK_DATA$DATASET$returns_by_event_monthly[,-to_remove]
     BUYBACK_DATA$DATASET$SDC <- BUYBACK_DATA$DATASET$SDC[-to_remove,]
     for(field in ls(BUYBACK_DATA$DATASET$CRSP))  BUYBACK_DATA$DATASET$CRSP[[field]] <- BUYBACK_DATA$DATASET$CRSP[[field]][-to_remove]
+    for(field in ls(BUYBACK_DATA$DATASET$institutional))  BUYBACK_DATA$DATASET$institutional[[field]] <- BUYBACK_DATA$DATASET$institutional[[field]][-to_remove]
     for(field1 in ls(BUYBACK_DATA$DATASET$ibes))  
       for (field in ls(BUYBACK_DATA$DATASET$ibes[[field1]])) 
         BUYBACK_DATA$DATASET$ibes[[field1]][[field]]<- BUYBACK_DATA$DATASET$ibes[[field1]][[field]][-to_remove]
