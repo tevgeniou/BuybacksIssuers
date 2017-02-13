@@ -3,8 +3,6 @@
 #  by V. Kapartzianis 
 #  Dual licensed under the MIT or GPL Version 2 licenses.
 
-library(shiny)
-library(htmlwidgets)
 renderHeatmapX <- function(data, style="norm", include.rownames = TRUE, include.colnames=TRUE, nsmall=2, border=0) {
   #vmax <- max(Filter(is.numeric, data))
   vmax = max(data[is.numeric(data) & !is.na(data)])

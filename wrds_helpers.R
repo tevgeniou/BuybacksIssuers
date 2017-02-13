@@ -30,6 +30,9 @@ source("wrds_config.R")
 library(xts)
 library(lubridate)
 
+## **** SEE ALSO 
+## https://wrds-web.wharton.upenn.edu/wrds/support/Accessing%20and%20Manipulating%20the%20Data/_007R%20Programming/_001Using%20R%20with%20WRDS.cfm
+## and ~/.Rprofile (in home directory of local computer)
 wrdsConnect <- function(user=wrds_user, pass=wrds_pass) {
   sas_core <- paste0(wrds_path, "sas.core.jar")
   sas_javatools <- paste0(wrds_path, "sas.intrnet.javatools.jar")
@@ -234,6 +237,31 @@ wrdsGetGVKEYForPERMNO <- function(wrds_handle, PERMNO, date) {
     gvkey.index <- which(as.Date(matched.rows$LINKDT) <= date & date <= as.Date(matched.rows$LINKENDDT))
     as.character(if (length(gvkey.index) == 1) matched.rows$GVKEY[gvkey.index] else NA)
   }, PERMNO, date)
+}
+
+
+wrdsGetPERMCOForCUSIP <- function(wrds_handle, CUSIP, date) {
+  FDATE <- paste0("'", format(date, "%d%b%Y"), "'d")
+  INPUT <- data.frame(CUSIP, FDATE)
+  chunk <- 1000 # split inputs in chunks, to avoid large query stacks
+  INPUT <- split(INPUT, rep(1:ceiling(nrow(INPUT)/chunk), each=chunk)[1:nrow(INPUT)])
+  wdata <- do.call(rbind, lapply(INPUT, function(X) {
+    query <- paste0('
+                    select TICKER, PERMCO, NCUSIP, NAMEDT, NAMEENDT
+                    from CRSP.DSENAMES
+                    where (', paste(paste0(
+                      '((NAMEDT <= ',X$FDATE,' <= NAMEENDT
+                      or NAMEENDT is NULL and NAMEDT <=',X$FDATE,')
+                      and NCUSIP like "',X$CUSIP,'%")'), collapse=" or "), ')
+                    ;')
+    dbGetQuery(wrds_handle, query)
+  }))
+  mapply(function(CUSIP, date) {  # TODO: loop probably needs optimization
+    matched.rows <- unique(wdata[substr(wdata$NCUSIP, 1, nchar(CUSIP)) == CUSIP, ])
+    matched.rows$NAMEENDT[is.na(matched.rows$NAMEENDT)] <- as.character(Sys.Date())
+    permco.index <- which(as.Date(matched.rows$NAMEDT) <= date & date <= as.Date(matched.rows$NAMEENDT))
+    as.numeric(if (length(permco.index) == 1) matched.rows$PERMCO[permco.index] else NA)
+  }, CUSIP, date)
 }
 
 wrdsGetMarketCap <- function(wrds_handle, PERMNO, date, periodicity=c("monthly", "yearly", "BE.ME")) {
