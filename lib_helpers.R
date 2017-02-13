@@ -20,9 +20,14 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
                    "psych","stringr","googleVis", "png","ggplot2","googleVis", "gridExtra","RcppArmadillo","xts","DescTools")
   
   get_libraries(libraries_used)
+  Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
+} else {
+  lib_helpers_path <- try(suppressWarnings(dirname(sys.frame(1)$ofile)), silent=TRUE)
+  if (class(lib_helpers_path) == "try-error") lib_helpers_path <- "."
+  if (file.exists("lib_helpers.cpp")) lib_helpers_path <- "."
+  Rcpp::sourceCpp(file.path(lib_helpers_path,'lib_helpers.cpp'), embeddedR=FALSE)
 }
 
-Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
 options(stringsAsFactors=FALSE)
 
 
