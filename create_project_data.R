@@ -12,9 +12,8 @@ if (memory.limit()<40*1024) memory.limit(40*1024) # allow at least 40GB of memor
 
 rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 
-
 ################################################################################
-##### NOTE: HERE WE NEED TO USE A WRDS USERNAME AND PASSWORD
+##### NOTE: HERE WE NEED TO USE A WRDS USERNAME AND PASSWORD, AND ALSO HAVE OTHER DATA FROM WRDS
 ################################################################################
 # Used to get WRDS data through the API
 source("../FinanceLibraries/wrds_helpers.R", chdir=TRUE)
@@ -23,16 +22,8 @@ source("~/Documents/WRDS_Drivers/startWRDSconnection.R") # This file has the use
 # wrds_pass <- "{SAS002}DBCC5712369DE1C65B19864C1564FB850F398DCF"
 # wrds_path <- "C:\\Users\\my_user\\Documents\\WRDS_Drivers\\"
 wrds_handle <- wrdsConnect()
-################################################################################
-################################################################################
 
-source("library_files/lib_helpers.R", chdir=TRUE)
-source("library_files/latex_code.R")
-source("library_files/ff_industries_sic.R")
-source("Paper_global_parameters.R")
-
-###################################################################################################
-# Get the raw data. These are not publicly available
+# These are not publicly available
 load("../FinanceData/created_monthly_data/GLOBAL_MONTHLY_DATABASE.Rdata")
 load("../FinanceData/created_yearly_data/GLOBAL_YEARLY_DATABASE.Rdata")
 load("../FinanceData/created_ibes_data/GLOBAL_IBES_DATABASE.Rdata")
@@ -50,8 +41,14 @@ if (0){ # If we want to use wrds directly
   GLOBAL_DAILY_DATABASE$FamaFrench_five_factors <- NULL
 }
 
-
 ###################################################################################################
+###################################################################################################
+
+source("library_files/lib_helpers.R", chdir=TRUE)
+source("library_files/latex_code.R")
+source("library_files/ff_industries_sic.R")
+source("Paper_global_parameters.R")
+
 # Some extra universe data variables we need for this project (based on the raw data)
 month_dates = str_sub(rownames(GLOBAL_MONTHLY_DATABASE$returns_monthly), start = 1, end = 7) 
 GLOBAL_MONTHLY_DATABASE$market_cap = GLOBAL_MONTHLY_DATABASE$prices_monthly*GLOBAL_MONTHLY_DATABASE$sharesout_monthly/1000 # In millions
