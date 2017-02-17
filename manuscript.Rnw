@@ -1,10 +1,10 @@
 
 << eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 #dev.off();
-#library(knitr); knit2pdf('manuscriptRF.Rnw', texi2dvi='texi2dvi'); file.remove(paste("manuscriptRF",c(".aux",".tex",".blg",".bbl",".log",".out"),sep=""))
+#library(knitr); knit2pdf('manuscript.Rnw', texi2dvi='texi2dvi'); file.remove(paste("manuscript",c(".aux",".tex",".blg",".bbl",".log",".out"),sep=""))
 #dir.create("tmpfiles") # need to comment this if the directory already exists
 # Then to make it into Word: 
-# system("pandoc -s manuscriptRF.tex --bibliography=bibliography.bib --number-sections --reference-links -o theo.docx")
+# system("pandoc -s manuscript.tex --bibliography=bibliography.bib --number-sections --reference-links -o theo.docx")
 
 rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 
@@ -172,17 +172,6 @@ knit_hooks$set(inline = inline_hook)
 \clearpage
 
 
-<< fig.width=10, fig.height=6, out.width='\\textwidth', echo=F >>=
-months1 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all1mshort_risk_factors,min_date=FirstTrade))
-months3 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all3mshort_risk_factors,min_date=FirstTrade))
-months6 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all6mshort_risk_factors,min_date=FirstTrade))
-months12 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all12mshort_risk_factors,min_date=FirstTrade))
-months24 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all24mshort_risk_factors,min_date=FirstTrade))
-months36 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all36mshort_risk_factors,min_date=FirstTrade))
-months48 = cumsum(100*remove_initialization_time(BUYBACK_DATA$long_all48mshort_risk_factors,min_date=FirstTrade))
-
-@ 
-
 \section{Introduction}
 \label{sec:Introduction}
 
@@ -261,7 +250,7 @@ One critique of the IRATS method is that the result may be time-specific. Indeed
 
 The calendar time results confirm the IRATS results. Regardless of the factor model and the investment horizon (24 months and beyond) long-term excess returns are positive a statistically significant at the 1$\%$ level. As in Panel A, excess returns are larger when the Stambaugh-Yuan four factor model is used as a benchmark. Specifically, during the 48-month period after the buyback announcement firms earn excess returns of \Sexpr{round(CAL_table_all_bb["+48","CAL 3F"],2)}$\%$ (t=\Sexpr{round(CAL_table_all_bb["+48",2],2)}) and \Sexpr{round(CAL_table_all_bb_undervaluation["+48","U:CAL3F"],2)}$\%$ (t=\Sexpr{round(CAL_table_all_bb_undervaluation["+48",2],2)}) in the case of high U-index firms.  So we can conclude that the buyback anomaly and the relevance of the U-index survive the \cite{FamaFrench2015} and \cite{StambaughYuan2016} models. 
 
-So far all our events are equally weighted. \cite{MitchellStafford2000} argue that events should be value weighted to test whether they represent an economically important anomaly. However, as pointed out by \cite{LoughranRitter2000}, small firms are more likely to be mispriced as they are less followed by analysts. Hence managers of small firms are better able to take advantage of mispricing than managers of large firms, which is the reason why firm size is one of the components of the U-index. So value weighting the events would simply bias the results toward zero. And indeed, when we value-weight the events (see Table \ref{tbl:valuetable} Panel A) long-term excess returns become statistically insignificantly different from zero when using the total sample of events. So the buyback anomaly is not economically important and does not challenge the basic premise that “the market” represented by a value-weighted index is priced correctly. Note, however, if we eliminate the firms with are in the top $25^{th}$ market capitalization percentile (see Table \ref{tbl:valuetable}, Panel~B) the results become again significant, especially for the high U-index firms. These firms had a market capitalization less than \$2,971 million in 2015. The fact that the buyback anomaly is a small cap anomaly makes it more likely that excess returns are evidence that managers (at least in these firms) time the market based on their information advantage relative to investors.  It may also explain why the anomaly persists as the capacity of small cap funds (and therefore management fees) is smaller than the capacity of large cap funds. 
+So far all our events are equally weighted. \cite{MitchellStafford2000} argue that events should be value weighted to test whether they represent an economically important anomaly. However, as pointed out by \cite{LoughranRitter2000}, small firms are more likely to be mispriced as they are less followed by analysts. Hence managers of small firms are better able to take advantage of mispricing than managers of large firms, which is the reason why firm size is one of the components of the U-index. So value weighting the events would simply bias the results toward zero. And indeed, when we value-weight the events (see Table \ref{tbl:valuetable} Panel A) long-term excess returns become statistically insignificantly different from zero when using the total sample of events. So the buyback anomaly is not economically important and does not challenge the basic premise that ???the market??? represented by a value-weighted index is priced correctly. Note, however, if we eliminate the firms with are in the top $25^{th}$ market capitalization percentile (see Table \ref{tbl:valuetable}, Panel~B) the results become again significant, especially for the high U-index firms. These firms had a market capitalization less than \$2,971 million in 2015. The fact that the buyback anomaly is a small cap anomaly makes it more likely that excess returns are evidence that managers (at least in these firms) time the market based on their information advantage relative to investors.  It may also explain why the anomaly persists as the capacity of small cap funds (and therefore management fees) is smaller than the capacity of large cap funds. 
 
 Table~\ref{tbl:priorIssuers}, shows the results for all equity issues. Note that because there is no undervaluation index for equity issues we use the Mispricing Measure (MM) of \cite{Stambaugh2015} to measure overvaluation. Specifically, we define all issuers in the top 20$^{th}$ MM percentile as High MM firms and issuers in the bottom 20$^{th}$ MM percentile as low MM firms. Note that high values of MM correspond to more overvaluation. Table~\ref{tbl:priorIssuers} panel A shows the IRATS results while panel B shows the Calendar Time results.  For the total sample, the Fama-French five factor model fully explains the anomaly, regardless of the method to measure abnormal returns. However, using IRATS, the 4 factor model produces significant positive excess returns of \Sexpr{round(IRATS_table_all_iss["+48","CAR 3F"],2)}$\%$ after 4 years (t=\Sexpr{round(IRATS_table_all_iss["+48",2],2)}). With the calendar time method, the excess returns become less significant (t=\Sexpr{round(CAL_table_all_iss["+48",2],2)}) but have the same magnitude (\Sexpr{round(CAL_table_all_iss["+48","CAL 3F"],2)}$\%$ per month or \Sexpr{48*round(CAL_table_all_iss["+48","CAL 3F"],2)}$\%$  after 48 months). When splitting up the sample according to MM, the Fama-French five factor model shows no significant long-term excess returns regardless of the investment horizon and the method to measure excess returns. A similar result is found when we use the \cite{Stambaugh2015} four factor model and the Calendar Time method. 
 
@@ -343,12 +332,6 @@ Turning to equity issues, we now find that firms with low idiosyncratic risk, i.
 
 \subsection{Measuring Mispricing for Buyback stocks: the Enhanced U-index}
 \label{sec:newindex}
-
-<<  eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
-#EU_index_features = scrub(cbind(BUYBACK_DATA$DATASET$SDC$minus_Rsq_returns, BUYBACK_DATA$DATASET$SDC$pre_vol,BUYBACK_DATA$Valuation_Index))
-#colnames(EU_index_features) <- c("Idiosyncratic Score", "Volatility Score", "U-Index Score")
-#Under_IdioBB_cor = cor(EU_index_features)
-@
 
 Table~\ref{tbl:underidioallBB} shows how the high/low U-index  high/low idiosyncratic risk, high/low volatility, and high/low MM buyback events overlap, while Table~\ref{tbl:underidioallBBcor} shows the correlations between the idiosyncratic risk, volatility, MM, and U-index scores. Overall we see that although high U-index firms tend to have high standardized idiosyncratic risk and high volatility, while high idiosyncratic risk firms tend to also have high volatility, the overlap is not very high. For example from Table~\ref{tbl:underidioallBB} we see that  only \Sexpr{round(Under_IdioBB["High Vol.","H Idiosync."],1)}$\%$ of the high volatility stocks that are classified as having either high or low standardized  idiosyncratic risk - note that we only consider the  \Sexpr{round(100*quantile_R2,2)}$\%$ tails - have high standardized idiosyncratic risk. From Table~\ref{tbl:underidioallBBcor} we also infer that the correlation between standardized idiosyncratic risk and volatility scores is only \Sexpr{round(Under_IdioBB_cor["Volatility Score","Idiosyncratic Score"]*100,1)}$\%$. We also see that the Mispricing Measure of \cite{Stambaugh2015} is not related to the other measures in the case of buybacks 
 
@@ -529,7 +512,7 @@ dorotate=T
 <<   eval = TRUE, echo=FALSE,message=FALSE,fig.pos='h',results='asis' >>=
 printLatexTable2(
   cbind(IRATS_table_all_iss,IRATS_table_lowMM_iss,IRATS_table_highMM_iss)[reported_times,],
-  cbind(CAL_table_all_iss,CAL_table_lowvol_iss,CAL_table_highvol_iss)[reported_times,],
+  cbind(CAL_table_all_iss,CAL_table_lowMM_iss,CAL_table_highMM_iss)[reported_times,],
   columns = c("All 4F","All 5F","Low MM 4F","Low MM 5F","High MM 4F","High MM 5F"),
   title="SEO announcements during 1985-2015",
   title1 = "Panel A: IRATs Cumulative Abnormal Returns",
@@ -948,26 +931,6 @@ abline(h = 50*6)
 }
 \label{fig:ReturnsBB}
 \end{figure}
-
-<< fig.width=8, fig.height=5, out.width='\\textwidth', echo=F >>=
-R2_IRATStableBB_plot = R2_IRATStableBB
-R2_IRATStableBB_plot[rownames(R2_IRATStableBB_plot) %in% as.character((-6):(-1)),c("Low Idiosync.: CAR","High Idiosync.: CAR")] <- -R2_IRATStableBB_plot[rownames(R2_IRATStableBB_plot) %in% as.character((-6):(-1)),c("Low Idiosync.: CAR","High Idiosync.: CAR")] 
-R2_IRATStable_underBB_plot = R2_IRATStable_underBB
-R2_IRATStable_underBB_plot[rownames(R2_IRATStable_underBB_plot) %in% as.character((-6):(-1)),c(1,4,7,10)] <- -R2_IRATStable_underBB_plot[rownames(R2_IRATStable_underBB_plot) %in% as.character((-6):(-1)),c(1,4,7,10)] 
-@
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% VOL ANALYSIS
-
-
-<< fig.width=8, fig.height=5, out.width='\\textwidth', echo=F >>=
-
-VOL_IRATStableBB_plot = VOL_IRATStableBB
-VOL_IRATStableBB_plot[rownames(VOL_IRATStableBB_plot) %in% as.character((-6):(-1)),c("Low Vol: CAR","High Vol: CAR")] <- -VOL_IRATStableBB_plot[rownames(VOL_IRATStableBB_plot) %in% as.character((-6):(-1)),c("Low Vol: CAR","High Vol: CAR")] 
-VOL_IRATStable_underBB_plot = VOL_IRATStable_underBB
-VOL_IRATStable_underBB_plot[rownames(VOL_IRATStable_underBB_plot) %in% as.character((-6):(-1)),c(1,4,7,10)] <- -VOL_IRATStable_underBB_plot[rownames(VOL_IRATStable_underBB_plot) %in% as.character((-6):(-1)),c(1,4,7,10)] 
-@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW INDEX

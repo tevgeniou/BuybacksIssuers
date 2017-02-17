@@ -1,7 +1,7 @@
 #  Copyright 2013, Satrapade
 #  by T. Evgeniou, V. Kapartzianis, N. Nassuphis and D. Spinellis
 #  Dual licensed under the MIT or GPL Version 2 licenses.
-#  11/2015 functions printLatexTable and printLatexTable2 added by T. Evgeniou and E. Junqué de Fortuny
+#  11/2015 functions printLatexTable and printLatexTable2 added by T. Evgeniou and E. Junqu?? de Fortuny
 
 
 ######################################################################################
@@ -10,13 +10,32 @@
 
 tostars <- function(x) ifelse(abs(x)<=0.01,"**",ifelse(abs(x)<=0.05,"*",ifelse(abs(x)<=0.1,"$^+$","")))
 
+# THIS NEEDS FIXING...
+latex_print_number <- function(the_value, digits=2,digitssmall = 6, NAvalue = "-"){ 
+  if (!is.numeric(the_value))
+    res = the_value
+  else {
+    if (is.na(the_value)){
+      res = NAvalue
+    } else {
+      res = round(the_value,digits)
+      if (round(the_value,digits) == 0 & the_value !=0)
+        res = ifelse(abs(the_value) < 10^(-digitssmall), 0, format(the_value,scientific=TRUE,digits=digits,big.mark=","))
+    }
+  }
+  res  
+}
+
+#latex_print_number <- function(the_value, digits) ifelse(round(the_value) == the_value, the_value,formatC(the_value,format="f",dig=digits))
+
+
 # CAN EDIT TO PRINT OUT WHATEVER LATEX WE NEED  
-latex_render_data_frame<-function(x,y=NULL, title="",caption="",label="",columns=NULL,bigtitleontop = F,show_rownames=FALSE,red_text="",green_text="",blue_text="",scale=1,digits,lastSpecial=F,dorotate=F, tostars_used = function(r) "") {
+latex_render_data_frame<-function(x,y=NULL, title="",caption="",label="",columns=NULL,bigtitleontop = F,show_rownames=FALSE,red_text="",green_text="",blue_text="",scale=1,digits=2,digitssmall = 6,lastSpecial=F,dorotate=F, tostars_used = NULL, NAvalue = "-",hlinerows = NULL) {
   #Helper functions
   p <- function(...){paste(...)}
   pn <- function(...){paste(...,"\n")} #print newline
   pc <- function(...){paste(...,"&")}  #print column
-
+  
   if(dorotate){
     width = "\\linewidth"
   } else {
@@ -43,7 +62,7 @@ latex_render_data_frame<-function(x,y=NULL, title="",caption="",label="",columns
     if(caption!="") {
       l <- pn(l,"\\parbox{",width,"}")
       l <- pn(l,"{\\scriptsize \\singlespacing",caption,"}\\\\")
-      l <- pn(l,"\\vspace{.2in}")
+      # l <- pn(l,"\\vspace{.2in}")
       
     }
   }
@@ -68,10 +87,10 @@ latex_render_data_frame<-function(x,y=NULL, title="",caption="",label="",columns
     if(show_rownames)cat(paste("\\textbf{",latexTranslate(rownames(x)[i]),"}",sep="",collapse="")," & ",sep="")
     for(j in 1:ncol(x)){
       the_value<-x[i,j]
-      if(is.na(the_value))the_value<-"-"
+      if(is.na(the_value))the_value<-NAvalue
       res<-switch(
         class(the_value),
-        numeric=formatC(the_value,format="f",dig=digits),
+        numeric= latex_print_number(the_value,digits,digitssmall),
         integer=format(the_value,scientific=FALSE,digits=0,big.mark=","),
         character={
           formatted_value<-latexTranslate(the_value)
@@ -83,9 +102,15 @@ latex_render_data_frame<-function(x,y=NULL, title="",caption="",label="",columns
         latexTranslate(as.character(the_value))
       )
       if(j>1)cat("& ")
-      cat(res)
+      if (!is.null(tostars_used) & j == 1)
+        cat(paste(latex_print_number(res,digits), tostars_used(x[i,3]), sep="", collapse = "")) # THIS IS USED ONLY IF THE MARIX HAS 3 COLUMNS AND THE LAST ONE IS THE p_VALUES. NEEDS FIXING.... TEMPORARY FOR NOW
+      else  
+        cat(res)
     }
-    cat("\\\\ \n")
+    if (i %in% hlinerows)
+      cat("\\\\ \\hline\n")
+    else    
+      cat("\\\\ \n")
   }
   cat("\\hline")
   cat("\n")
@@ -165,12 +190,12 @@ latex_render_data_frame<-function(x,y=NULL, title="",caption="",label="",columns
 
 
 #Work in progress, generic latex printer
-printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",bigtitleontop = F, titleontop=F, metric1="CAR",metric2="AR",label="",rowcolumn="",columns=NULL,columns2=NULL,scale=1,lastSpecial=F,dorotate=F,returntext=F) {
+printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",bigtitleontop = F, titleontop=F, metric1="CAR",metric2="AR",label="",rowcolumn="",columns=NULL,columns2=NULL,scale=1,lastSpecial=F,dorotate=F,returntext=F, NAvalue = "-",digitsround = 2) {
   #Helper functions
   p <- function(...){paste(...)}
   pn <- function(...){paste(...,"\n")} #print newline
   pc <- function(...){paste(...,"&")}  #print column
-
+  
   if(dorotate){
     width = "\\linewidth"
   } else {
@@ -209,9 +234,10 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
   # TABLE 1 NOW
   #############################################
   #convertprintLatexTable2 input
-  pval   <- df1[,3* (1:(ncol(df1)/3))]
   tstat  <- df1[,3* (1:(ncol(df1)/3))-1]
   df     <- df1[,3* (1:(ncol(df1)/3))-2]
+  # Here we just make sure we fix any p-value issues due to sign
+  pval   <- ifelse(df > 0, df1[,3* (1:(ncol(df1)/3))], ifelse(abs(tstat) > 1.3 & df1[,3* (1:(ncol(df1)/3))] > 0.5, 1-df1[,3* (1:(ncol(df1)/3))],df1[,3* (1:(ncol(df1)/3))]))
   
   #l <- pn(l,"\\scalebox{",scale,"} {")
   align <- "l"
@@ -255,12 +281,23 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
     l <- pc(l,rownames(df)[row])
     if(! ( lastSpecial && row == nrow(df)) ) {
       for(col in 1:ncol(df)) {
-        l <- pc(l,paste(round(df[row,col],2), tostars(pval[row,col]), sep="", collapse = ""))
+        if (!is.na(df[row,col])){
+          #tmpval = latex_print_number(df[row,col],digitsround)
+          tmpval = ifelse(round(abs(df[row,col]),2) == 0, round(df[row,col],digitsround), round(df[row,col],2))
+          l <- pc(l,paste(tmpval, tostars(pval[row,col]), sep="", collapse = ""))
+        }
+        else 
+          l <- pc(l,paste("", "", sep="", collapse = ""))
         if(col != ncol(df)) {
-          l <- pc(l,round(tstat[row,col],3),sep="")
+          if (!is.na(tstat[row,col]))
+            #l <- pc(l,round(tstat[row,col],3),sep="")
+            l <- pc(l,latex_print_number(tstat[row,col],digitsround),sep="")
+          else 
+            l <- pc(l,"",sep="")
           l <- pc(l,"{}")#extra spacing between columns
         }else {
-          l <- p(l,round(tstat[row,col],3),"\\\\",sep="")
+          #l <- p(l,round(tstat[row,col],3),"\\\\",sep="")
+          l <- p(l,latex_print_number(tstat[row,col],digitsround),"\\\\",sep="")
           if(row == nrow(df))
             l <- p(l,"[0.5ex]")
           l <- pn(l)
@@ -269,9 +306,9 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
     }else { #special last row
       for(col in 1:ncol(df)) {
         if(col != ncol(df)) 
-          l <- pc(l,"\\multicolumn{2}{c}{",df[row,col],"}&{}")
+          l <- pc(l,"\\multicolumn{2}{c}{",ifelse(!is.na(df[row,col]), df[row,col],"-"),"}&{}")
         else
-          l <- pn(l,"\\multicolumn{2}{c}{",df[row,col],"}\\\\[0.5ex]")
+          l <- pn(l,"\\multicolumn{2}{c}{",ifelse(!is.na(df[row,col]), df[row,col],"-"),"}\\\\[0.5ex]")
       }
     }
   }
@@ -293,9 +330,11 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
   l <- pn(l,"\\medskip\n")
   
   #convert input
-  pval   <- df2[,3* (1:(ncol(df2)/3))]
+  #pval   <- df2[,3* (1:(ncol(df2)/3))]
   tstat  <- df2[,3* (1:(ncol(df2)/3))-1]
   df     <- df2[,3* (1:(ncol(df2)/3))-2]
+  # Here we just make sure we fix any p-value issues due to sign
+  pval   <- ifelse(df > 0, df2[,3* (1:(ncol(df2)/3))], ifelse(abs(tstat) > 1.3 & df2[,3* (1:(ncol(df2)/3))] > 0.5, 1-df2[,3* (1:(ncol(df2)/3))],df2[,3* (1:(ncol(df2)/3))]))
   
   if(!is.null(columns2))
     columns = columns2
@@ -342,12 +381,16 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
     l <- pc(l,rownames(df)[row])
     if(! ( lastSpecial && row == nrow(df)) ) {
       for(col in 1:ncol(df)) {
-        l <- pc(l,paste(round(df[row,col],2), tostars(pval[row,col]), sep="", collapse = ""))
+        tmpval = latex_print_number(df[row,col],digitsround)
+        #tmpval = ifelse(round(abs(df[row,col]),2) == 0, round(df[row,col],digitsround), round(df[row,col],2))
+        l <- pc(l,paste(tmpval, tostars(pval[row,col]), sep="", collapse = ""))
         if(col != ncol(df)) {
-          l <- pc(l,round(tstat[row,col],3),sep="")
+          #l <- pc(l,round(tstat[row,col],3),sep="")
+          l <- pc(l,latex_print_number(tstat[row,col],digitsround),sep="")
           l <- pc(l,"{}")#extra spacing between columns
         }else {
-          l <- p(l,round(tstat[row,col],3),"\\\\",sep="")
+          l <- p(l,latex_print_number(tstat[row,col],digitsround),"\\\\",sep="")
+          #l <- p(l,round(tstat[row,col],3),"\\\\",sep="")
           if(row == nrow(df))
             l <- p(l,"[0.5ex]")
           l <- pn(l)
@@ -356,9 +399,9 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
     }else { #special last row
       for(col in 1:ncol(df)) {
         if(col != ncol(df)) 
-          l <- pc(l,"\\multicolumn{2}{c}{",df[row,col],"}&{}")
+          l <- pc(l,"\\multicolumn{2}{c}{",ifelse(!is.na(df[row,col]), df[row,col],"-"),"}&{}")
         else
-          l <- pn(l,"\\multicolumn{2}{c}{",df[row,col],"}\\\\[0.5ex]")
+          l <- pn(l,"\\multicolumn{2}{c}{",ifelse(!is.na(df[row,col]), df[row,col],"-"),"}\\\\[0.5ex]")
       }
     }
   }
@@ -405,11 +448,14 @@ printLatexTable2 <- function(df1,df2, title="",title1="", title2="",caption="",b
 
 
 #Work in progress, generic latex printer
-printLatexTable <- function(df, title="",metric="CAR",caption="",label="",titleontop = F, rowcolumn="",columns=NULL,scale=1,close=T,open=T,lastSpecial=F) {
+printLatexTable <- function(df, title="",metric="CAR",caption="",label="",titleontop = F, rowcolumn="",columns=NULL,scale=1,close=T,open=T,lastSpecial=F,NAvalue = "-", digitsround = 2) {
   #convert input
-  pval   <- df[,3* (1:(ncol(df)/3))]
+  dfini = df
+  #pval   <- df[,3* (1:(ncol(df)/3))]
   tstat  <- df[,3* (1:(ncol(df)/3))-1]
   df     <- df[,3* (1:(ncol(df)/3))-2]
+  # Here we just make sure we fix any p-value issues due to sign
+  pval   <- ifelse(df > 0, dfini[,3* (1:(ncol(dfini)/3))], ifelse(abs(tstat) > 1.3 & dfini[,3* (1:(ncol(dfini)/3))] > 0.5, 1-dfini[,3* (1:(ncol(dfini)/3))],dfini[,3* (1:(ncol(dfini)/3))]))
   
   if (length(metric) ==1)
     metric = rep(metric, ncol(df))
@@ -427,7 +473,7 @@ printLatexTable <- function(df, title="",metric="CAR",caption="",label="",titleo
   p <- function(...){paste(...)}
   pn <- function(...){paste(...,"\n")} #print newline
   pc <- function(...){paste(...,"&")}  #print column
-
+  
   #Start the table definition
   l <- ""
   
@@ -496,12 +542,26 @@ printLatexTable <- function(df, title="",metric="CAR",caption="",label="",titleo
     l <- pc(l,rownames(df)[row])
     if(! ( lastSpecial && row == nrow(df)) ) {
       for(col in 1:ncol(df)) {
-        l <- pc(l,paste(round(df[row,col],2), tostars(pval[row,col]), sep="", collapse = ""))
+        if (!is.na(df[row,col])){
+          tmpval = latex_print_number(df[row,col],digitsround)
+          #tmpval = ifelse(round(abs(df[row,col]),2) == 0, round(df[row,col],digitsround), round(df[row,col],2))
+          l <- pc(l,paste(tmpval, tostars(pval[row,col]), sep="", collapse = ""))
+        }
+        else 
+          l <- pc(l,paste("", "", sep="", collapse = ""))
         if(col != ncol(df)) {
-          l <- pc(l,round(tstat[row,col],3),sep="")
+          if (!is.na(tstat[row,col]))
+            #l <- pc(l,round(tstat[row,col],3),sep="")
+            l <- pc(l,latex_print_number(tstat[row,col],digitsround),sep="")
+          else
+            l <- pc(l,"",sep="")
           l <- pc(l,"{}")#extra spacing between columns
         }else {
-          l <- p(l,round(tstat[row,col],3),"\\\\",sep="")
+          if (!is.na(tstat[row,col]))
+            #l <- p(l,round(tstat[row,col],3),"\\\\",sep="")
+            l <- p(l,latex_print_number(tstat[row,col],digitsround),"\\\\",sep="")
+          else
+            l <- p(l,"","\\\\",sep="")
           if(row == nrow(df))
             l <- p(l,"[0.5ex]")
           l <- pn(l)
@@ -509,10 +569,11 @@ printLatexTable <- function(df, title="",metric="CAR",caption="",label="",titleo
       }
     }else { #special last row
       for(col in 1:ncol(df)) {
+          thevalue = latex_print_number(df[row,col])
         if(col != ncol(df)) 
-          l <- pc(l,"\\multicolumn{2}{c}{",df[row,col],"}&{}")
+          l <- pc(l,"\\multicolumn{2}{c}{",thevalue,"}&{}")
         else
-          l <- pn(l,"\\multicolumn{2}{c}{",df[row,col],"}\\\\[0.5ex]")
+          l <- pn(l,"\\multicolumn{2}{c}{",thevalue,"}\\\\[0.5ex]")
       }
     }
   }

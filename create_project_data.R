@@ -2,20 +2,34 @@
 #  by T. Evgeniou, Enric Junque de Fortuny, Nick Nassuphis, Theo Vermaelen 
 #  Dual licensed under the MIT or GPL Version 2 licenses.
 
-if (memory.limit()<40*1024) memory.limit(40*1024) # allow at least 40GB of memory to be allocated (Windows)
-##########################################################################################
 # Creates the data for the Buybacks-Issuers paper
+
 ##########################################################################################
+# NOTE: THIS FILE REQUIRES ACCESS TO DATA FROM WRDS. OTHERWISE IT CANNOT BE USED
+##########################################################################################
+
+if (memory.limit()<40*1024) memory.limit(40*1024) # allow at least 40GB of memory to be allocated (Windows)
 
 rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 
-use_major_market_score = 0 # We use all CRSP universe for the scores 
+
+################################################################################
+##### NOTE: HERE WE NEED TO USE A WRDS USERNAME AND PASSWORD
+################################################################################
+# Used to get WRDS data through the API
+source("../FinanceLibraries/wrds_helpers.R", chdir=TRUE)
+source("~/Documents/WRDS_Drivers/startWRDSconnection.R") # This file has the username pasword for WRDS. These lines below. See wrds_config.R in FinanceLibraries
+# wrds_user <- "my_username"
+# wrds_pass <- "{SAS002}DBCC5712369DE1C65B19864C1564FB850F398DCF"
+# wrds_path <- "C:\\Users\\my_user\\Documents\\WRDS_Drivers\\"
+wrds_handle <- wrdsConnect()
+################################################################################
+################################################################################
 
 source("library_files/lib_helpers.R", chdir=TRUE)
 source("library_files/latex_code.R")
 source("library_files/ff_industries_sic.R")
 source("Paper_global_parameters.R")
-
 
 ###################################################################################################
 # Get the raw data. These are not publicly available
@@ -26,13 +40,6 @@ load("../FinanceData/created_buyback_data/GLOBAL_BUYBACK.Rdata")
 load("../FinanceData/created_issuers_data/GLOBAL_ISSUERS.Rdata")
 
 if (0){ # If we want to use wrds directly
-  # Used to get WRDS data through the API
-  source("../FinanceLibraries/wrds_helpers.R", chdir=TRUE)
-  source("~/Documents/WRDS_Drivers/startWRDSconnection.R") # This file has the username pasword for WRDS. These lines below. See wrds_config.R in FinanceLibraries
-  # wrds_user <- "my_username"
-  # wrds_pass <- "{SAS002}DBCC5712369DE1C65B19864C1564FB850F398DCF"
-  # wrds_path <- "C:\\Users\\my_user\\Documents\\WRDS_Drivers\\"
-  wrds_handle <- wrdsConnect()
   GLOBAL_DAILY_DATABASE = list()
   GLOBAL_DAILY_DATABASE$returns_daily <- wrdsQueryStockFieldMatrix(wrds_handle, colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly), "RET",start=as.Date("1980-01-01"))
 } else {
@@ -666,5 +673,5 @@ save(ISSUERS_PreEvent_Factor_coeffs,Estimated_returns,file = "../FinanceData/cre
 
 # Finally save the main data structure
 
-save(BUYBACK_DATA, ISSUERS_DATA, file = "../FinanceData/created_projects_datasets/BUYBACKSnew.Rdata")
+save(BUYBACK_DATA, ISSUERS_DATA, file = "../FinanceData/created_projects_datasets/BUYBACKS.Rdata")
 

@@ -12,3 +12,6 @@ rsconnect
 figure
 Rplots.pdf
 .gitignore
+*.tex
+*.pdf
+*.sty

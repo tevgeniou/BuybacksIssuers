@@ -5,6 +5,7 @@
 ############################################################################################ 
 # All global parameters of the project
 ############################################################################################ 
+use_major_market_score = 0 # We use all CRSP universe for the scores 
 
 remove_financials_utilities = 1 # Remove the financials and utilities? (Default is 1)
 remove_missing_permnosV2 = 1 # remove also the permnos that are missing when they are found using the NCUSIP-Date? (Default is 1, to avoid any data issues) 
@@ -28,10 +29,11 @@ periods_considered = rbind(
 penny_stock_price_recent = 3 # penny stock threshold price - post 1990
 penny_stock_price_old = 1 # penny stock threshold price - pre 1990
 good_currencies = c("US")
-major_markets = c("N", "NM", "NY", "NK", "New York", "Nasdaq", "NYSE Amex", "American")
+major_markets = c("N", "NM", "NY", "NK",      "New York", "Nasdaq", "NYSE Amex", "American")
 major_markets_crsp = c(11,12,14)
 MIN_SIZE = 0 #micro caps are those with a market cap <300m
 MAX_SIZE = 1e20 #already in million (e6)
+MAX_SIZE_SCORE = 1e20
 MIN_EVENT_SIZE = 0 # Required minimum "event size" (e.g. % of shares repurchased/issued)
 MAX_EVENT_SIZE = 50 # not allow more than this percent of shares for the event
 CROSS_EVENTS_SINCE_LAST_EVENT = 4*365 # we require that there were at most that many days before the previous event
@@ -51,12 +53,8 @@ ISS_allowed_techniques = c("FIRMCOMMITMENT+NEGOTIATEDSALE", "NEGOTIATEDSALE+FIRM
 ##############################################################################
 # U-index parameters
 
-quantile_Uindex = 0.2 # Quantile for defining high/low U-index based on the U-index score
-quantile_R2 = 0.2 # quantile for high and low idiosyncratic risk companies
-quantile_VOL = 0.2 # quantile for high and low volcompanies
-quantile_LEV = 0.2 # quantile for high and low leverage companies
-quantile_EPS = 0.2 # quantile for high and low EPS companies
-
+quantile_simple = 0.2
+quantile_Uindex <- quantile_R2 <- quantile_VOL <- quantile_LEV <- quantile_EPS <- quantile_simple # Quantile for defining high/low U-index based on the U-index score
 years_across_cross_events = 4 # for BB then ISS or vice verca years.
 
 ##########################################################################################
@@ -70,6 +68,9 @@ INDUSTRY_USED = setdiff(All,union(union(FF_industries$Trading, FF_industries$Ban
 INDUSTRY_FINANCIALS = union(FF_industries$Trading, FF_industries$Banking) # what industry to check in the sector sensitivity part of the paper (only used there)
 
 min_industry_sampleBB = 300
+
+##########################################################################################
+# Risk Factors
 
 pnl_hedge_factors = c("RF","Delta","SMB","HML","RMW","CMA") # for the "strategy" hedge
 
