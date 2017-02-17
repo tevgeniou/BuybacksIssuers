@@ -1,6 +1,6 @@
 .Rproj.user
 .Rhistory
-.RData
+*.RData
 jf.sty
 manuscriptJF.pdf
 bb_issuers_new.Rdata
