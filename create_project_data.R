@@ -23,7 +23,7 @@ source("~/Documents/WRDS_Drivers/startWRDSconnection.R") # This file has the use
 # wrds_path <- "C:\\Users\\my_user\\Documents\\WRDS_Drivers\\"
 wrds_handle <- wrdsConnect()
 
-# These are not publicly available
+# These are not publicly available. Search also below for other data files starting with "../FinanceData..."
 load("../FinanceData/created_monthly_data/GLOBAL_MONTHLY_DATABASE.Rdata")
 load("../FinanceData/created_yearly_data/GLOBAL_YEARLY_DATABASE.Rdata")
 load("../FinanceData/created_ibes_data/GLOBAL_IBES_DATABASE.Rdata")
