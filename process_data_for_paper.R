@@ -21,7 +21,7 @@ initial_vars = ls(all = TRUE) # takes time to save and load, so we save only wha
 
 load("../FinanceData/created_projects_datasets/BUYBACKSnew.Rdata")
 # All the data filters are done in here - in case we want to change them for the paper
-source("filter_bbissuers_data.R")
+source("filter_data_for_paper.R")
 # Add some more data
 BUYBACK_DATA$DATASET$DatesMonth <- create_dates_month(BUYBACK_DATA$DATASET$SDC$Event.Date, rownames(BUYBACK_DATA$Risk_Factors_Monthly)) # We don't need this any more, can simplify to only get the dates needed... it's ok for now, as it is now slow
 colnames(BUYBACK_DATA$DATASET$DatesMonth) <- BUYBACK_DATA$DATASET$SDC$permno
@@ -1392,6 +1392,6 @@ rm("tmp")
 ########################################################################################################
 # Keep all results ONLY IN THIS FILE just in case we need to rerun or add something... this is temporary
 
-save(list = setdiff(ls(all = TRUE),initial_vars), file = "processed_project_data.Rdata")
+save(list = setdiff(ls(all = TRUE),initial_vars), file = "data_for_paper.Rdata")
 
 

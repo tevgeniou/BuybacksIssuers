@@ -15,9 +15,9 @@ if (generate_all_data == 1){
   source("create_project_data.R")
 }
 if (generate_rnw_data == 1){
-  source("process_project_data.R")
+  source("process_data_for_paper.R")
 } else {
-  load("processed_project_data.Rdata")
+  load("data_for_paper.Rdata")
 }
 
 source("../FinanceLibraries/lib_helpers.R", chdir=TRUE)
