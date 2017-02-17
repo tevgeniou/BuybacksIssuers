@@ -10,3 +10,5 @@ jf.bst
 session.*
 rsconnect
 figure
+Rplots.pdf
+.gitignore

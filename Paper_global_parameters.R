@@ -28,7 +28,7 @@ periods_considered = rbind(
 penny_stock_price_recent = 3 # penny stock threshold price - post 1990
 penny_stock_price_old = 1 # penny stock threshold price - pre 1990
 good_currencies = c("US")
-major_markets = c("N", "NM", "NY", "NK",      "New York", "Nasdaq", "NYSE Amex", "American")
+major_markets = c("N", "NM", "NY", "NK", "New York", "Nasdaq", "NYSE Amex", "American")
 major_markets_crsp = c(11,12,14)
 MIN_SIZE = 0 #micro caps are those with a market cap <300m
 MAX_SIZE = 1e20 #already in million (e6)
@@ -70,21 +70,6 @@ INDUSTRY_USED = setdiff(All,union(union(FF_industries$Trading, FF_industries$Ban
 INDUSTRY_FINANCIALS = union(FF_industries$Trading, FF_industries$Banking) # what industry to check in the sector sensitivity part of the paper (only used there)
 
 min_industry_sampleBB = 300
-
-##########################################################################################
-# Risk Factors
-
-finance_three_factor_model = "(ri - RF) ~ Finance + SMB + HML"
-finance_five_factor_model = "(ri - RF) ~ Finance + SMB + HML + RMW + CMA"
-finance_five_factor_model2 = "(ri - RF) ~ Delta + Finance + SMB + HML + RMW + CMA"
-three_factor_model = "(ri - RF) ~ Delta + SMB + HML"
-four_factor_model = "(ri - RF) ~ Delta + SMB + HML + Mom"
-five_factor_model = "(ri - RF) ~ Delta + SMB + HML + RMW + CMA"
-six_factor_model = "(ri - RF) ~ Delta + SMB + HML + RMW + CMA + Mom"
-three_factor_model_finance = "(ri - RF) ~ Delta + SMB + HML + Finance"
-four_factor_model_finance = "(ri - RF) ~ Delta + SMB + HML + Mom + Finance"
-five_factor_model_finance = "(ri - RF) ~ Delta + SMB + HML + RMW + CMA + Finance"
-six_factor_model_finance = "(ri - RF) ~ Delta + SMB + HML + RMW + CMA + Mom + Finance"
 
 pnl_hedge_factors = c("RF","Delta","SMB","HML","RMW","CMA") # for the "strategy" hedge
 

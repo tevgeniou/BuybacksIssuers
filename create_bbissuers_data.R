@@ -15,30 +15,34 @@ source("library_files/lib_helpers.R", chdir=TRUE)
 source("library_files/latex_code.R")
 source("library_files/ff_industries_sic.R")
 source("Paper_global_parameters.R")
-# Used to get WRDS data through the API
-source("../FinanceLibraries/wrds_helpers.R", chdir=TRUE)
-source("~/Documents/WRDS_Drivers/startWRDSconnection.R") # This file has the username pasword for WRDS. These lines below. See wrds_config.R in FinanceLibraries
-# wrds_user <- "my_username"
-# wrds_pass <- "{SAS002}DBCC5712369DE1C65B19864C1564FB850F398DCF"
-# wrds_path <- "C:\\Users\\my_user\\Documents\\WRDS_Drivers\\"
-wrds_handle <- wrdsConnect()
 
+
+###################################################################################################
+# Get the raw data. These are not publicly available
 load("../FinanceData/created_monthly_data/GLOBAL_MONTHLY_DATABASE.Rdata")
 load("../FinanceData/created_yearly_data/GLOBAL_YEARLY_DATABASE.Rdata")
 load("../FinanceData/created_ibes_data/GLOBAL_IBES_DATABASE.Rdata")
 load("../FinanceData/created_buyback_data/GLOBAL_BUYBACK.Rdata")
 load("../FinanceData/created_issuers_data/GLOBAL_ISSUERS.Rdata")
 
-if (1){
+if (0){ # If we want to use wrds directly
+  # Used to get WRDS data through the API
+  source("../FinanceLibraries/wrds_helpers.R", chdir=TRUE)
+  source("~/Documents/WRDS_Drivers/startWRDSconnection.R") # This file has the username pasword for WRDS. These lines below. See wrds_config.R in FinanceLibraries
+  # wrds_user <- "my_username"
+  # wrds_pass <- "{SAS002}DBCC5712369DE1C65B19864C1564FB850F398DCF"
+  # wrds_path <- "C:\\Users\\my_user\\Documents\\WRDS_Drivers\\"
+  wrds_handle <- wrdsConnect()
+  GLOBAL_DAILY_DATABASE = list()
+  GLOBAL_DAILY_DATABASE$returns_daily <- wrdsQueryStockFieldMatrix(wrds_handle, colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly), "RET",start=as.Date("1980-01-01"))
+} else {
   load("../FinanceData/created_daily_data/GLOBAL_DAILY_DATABASE.Rdata")
   # We don't need these, so for memory purpose we remove 
   GLOBAL_DAILY_DATABASE$volume_daily <- NULL
   GLOBAL_DAILY_DATABASE$recent_volatility_daily <- NULL
   GLOBAL_DAILY_DATABASE$FamaFrench_five_factors <- NULL
-} else{ 
-  GLOBAL_DAILY_DATABASE = list()
-  GLOBAL_DAILY_DATABASE$returns_daily <- wrdsQueryStockFieldMatrix(wrds_handle, colnames(GLOBAL_MONTHLY_DATABASE$returns_monthly), "RET",start=as.Date("1980-01-01"))
 }
+
 
 ###################################################################################################
 # Some extra universe data variables we need for this project (based on the raw data)
@@ -591,6 +595,27 @@ ISSUERS_DATA$DATASET$CRSP$recent_performance_score = tmp[(match(ISSUERS_DATA$DAT
 sum(is.na(ISSUERS_DATA$DATASET$CRSP$recent_performance_score))
 
 
+###############################################################
+# Make the U-Index scores
+BUYBACK_DATA$Performance_used <- ifelse(is.na(BUYBACK_DATA$DATASET$CRSP$recent_performance_score), NA, ceiling(5*(1-BUYBACK_DATA$DATASET$CRSP$recent_performance_score)))
+BUYBACK_DATA$Performance_used[BUYBACK_DATA$Performance_used==0] <- 1
+BUYBACK_DATA$Size_used <- ifelse(is.na(BUYBACK_DATA$DATASET$CRSP$Market.Cap_score), NA, ceiling(5*(1-BUYBACK_DATA$DATASET$CRSP$Market.Cap_score)))
+BUYBACK_DATA$Size_used[BUYBACK_DATA$Size_used==0] <- 1
+# USE OUR BE.ME, NOT THE FF
+BUYBACK_DATA$BEME_used <- ifelse(is.na(BUYBACK_DATA$DATASET$CRSP$BE.ME_score), NA, ceiling(5*BUYBACK_DATA$DATASET$CRSP$BE.ME_score))
+BUYBACK_DATA$BEME_used[BUYBACK_DATA$BEME_used==0] <- 1
+BUYBACK_DATA$Valuation_Index = BUYBACK_DATA$Performance_used + BUYBACK_DATA$Size_used + BUYBACK_DATA$BEME_used 
+
+# Note differences from buybacks for performance and BE/ME 
+ISSUERS_DATA$Performance_used <- ifelse(is.na(ISSUERS_DATA$DATASET$CRSP$recent_performance_score), NA, ceiling(5*(ISSUERS_DATA$DATASET$CRSP$recent_performance_score)))
+ISSUERS_DATA$Performance_used[ISSUERS_DATA$Performance_used==0] <- 1
+ISSUERS_DATA$Size_used <- ifelse(is.na(ISSUERS_DATA$DATASET$CRSP$Market.Cap_score), NA, ceiling(5*(1-ISSUERS_DATA$DATASET$CRSP$Market.Cap_score)))
+ISSUERS_DATA$Size_used[ISSUERS_DATA$Size_used==0] <- 1
+# USE OUR BE.ME, NOT THE FF
+ISSUERS_DATA$BEME_used <- ifelse(is.na(ISSUERS_DATA$DATASET$CRSP$BE.ME_score), NA, ceiling(5*(1-ISSUERS_DATA$DATASET$CRSP$BE.ME_score)))
+ISSUERS_DATA$BEME_used[ISSUERS_DATA$BEME_used==0] <- 1
+ISSUERS_DATA$Valuation_Index = ISSUERS_DATA$Performance_used + ISSUERS_DATA$Size_used + ISSUERS_DATA$BEME_used 
+
 ##########################################################################################
 # Finally add the risk factors and the market 
 
@@ -602,7 +627,44 @@ BUYBACK_DATA$Market_daily = GLOBAL_DAILY_DATABASE$Market_Daily
 ISSUERS_DATA$Market_daily = GLOBAL_DAILY_DATABASE$Market_Daily
 
 ##########################################################################################
+########################################################################################################
+# Now get the pre-announce betas and returns - used for cross-sectional analyses- for ALL events
+# It is slow so we can do it only when needed. Also, first manually do the basic filtering (for missing data, basic size/price/etc filters etc) in filter_bbissuers_data.R
+
+# Buybacks first
+BUYBACK_PreEvent_Factor_coeffs <- event_study_factor_coeffs(BUYBACK_DATA$DATASET$returns_by_event_monthly, BUYBACK_DATA$DATASET$SDC$Event.Date,BUYBACK_DATA$Risk_Factors_Monthly)
+## Step 2: Calculate Monthly Estimated Risk-adjusted Return 
+factors_used_noRF = c("Delta","SMB","HML","RMW","CMA")
+Estimated_returns = Reduce(rbind,lapply(1:length(BUYBACK_PreEvent_Factor_coeffs), function(thestock){
+  this_stock_data = BUYBACK_PreEvent_Factor_coeffs[[thestock]]
+  apply(this_stock_data, 1, function(r)
+    ifelse(!is.na(sum(r)), r["actual_ret"] - r["RF_ret"] - sum(r[factors_used_noRF]*r[paste(factors_used_noRF,"ret", sep="_")]), NA)
+  )
+}))
+names(BUYBACK_PreEvent_Factor_coeffs) <- paste(BUYBACK_DATA$DATASET$SDC$permno, BUYBACK_DATA$DATASET$SDC$Event.Date, sep=" ")
+rownames(Estimated_returns) <- paste(BUYBACK_DATA$DATASET$SDC$permno, BUYBACK_DATA$DATASET$SDC$Event.Date, sep=" ")
+colnames(Estimated_returns)<- paste("Month", 1:ncol(Estimated_returns), sep=" ")
+save(BUYBACK_PreEvent_Factor_coeffs,Estimated_returns,file = "../FinanceData/created_projects_datasets/BUYBACKSnew_BSC1998_event_study_factor_coeffs.Rdata") #
+
+#############
+# Now issuers
+ISSUERS_PreEvent_Factor_coeffs <- event_study_factor_coeffs(ISSUERS_DATA$DATASET$returns_by_event_monthly, ISSUERS_DATA$DATASET$SDC$Event.Date,ISSUERS_DATA$Risk_Factors_Monthly)
+## Step 2: Calculate Monthly Estimated Risk-adjusted Return 
+factors_used_noRF = c("Delta","SMB","HML","RMW","CMA")
+Estimated_returns = Reduce(rbind,lapply(1:length(ISSUERS_PreEvent_Factor_coeffs), function(thestock){
+  this_stock_data = ISSUERS_PreEvent_Factor_coeffs[[thestock]]
+  apply(this_stock_data, 1, function(r)
+    ifelse(!is.na(sum(r)), r["actual_ret"] - r["RF_ret"] - sum(r[factors_used_noRF]*r[paste(factors_used_noRF,"ret", sep="_")]), NA)
+  )
+}))
+names(ISSUERS_PreEvent_Factor_coeffs) <- paste(ISSUERS_DATA$DATASET$SDC$permno, ISSUERS_DATA$DATASET$SDC$Event.Date, sep=" ")
+rownames(Estimated_returns) <- paste(ISSUERS_DATA$DATASET$SDC$permno, ISSUERS_DATA$DATASET$SDC$Event.Date, sep=" ")
+colnames(Estimated_returns)<- paste("Month", 1:ncol(Estimated_returns), sep=" ")
+save(ISSUERS_PreEvent_Factor_coeffs,Estimated_returns,file = "../FinanceData/created_projects_datasets/ISSUERSnew_BSC1998_event_study_factor_coeffs.Rdata") #
+
 ##########################################################################################
+
+# Finally save the main data structure
 
 save(BUYBACK_DATA, ISSUERS_DATA, file = "../FinanceData/created_projects_datasets/BUYBACKSnew.Rdata")
 
