@@ -47,7 +47,7 @@ getURLHeaders <- function(url) {
 }
 
 # Dropbox specific
-curlCachedLoad <- function(url, envir=parent.frame(), verbose=FALSE, folder="cache") {
+curlCachedLoad.Dropbox <- function(url, envir=parent.frame(), verbose=FALSE, folder="cache") {
   headers <- getURLHeaders(url)
   etag <- headers["etag"]
   filename <- sub("\"", "", sub("filename=\"", "", unlist(strsplit(headers["content-disposition"], "; "))[2]))
@@ -58,4 +58,41 @@ curlCachedLoad <- function(url, envir=parent.frame(), verbose=FALSE, folder="cac
     curlDownload(url, filecache)
   }
   load(filecache, envir, verbose)
+}
+
+# OneDrive specific
+getURLHeaders.OneDrive <- function(url) {
+  h <- basicHeaderGatherer()
+  result <- curlPerform(url=url, headerfunction=h$update)
+  headers <- h$value()
+  location <- headers["Location"] 
+  if (!is.na(location)) {
+    headers <- getURLHeaders(location)
+    headers <- c(location, headers)
+  }
+  headers
+}
+
+curlCachedLoad.OneDrive <- function(url, envir=parent.frame(), verbose=FALSE, folder="cache") {
+  headers <- getURLHeaders.OneDrive(url)
+  etag <- headers["CTag"]
+  filename <- strsplit(tail(strsplit(headers["Location"], "/")[[1]], 1), "\\?")[[1]][1]
+  filecache <- file.path(folder, paste0(filename, "-", etag))
+  if (!file.exists(filecache)) {
+    dir.create(folder, showWarnings=FALSE, recursive=TRUE)
+    suppressWarnings(file.remove(list.files(folder, pattern=filename, full.names=TRUE)))
+    curlDownload(url, filecache)
+  }
+  load(filecache, envir, verbose)
+}
+
+# Dropbox/OneDrive cached load()
+curlCachedLoad <- function(url, envir=parent.frame(), ...) {
+  if (grepl("dropbox.com", url)) {
+    curlCachedLoad.Dropbox(url, envir, ...)
+  } else if (grepl("onedrive.live.com", url)) {
+    curlCachedLoad.OneDrive(url, envir, ...)
+  } else {
+    stop("unsupported cloud storage host")
+  }
 }
