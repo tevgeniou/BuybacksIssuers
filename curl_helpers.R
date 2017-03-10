@@ -86,12 +86,28 @@ curlCachedLoad.OneDrive <- function(url, envir=parent.frame(), verbose=FALSE, fo
   load(filecache, envir, verbose)
 }
 
+# SharePoint specific
+curlCachedLoad.SharePoint <- function(url, envir=parent.frame(), verbose=FALSE, folder="cache") {
+  headers <- getURLHeaders(url)
+  etag <- gsub("\"", "", headers["ETag"])
+  filename <- sub("\"", "", sub("filename=\"", "", unlist(strsplit(headers["Content-Disposition"], ";"))[2]))
+  filecache <- file.path(folder, paste0(filename, "-", etag))
+  if (!file.exists(filecache)) {
+    dir.create(folder, showWarnings=FALSE, recursive=TRUE)
+    suppressWarnings(file.remove(list.files(folder, pattern=filename, full.names=TRUE)))
+    curlDownload(url, filecache)
+  }
+  load(filecache, envir, verbose)
+}
+
 # Dropbox/OneDrive cached load()
 curlCachedLoad <- function(url, envir=parent.frame(), ...) {
   if (grepl("dropbox.com", url)) {
     curlCachedLoad.Dropbox(url, envir, ...)
   } else if (grepl("onedrive.live.com", url)) {
     curlCachedLoad.OneDrive(url, envir, ...)
+  } else if (grepl("sharepoint.com", url)) {
+    curlCachedLoad.SharePoint(url, envir, ...)
   } else {
     stop("unsupported cloud storage host")
   }
