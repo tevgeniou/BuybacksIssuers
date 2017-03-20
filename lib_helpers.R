@@ -15,11 +15,9 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
     })
   }
   libraries_used=c("stringr","gtools","foreign","reshape2","digest","timeDate","devtools","knitr","graphics",
-                   "grDevices","xtable","sqldf","stargazer","data.table","shiny","htmlwidgets",
-                   "Hmisc","vegan","fpc","GPArotation",
-                   #"FactoMineR",
-                   "cluster","dygraphs",
-                   "psych","stringr","googleVis", "png","ggplot2","googleVis", "gridExtra","RcppArmadillo","xts","DescTools")
+                   "grDevices","xtable","sqldf","stargazer","data.table","shiny","htmlwidgets","Hmisc","vegan",
+                   "fpc","GPArotation","cluster","dygraphs","psych","googleVis", "png","ggplot2", "gridExtra",
+                   "RcppArmadillo","xts","DescTools")
   
   get_libraries(libraries_used)
   Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
