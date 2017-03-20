@@ -14,7 +14,7 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
       do.call(library,list(thelibrary))
     })
   }
-  libraries_used=c("stringr","gtools","reshape2","timeDate","graphics","xtable",
+  libraries_used=c("stringr","gtools","reshape2","timeDate","xtable",
   	               "data.table","shiny","psych","RcppArmadillo","xts")
   
   get_libraries(libraries_used)
