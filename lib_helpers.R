@@ -203,43 +203,6 @@ rolling_beta<-function(security,hedge,window){
 ################################################################################################################
 ################################################################################################################
 
-
-# A helper that creates yearly matrices for each firm characteristic,
-# aligned with the monthly data. Note the fiscal year use
-# (datadate is the end of the fiscal year)
-create_yearly_data <- function(value_used, template_matrix,all_compustat_data){
-  tmp_data = as.data.frame(data.table::dcast(all_compustat_data, datadate ~ LPERMNO,
-                                             fun.aggregate = function(r) ifelse(length(unique(r)) > 1, NA, unique(r)),
-                                             value.var=value_used)) 
-  # Convert tmp_data to matrix with dates as rownames
-  tmp = as.character(tmp_data$datadate)
-  tmp_data$datadate <- NULL
-  tmp_data <- as.matrix(tmp_data)
-  rownames(tmp_data) <- tmp
-  # Align with monthly data now
-  rownames(tmp_data) <- rownames(
-    template_matrix)[match(
-      str_sub(rownames(tmp_data),start=1,end=7),
-      str_sub(rownames(template_matrix),start=1,end=7))]
-  tmp_data = tmp_data[,intersect(colnames(tmp_data),
-                                 colnames(template_matrix))]
-  res = NA*template_matrix
-  res[rownames(tmp_data),colnames(tmp_data)] <- tmp_data  
-  # Fill in the gaps
-  # we need to start using the data from the "next month",
-  # after the fiscal year end
-  res = apply(res,2,function(r) {
-    x = fill_NA_previous(r);
-    if(is.na(tail(x,1)) & sum(!is.na(x))) {
-      x[pmin(length(x),tail(which(!is.na(x)),1):
-               (tail(which(!is.na(x)),1)+11))] <- x[tail(which(!is.na(x)),1)]
-    } 
-    c(NA,head(x,-1))
-  }) 
-  rownames(res) <- rownames(template_matrix)
-  res
-}
-
 # Creates cross-sectional percentile based scores for a given company characteristic. 
 get_cross_section_score <- function(company_feature_matrix, company_feature_matrix_used=NULL, zero_special = F, not_used = NULL){
   datacol = ncol(company_feature_matrix)
@@ -305,11 +268,11 @@ alpha_lm <- function(ri,Riskfactors,hedge_days, trade = 0) {
   runcoeff <- function(rj) {
     data    = Riskfactors[rownames(Riskfactors) >= min(names(rj)) & rownames(Riskfactors) <= max(names(rj)),,drop=F]
     data$rj = rj
-    model = fastLm(form,data=data)
+    model = RcppArmadillo::fastLm(form,data=data)
     return(summary(model)$coefficients[,1])
   }
   #names(ri) <- paste(str_sub(names(ri),start=1,end=7),"01",sep="-")
-  coeff <- running(ri,fun=runcoeff,width=hedge_days,allow.fewer = T)
+  coeff <- gtools::running(ri,fun=runcoeff,width=hedge_days,allow.fewer = T)
   coeffcorrection <- data.table::shift(t(coeff[NotRFfield,]),trade) * Riskfactors[,NotRFfield]
   if(dim(coeffcorrection)[1] !=1)
     coeffcorrection <- apply(coeffcorrection,1,sum)
