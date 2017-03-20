@@ -15,7 +15,7 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
     })
   }
   libraries_used=c("stringr","gtools","reshape2","timeDate","graphics","xtable",
-  	               "data.table","shiny","psych","ggplot2","RcppArmadillo","xts")
+  	               "data.table","shiny","psych","RcppArmadillo","xts")
   
   get_libraries(libraries_used)
   Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
