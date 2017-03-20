@@ -14,7 +14,7 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
       do.call(library,list(thelibrary))
     })
   }
-  libraries_used=c("stringr","gtools","timeDate","data.table","psych","RcppArmadillo","Hmisc")
+  libraries_used=c("stringr","gtools","timeDate","data.table","psych","RcppArmadillo","Hmisc","DescTools")
   
   get_libraries(libraries_used)
   Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
@@ -858,7 +858,7 @@ Betas <- function(x,y,Dates, EVENT_RETURNS,Riskfactors){
 
 create_dates_month <- function(Event_Date, allmonths) {
   last_available = tail(allmonths,1)
-  last_available = paste(format(AddMonths(as.Date(last_available),1),"%Y-%m"), "01",sep="-") # Just make it a date in the future
+  last_available = paste(format(DescTools::AddMonths(as.Date(last_available),1),"%Y-%m"), "01",sep="-") # Just make it a date in the future
   allmonths = sort(allmonths) # just in case
   allmonths = stringr::str_sub(allmonths, start=1,end=7)
   tmp = match(stringr::str_sub(Event_Date, start = 1, end = 7), stringr::str_sub(allmonths, start=1,end=7))
@@ -878,7 +878,7 @@ create_dates_month <- function(Event_Date, allmonths) {
 }
 
 is.crisis <- function(thedate, crisis_years, slack_pre=0, slack_post = 0)
-  sum(sapply(1:length(crisis_years), function(i) thedate >= AddMonths(crisis_years[[i]][1], - slack_pre*12) & thedate <= AddMonths(crisis_years[[i]][2], slack_post*12)))!=0
+  sum(sapply(1:length(crisis_years), function(i) thedate >= DescTools::AddMonths(crisis_years[[i]][1], - slack_pre*12) & thedate <= DescTools::AddMonths(crisis_years[[i]][2], slack_post*12)))!=0
 
 plot_crisis_dates <- function(all_ret_values, monthly = 1){
   if (class(all_ret_values) == "matrix" | class(all_ret_values) == "data.frame"){
