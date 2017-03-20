@@ -14,7 +14,7 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
       do.call(library,list(thelibrary))
     })
   }
-  libraries_used=c("stringr","gtools","timeDate","xtable",
+  libraries_used=c("stringr","gtools","timeDate",
   	               "data.table","shiny","psych","RcppArmadillo","xts")
   
   get_libraries(libraries_used)
@@ -55,14 +55,14 @@ yeardays<-function(x){
   365.25*length(x)/(ld-fd)
 }
 
-vol_pa<-function(x,exclude_zero=(x!=0), holidays = holidayNYSE()) {
-  if(is.null(names(x))){ good_days <- TRUE }else { good_days <- isBizday(as.timeDate(names(x)), holidays, wday = 1:5) }
+vol_pa<-function(x,exclude_zero=(x!=0), holidays = timeDate::holidayNYSE()) {
+  if(is.null(names(x))){ good_days <- TRUE }else { good_days <- timeDate::isBizday(timeDate::as.timeDate(names(x)), holidays, wday = 1:5) }
   x1<-drop(x[exclude_zero & good_days])
   sqrt(yeardays(x1))*sd(x1)
 }
 
-sharpe<-function(x,exclude_zero=(x!=0), holidays = holidayNYSE() ) {
-  if(is.null(names(x))){ good_days <- TRUE }else { good_days <- isBizday(as.timeDate(names(x)), holidays, wday = 1:5) }
+sharpe<-function(x,exclude_zero=(x!=0), holidays = timeDate::holidayNYSE() ) {
+  if(is.null(names(x))){ good_days <- TRUE }else { good_days <- timeDate::isBizday(timeDate::as.timeDate(names(x)), holidays, wday = 1:5) }
   x1<-drop(x[exclude_zero & good_days])
   round(yeardays(x1)*mean(x1)/vol_pa(x1),digits=2)   # annualized
 }
@@ -271,7 +271,7 @@ alpha_lm <- function(ri,Riskfactors,hedge_days, trade = 0) {
     model = RcppArmadillo::fastLm(form,data=data)
     return(summary(model)$coefficients[,1])
   }
-  #names(ri) <- paste(str_sub(names(ri),start=1,end=7),"01",sep="-")
+  #names(ri) <- paste(stringr::str_sub(names(ri),start=1,end=7),"01",sep="-")
   coeff <- gtools::running(ri,fun=runcoeff,width=hedge_days,allow.fewer = T)
   coeffcorrection <- data.table::shift(t(coeff[NotRFfield,]),trade) * Riskfactors[,NotRFfield]
   if(dim(coeffcorrection)[1] !=1)
@@ -329,11 +329,11 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
     rownames(Risk_Factors_Monthly) <- dates
   }
   # Make all data have monthly dates on first of month:
-  rownames(returns) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
-  rownames(Risk_Factors_Monthly) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(returns) <- paste(stringr::str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(Risk_Factors_Monthly) <- paste(stringr::str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
   
   ###
-  factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
+  factors_used = setdiff(unlist(stringr::str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   min_window = min(1,min_window)
   max_window = max(-1,max_window)
   allmonths = min_window:max_window
@@ -356,7 +356,7 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   }
   
   #Step 1: Build an event matrix, where all the events are aligned by event month as opposed to calendar month
-  Event.Date = paste(str_sub(Event.Date,start=1,end=7), "01", sep="-") # just in case
+  Event.Date = paste(stringr::str_sub(Event.Date,start=1,end=7), "01", sep="-") # just in case
   Row.Date <- as.Date(rownames(returns))
   Row.Date_number = as.numeric(Row.Date)
   Event.Date_number = as.numeric(as.Date(Event.Date))
@@ -484,11 +484,11 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
     rownames(Risk_Factors_Monthly) <- dates
   }
   # Make all data have monthly dates on first of month:
-  rownames(returns) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
-  rownames(Risk_Factors_Monthly) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(returns) <- paste(stringr::str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(Risk_Factors_Monthly) <- paste(stringr::str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
   
   ### 
-  factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
+  factors_used = setdiff(unlist(stringr::str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   factors_used_noRF = setdiff(factors_used, "RF")
   min_window = min(1,min_window)
   max_window = max(-1,max_window)
@@ -513,7 +513,7 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
   
   Row.Date <- as.Date(rownames(returns))
   form  = as.formula(formula_used)
-  Event.Date = paste(str_sub(Event.Date,start=1,end=7), "01", sep="-") # just in case
+  Event.Date = paste(stringr::str_sub(Event.Date,start=1,end=7), "01", sep="-") # just in case
   Risk_Factors_Monthly = Risk_Factors_Monthly[,factors_used]
   if (!("RF" %in% factors_used)){
     Risk_Factors_Monthly = cbind(Risk_Factors_Monthly,matrix(0,nrow=nrow(Risk_Factors_Monthly)))
@@ -589,7 +589,7 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
 event_study_factor_coeffs <- function(returns,Event.Date, Risk_Factors_Monthly,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA", rolling_window=60, timeperiods_requested = 1:48, min_data = 10){
   # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
   # Keep track also of the risk and stock returns the next month - where we will do the predictions
-  factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
+  factors_used = setdiff(unlist(stringr::str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   if (sum(!(factors_used %in% colnames(Risk_Factors_Monthly))))
     stop(paste("BSC1998_event_study misses the risk factors: ",factors_used[!(factors_used %in% colnames(Risk_Factors_Monthly))]))
   
@@ -604,8 +604,8 @@ event_study_factor_coeffs <- function(returns,Event.Date, Risk_Factors_Monthly,f
   
   
   #Step 1: Build an event matrix, where all the events are aligned by event month as opposed to calendar month
-  returns_month = str_sub(rownames(returns), start=1,end=7)
-  Event.Date = str_sub(Event.Date,start=1,end=7)
+  returns_month = stringr::str_sub(rownames(returns), start=1,end=7)
+  Event.Date = stringr::str_sub(Event.Date,start=1,end=7)
   firstHit = match(Event.Date,returns_month)
   if (sum(is.na(firstHit)) !=0)
     print("\nSOME EVENTS SEEM TO BE OUTISDE THE RANGE OF DATES OF THE RISK FACTORS...\n")
@@ -644,7 +644,7 @@ event_study_factor_coeffs <- function(returns,Event.Date, Risk_Factors_Monthly,f
 # PART II OF BSC1998_event_study
 BSC1998_event_study_coeffs <- function(Estimated_returns,company_features,timeperiods_requested = 1:48,square_features=NULL,nomissing_allowed,  
                                        instrumental_var_endogenous = NULL, instrumental_var_IVs = NULL, company_features_instrumental = NULL, 
-                                       remove_vars_report = function(varname) !str_detect(varname,"dummies")){
+                                       remove_vars_report = function(varname) !stringr::str_detect(varname,"dummies")){
   # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
   # Assumes factor_loadings comes from event_study_factor_coeffs using the exact same inputs
   ## Step 1: Estimate Factor Loadings for the requested months (so month 0 is the event month)
@@ -653,13 +653,13 @@ BSC1998_event_study_coeffs <- function(Estimated_returns,company_features,timepe
   ## Step 3: Run Cross-Section Regression in Each Post-Event Month, from 1-48 months
   rownames(company_features) <- rownames(Estimated_returns)
   colnames(company_features) <- sapply(colnames(company_features), function(i){
-    while(str_detect(i, " ")) i = str_replace(i, " ","_")
-    while(str_detect(i, "\\(")) i = str_replace(i, "\\(","_")
-    while(str_detect(i, "\\)")) i = str_replace(i, "\\)","_")
-    while(str_detect(i, "\\+")) i = str_replace(i, "\\+","_")
-    while(str_detect(i, "-")) i = str_replace(i, "-","_")
-    while(str_detect(i, "/")) i = str_replace(i, "/","_")
-    while(str_detect(i, "\\*")) i = str_replace(i, "\\*","_")
+    while(stringr::str_detect(i, " ")) i = stringr::str_replace(i, " ","_")
+    while(stringr::str_detect(i, "\\(")) i = stringr::str_replace(i, "\\(","_")
+    while(stringr::str_detect(i, "\\)")) i = stringr::str_replace(i, "\\)","_")
+    while(stringr::str_detect(i, "\\+")) i = stringr::str_replace(i, "\\+","_")
+    while(stringr::str_detect(i, "-")) i = stringr::str_replace(i, "-","_")
+    while(stringr::str_detect(i, "/")) i = stringr::str_replace(i, "/","_")
+    while(stringr::str_detect(i, "\\*")) i = stringr::str_replace(i, "\\*","_")
     i}) 
   
   
@@ -674,22 +674,22 @@ BSC1998_event_study_coeffs <- function(Estimated_returns,company_features,timepe
   if (!is.null(instrumental_var_endogenous)){
     rownames(company_features_instrumental) <- rownames(Estimated_returns)
     colnames(company_features_instrumental) <- sapply(colnames(company_features_instrumental), function(i){
-      while(str_detect(i, " ")) i = str_replace(i, " ","_")
-      while(str_detect(i, "\\(")) i = str_replace(i, "\\(","_")
-      while(str_detect(i, "\\)")) i = str_replace(i, "\\)","_")
-      while(str_detect(i, "\\+")) i = str_replace(i, "\\+","_")
-      while(str_detect(i, "-")) i = str_replace(i, "-","_")
-      while(str_detect(i, "/")) i = str_replace(i, "/","_")
-      while(str_detect(i, "\\*")) i = str_replace(i, "\\*","_")
+      while(stringr::str_detect(i, " ")) i = stringr::str_replace(i, " ","_")
+      while(stringr::str_detect(i, "\\(")) i = stringr::str_replace(i, "\\(","_")
+      while(stringr::str_detect(i, "\\)")) i = stringr::str_replace(i, "\\)","_")
+      while(stringr::str_detect(i, "\\+")) i = stringr::str_replace(i, "\\+","_")
+      while(stringr::str_detect(i, "-")) i = stringr::str_replace(i, "-","_")
+      while(stringr::str_detect(i, "/")) i = stringr::str_replace(i, "/","_")
+      while(stringr::str_detect(i, "\\*")) i = stringr::str_replace(i, "\\*","_")
       i}) 
     instrumental_var_IVs <- sapply(instrumental_var_IVs,function(i){
-      while(str_detect(i, " ")) i = str_replace(i, " ","_")
-      while(str_detect(i, "\\(")) i = str_replace(i, "\\(","_")
-      while(str_detect(i, "\\)")) i = str_replace(i, "\\)","_")
-      while(str_detect(i, "\\+")) i = str_replace(i, "\\+","_")
-      while(str_detect(i, "-")) i = str_replace(i, "-","_")
-      while(str_detect(i, "/")) i = str_replace(i, "/","_")
-      while(str_detect(i, "\\*")) i = str_replace(i, "\\*","_")
+      while(stringr::str_detect(i, " ")) i = stringr::str_replace(i, " ","_")
+      while(stringr::str_detect(i, "\\(")) i = stringr::str_replace(i, "\\(","_")
+      while(stringr::str_detect(i, "\\)")) i = stringr::str_replace(i, "\\)","_")
+      while(stringr::str_detect(i, "\\+")) i = stringr::str_replace(i, "\\+","_")
+      while(stringr::str_detect(i, "-")) i = stringr::str_replace(i, "-","_")
+      while(stringr::str_detect(i, "/")) i = stringr::str_replace(i, "/","_")
+      while(stringr::str_detect(i, "\\*")) i = stringr::str_replace(i, "\\*","_")
       i})
     
     
@@ -704,7 +704,7 @@ BSC1998_event_study_coeffs <- function(Estimated_returns,company_features,timepe
     tmp = predict(simple.ed.1s)
     
     # keep instrument strength ets
-    cross_setional_form <- str_replace(cross_setional_form," \\+ instrumental_var", "")
+    cross_setional_form <- stringr::str_replace(cross_setional_form," \\+ instrumental_var", "")
     instr.strength.regression <- lm(cross_setional_form, data=company_features_instrumental)
     inst_results =  list(
       inst_strength = c(waldtest(simple.ed.1s, instr.strength.regression)$F[2],
@@ -861,8 +861,8 @@ create_dates_month <- function(Event_Date, allmonths) {
   last_available = tail(allmonths,1)
   last_available = paste(format(AddMonths(as.Date(last_available),1),"%Y-%m"), "01",sep="-") # Just make it a date in the future
   allmonths = sort(allmonths) # just in case
-  allmonths = str_sub(allmonths, start=1,end=7)
-  tmp = match(str_sub(Event_Date, start = 1, end = 7), str_sub(allmonths, start=1,end=7))
+  allmonths = stringr::str_sub(allmonths, start=1,end=7)
+  tmp = match(stringr::str_sub(Event_Date, start = 1, end = 7), stringr::str_sub(allmonths, start=1,end=7))
   
   Trading.Day = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1, length(allmonths))], "01",sep="-"), last_available)
   One.Month.After = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1+1, length(allmonths))], "01",sep="-"), last_available)
