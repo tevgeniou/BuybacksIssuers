@@ -14,7 +14,7 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
       do.call(library,list(thelibrary))
     })
   }
-  libraries_used=c("stringr","gtools","timeDate","data.table","psych","RcppArmadillo")
+  libraries_used=c("stringr","gtools","timeDate","data.table","psych","RcppArmadillo","Hmisc")
   
   get_libraries(libraries_used)
   Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
