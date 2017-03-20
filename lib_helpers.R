@@ -40,8 +40,10 @@ my_summary <- function(x){
   res
 }
 
-non_na_mean <- function(x) { mean(x[!is.na(x) & x != 0]) }
-non_na_sd <- function(x) { sd(x[!is.na(x) & x != 0]) }
+non_na_mean <- function(x) { mean(x[!is.na(x)]) }
+non_na_sd <- function(x) { sd(x[!is.na(x)]) }
+non_na_zero_mean <- function(x) { mean(x[!is.na(x) & x != 0]) }
+non_na_zero_sd <- function(x) { sd(x[!is.na(x) & x != 0]) }
 
 remove_initialization_time <- function(x,min_date=NULL) { # Note: Added also min_date as an argument!! THis way we remove data from any given date!
   if (!is.null(min_date)){
