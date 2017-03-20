@@ -14,12 +14,7 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
       do.call(library,list(thelibrary))
     })
   }
-  libraries_used=c("stringr","gtools","foreign","reshape2","digest","timeDate","devtools","knitr","graphics",
-                   "grDevices","xtable","sqldf","stargazer","data.table","shiny","htmlwidgets",
-                   "Hmisc","vegan","fpc","GPArotation",
-                   #"FactoMineR",
-                   "cluster","dygraphs",
-                   "psych","stringr","googleVis", "png","ggplot2","googleVis", "gridExtra","RcppArmadillo","xts","DescTools")
+  libraries_used=c("stringr","gtools","timeDate","data.table","psych","RcppArmadillo")
   
   get_libraries(libraries_used)
   Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
@@ -33,17 +28,7 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
 options(stringsAsFactors=FALSE)
 
 
-# Summary table
-my_summary <- function(x){
-  nas = sum(is.na(x))
-  x=x[!is.na(x)]
-  res = c(mean(x), median(x),min(x),quantile(x,0.1), quantile(x,0.25), quantile(x,0,95), quantile(x,0.9), max(x), sd(x), length(x))
-  names(res) <- c("mean", "p50", "min", "p10", "p25", "p75","p90","max","sd", "N")
-  res
-}
-
-non_na_mean <- function(x) { mean(x[!is.na(x) & x != 0]) }
-non_na_sd <- function(x) { sd(x[!is.na(x) & x != 0]) }
+non_na_mean <- function(x) { mean(x[!is.na(x)]) }
 
 remove_initialization_time <- function(x,min_date=NULL) { # Note: Added also min_date as an argument!! THis way we remove data from any given date!
   if (!is.null(min_date)){
@@ -53,9 +38,6 @@ remove_initialization_time <- function(x,min_date=NULL) { # Note: Added also min
       res = x
     } else {
       if (sum(x!=0) != 0){
-        #res = tail(res, -head(which(diff(res)!=0),1))
-        #names(res) <- tail(names(res), -head(which(diff(res)!=0),1))
-        
         tmp <- names(x)
         ending <- -head(which(diff(x)!=0),1)
         res = tail(x, ending)
@@ -72,19 +54,17 @@ yeardays<-function(x){
   365.25*length(x)/(ld-fd)
 }
 
-vol_pa<-function(x,exclude_zero=(x!=0), holidays = holidayNYSE()) {
-  if(is.null(names(x))){ good_days <- TRUE }else { good_days <- isBizday(as.timeDate(names(x)), holidays, wday = 1:5) }
+vol_pa<-function(x,exclude_zero=(x!=0), holidays = timeDate::holidayNYSE()) {
+  if(is.null(names(x))){ good_days <- TRUE }else { good_days <- timeDate::isBizday(timeDate::as.timeDate(names(x)), holidays, wday = 1:5) }
   x1<-drop(x[exclude_zero & good_days])
   sqrt(yeardays(x1))*sd(x1)
 }
 
-sharpe<-function(x,exclude_zero=(x!=0), holidays = holidayNYSE() ) {
-  if(is.null(names(x))){ good_days <- TRUE }else { good_days <- isBizday(as.timeDate(names(x)), holidays, wday = 1:5) }
+sharpe<-function(x,exclude_zero=(x!=0), holidays = timeDate::holidayNYSE() ) {
+  if(is.null(names(x))){ good_days <- TRUE }else { good_days <- timeDate::isBizday(timeDate::as.timeDate(names(x)), holidays, wday = 1:5) }
   x1<-drop(x[exclude_zero & good_days])
   round(yeardays(x1)*mean(x1)/vol_pa(x1),digits=2)   # annualized
 }
-
-bps<-function(x,exclude_zero=(x!=0))round(10000*mean(drop(x[exclude_zero])),digits=2)
 
 drawdown<-function(x){
   scaling = ifelse(max(abs(x)) < 20, 100, 1)
@@ -128,8 +108,6 @@ pnl_matrix<-function(perf, digits = 2){
   round(cbind(res,Year=apply(res,1,function(r)prod(r[!is.na(r)]+1)-1))*100,digits=2)
 }
 
-show_stats<-function(x)paste(names(pnl_stats(x)),pnl_stats(x),sep=":",collapse=" \\textbar ")
-
 ###
 
 # if number of non-zeroes of x is less than n, return 0, else return the mean of the non-zero entries 
@@ -159,7 +137,6 @@ scrub<-function(x){
 }
 
 # Fill NAs with earlier values
-
 fill_NA_previous <- function(x, lastfill = F){
   if (sum(!is.na(x)) == 0)
     return(x)
@@ -172,59 +149,6 @@ fill_NA_previous <- function(x, lastfill = F){
     x[tail(non_na,1):length(x)] <- x[tail(non_na,1)]
   x
 }
-
-######
-
-# roll function over multiple matrix rows, in parallel. mapply for matrices.
-multiroll_fun<-function(fun,w,...,MoreArgs=NULL,verbose=identity){
-  data<-list(...)
-  if(length(data)==0)stop("multiroll: data required")
-  if(length(data)!=length(formals(fun)))stop("multiroll: fun arg count differs from data length")
-  if(!all(unlist(lapply(data,class))=="matrix"))stop("multiroll: only matrix")
-  if( length(unique(unlist(lapply(data,nrow))))!=1 )stop("multiroll: all matrices must have same rows")
-  p<-nrow(data[[1]])
-  ndx<-t(matrix(c(0,w-1),nrow=2,ncol=p-w+1)+t(matrix(1:(p-w+1),ncol=2,nrow=p-w+1)))
-  res<-t(simplify2array(apply(ndx,1,function(r){
-    window_res<-do.call(fun,c(lapply(data,function(m)m[r[1]:r[2],,drop=FALSE]),MoreArgs))
-    if(class(verbose)=="function")cat(r[2]," ",verbose(window_res),"\n")
-    window_res
-  })))
-  if(class(res)=="matrix")rownames(res)<-rownames(data[[1]])[ndx[,2]] else names(res)<-rownames(data[[1]])[ndx[,2]]
-  res
-}
-
-# apply function to matrix, matrix result
-row_apply<-function(m,f,...){
-  if(class(m)!="matrix")return(NULL)
-  if(!any(class(f)%in%c("function","standardGeneric")))return(NULL)
-  mcol<-ncol(m)
-  res<-t(apply(m,1,function(r){
-    row_res<-drop(unlist(f(r,...)))
-    if(length(row_res)==1)return(rep(row_res,mcol))
-    if(length(row_res)==mcol)return(row_res)
-    return(rep(0,length(r)))
-  }))
-  dimnames(res)<-dimnames(m)
-  res
-}
-
-# apply function to matrix, matrix result
-col_apply<-function(m,f,...){
-  if(class(m)!="matrix")return(NULL)
-  if(!any(class(f)%in%c("function","standardGeneric")))return(NULL)
-  mrow<-nrow(m)
-  res<-apply(m,2,function(r){
-    row_res<-drop(unlist(f(r,...)))
-    if(length(row_res)==1)return(rep(row_res,mrow))
-    if(length(row_res)==mrow)return(row_res)
-    return(rep(0,length(r)))
-  })
-  dimnames(res)<-dimnames(m)
-  res
-}
-
-"%-%"<-row_apply
-"%|%"<-col_apply
 
 ################################################################################################################
 ################################################################################################################
@@ -272,56 +196,11 @@ rolling_beta<-function(security,hedge,window){
   ifelse(variance>0,covariance/variance,0)
 }
 
-alpha_ff <- function(ri,RiskFactors,Risk_Factors_Equation) {
-  data  = RiskFactors
-  data$ri = ri
-  form  = as.formula(Risk_Factors_Equation)
-  model = lm(form,data=data)
-  alpha = summary(model)$coefficients[1]
-}
-
 ################################################################################################################
 ################################################################################################################
 # DATASET CREATION RELATED FUNCTIONS
 ################################################################################################################
 ################################################################################################################
-
-
-# A helper that creates yearly matrices for each firm characteristic,
-# aligned with the monthly data. Note the fiscal year use
-# (datadate is the end of the fiscal year)
-create_yearly_data <- function(value_used, template_matrix,all_compustat_data){
-  tmp_data = as.data.frame(dcast(all_compustat_data, datadate ~ LPERMNO,
-                                 fun.aggregate = function(r) ifelse(length(unique(r)) > 1, NA, unique(r)),
-                                 value.var=value_used)) 
-  # Convert tmp_data to matrix with dates as rownames
-  tmp = as.character(tmp_data$datadate)
-  tmp_data$datadate <- NULL
-  tmp_data <- as.matrix(tmp_data)
-  rownames(tmp_data) <- tmp
-  # Align with monthly data now
-  rownames(tmp_data) <- rownames(
-    template_matrix)[match(
-      str_sub(rownames(tmp_data),start=1,end=7),
-      str_sub(rownames(template_matrix),start=1,end=7))]
-  tmp_data = tmp_data[,intersect(colnames(tmp_data),
-                                 colnames(template_matrix))]
-  res = NA*template_matrix
-  res[rownames(tmp_data),colnames(tmp_data)] <- tmp_data  
-  # Fill in the gaps
-  # we need to start using the data from the "next month",
-  # after the fiscal year end
-  res = apply(res,2,function(r) {
-    x = fill_NA_previous(r);
-    if(is.na(tail(x,1)) & sum(!is.na(x))) {
-      x[pmin(length(x),tail(which(!is.na(x)),1):
-               (tail(which(!is.na(x)),1)+11))] <- x[tail(which(!is.na(x)),1)]
-    } 
-    c(NA,head(x,-1))
-  }) 
-  rownames(res) <- rownames(template_matrix)
-  res
-}
 
 # Creates cross-sectional percentile based scores for a given company characteristic. 
 get_cross_section_score <- function(company_feature_matrix, company_feature_matrix_used=NULL, zero_special = F, not_used = NULL){
@@ -353,79 +232,6 @@ get_cross_section_score <- function(company_feature_matrix, company_feature_matr
     res
   }))
   rownames(tmp) <- rownames(company_feature_matrix)
-  tmp
-}
-
-# Creates cross-sectional percentile based scores for a given company characteristic PER INDUSTRY
-# ASSUMES company_feature_matrix, company_feature_matrix_used, industry_matrix have the same number of colunns!! (for now - needs fixing/clean up)
-# All inputs must be numeric
-get_cross_section_score_industry <- function(company_feature_matrix, company_feature_matrix_used=NULL,industry_matrix, zero_special = F, not_used = NULL){
-  
-  # zero_special is FALSE if we also score the 0s. When zero_special is TRUE then we don't score the 0s. 
-  company_feature_matrix[company_feature_matrix %in% not_used] <- NA
-  if (is.null(company_feature_matrix_used))
-    company_feature_matrix_used = company_feature_matrix
-  
-  resall = company_feature_matrix[1,]*NA
-  names(resall) <- 1:length(resall)
-  
-  tmp = Reduce(rbind,lapply(1:nrow(company_feature_matrix), function(iter){
-    r_scored = company_feature_matrix[iter,] 
-    r_ecdf = company_feature_matrix_used[iter,]
-    r_industry = industry_matrix[iter,] 
-    # !!! ************************ Assumes same length!!! ************************
-    names(r_scored) <- names(r_ecdf) <- names(r_industry) <- 1:length(r_industry)
-    res = resall # Default
-    
-    if (!zero_special){
-      r_scored = scrub(r_scored)
-      r_ecdf = scrub(r_ecdf)
-      if (sum(r_ecdf !=0)) {   # Note: we don't use both NAs and 0s
-        # Do it by industry
-        res = unlist(lapply(unique(r_industry[!is.na(r_industry)]), function(ind) {
-          r_ecdfi = r_ecdf[r_industry %in% ind]
-          r_scoredi = r_scored[r_industry %in% ind]
-          resi = resall[r_industry %in% ind]
-          if (sum(r_ecdfi != 0)){
-            score_fun = ecdf(r_ecdfi[r_ecdfi!= 0])
-            resi = ifelse(r_scoredi!=0, score_fun(r_scoredi),NA)
-          }
-          names(resi) <- names(r_scoredi)
-          resi
-        }))
-        # add the NA industries now
-        tmp = rep(NA,sum(is.na(r_industry)))
-        names(tmp) <- names(r_industry[is.na(r_industry)])
-        res = c(res,tmp)
-        # Just re-order now
-        res = res[names(r_scored)]
-      }
-    } else {
-      if (sum(!is.na(r_ecdf))) {   # Note: we don't use NAs only here
-        # Do it by industry
-        res = unlist(lapply(unique(r_industry[!is.na(r_industry)]), function(ind) {
-          r_ecdfi = r_ecdf[r_industry %in% ind]
-          r_scoredi = r_scored[r_industry %in% ind]
-          resi = resall[r_industry %in% ind]
-          if (sum(!is.na(r_ecdfi))){
-            score_fun = ecdf(r_ecdfi[!is.na(r_ecdfi)])
-            resi = ifelse(!is.na(r_scoredi), score_fun(r_scoredi),NA)
-          }
-          names(resi) <- names(r_scoredi)
-          resi
-        }))
-        # add the NA industries now
-        tmp = rep(NA,sum(is.na(r_industry)))
-        names(tmp) <- names(r_industry[is.na(r_industry)])
-        res = c(res,tmp)
-        # Just re-order now
-        res = res[names(r_scored)]
-      }
-    }
-    res
-  }))
-  rownames(tmp) <- rownames(company_feature_matrix)
-  colnames(tmp) <- colnames(company_feature_matrix)
   tmp
 }
 
@@ -461,12 +267,12 @@ alpha_lm <- function(ri,Riskfactors,hedge_days, trade = 0) {
   runcoeff <- function(rj) {
     data    = Riskfactors[rownames(Riskfactors) >= min(names(rj)) & rownames(Riskfactors) <= max(names(rj)),,drop=F]
     data$rj = rj
-    model = fastLm(form,data=data)
+    model = RcppArmadillo::fastLm(form,data=data)
     return(summary(model)$coefficients[,1])
   }
-  #names(ri) <- paste(str_sub(names(ri),start=1,end=7),"01",sep="-")
-  coeff <- running(ri,fun=runcoeff,width=hedge_days,allow.fewer = T)
-  coeffcorrection <- shift(t(coeff[NotRFfield,]),trade) * Riskfactors[,NotRFfield]
+  #names(ri) <- paste(stringr::str_sub(names(ri),start=1,end=7),"01",sep="-")
+  coeff <- gtools::running(ri,fun=runcoeff,width=hedge_days,allow.fewer = T)
+  coeffcorrection <- data.table::shift(t(coeff[NotRFfield,]),trade) * Riskfactors[,NotRFfield]
   if(dim(coeffcorrection)[1] !=1)
     coeffcorrection <- apply(coeffcorrection,1,sum)
   alpha <- (ri - coeffcorrection)
@@ -522,11 +328,11 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
     rownames(Risk_Factors_Monthly) <- dates
   }
   # Make all data have monthly dates on first of month:
-  rownames(returns) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
-  rownames(Risk_Factors_Monthly) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(returns) <- paste(stringr::str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(Risk_Factors_Monthly) <- paste(stringr::str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
   
   ###
-  factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
+  factors_used = setdiff(unlist(stringr::str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   min_window = min(1,min_window)
   max_window = max(-1,max_window)
   allmonths = min_window:max_window
@@ -549,7 +355,7 @@ car_table <- function(returns,Event.Date,Risk_Factors_Monthly,min_window = -6, m
   }
   
   #Step 1: Build an event matrix, where all the events are aligned by event month as opposed to calendar month
-  Event.Date = paste(str_sub(Event.Date,start=1,end=7), "01", sep="-") # just in case
+  Event.Date = paste(stringr::str_sub(Event.Date,start=1,end=7), "01", sep="-") # just in case
   Row.Date <- as.Date(rownames(returns))
   Row.Date_number = as.numeric(Row.Date)
   Event.Date_number = as.numeric(as.Date(Event.Date))
@@ -677,11 +483,11 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
     rownames(Risk_Factors_Monthly) <- dates
   }
   # Make all data have monthly dates on first of month:
-  rownames(returns) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
-  rownames(Risk_Factors_Monthly) <- paste(str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(returns) <- paste(stringr::str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
+  rownames(Risk_Factors_Monthly) <- paste(stringr::str_sub(rownames(Risk_Factors_Monthly), start=1,end=7),"01",sep="-")
   
   ### 
-  factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
+  factors_used = setdiff(unlist(stringr::str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   factors_used_noRF = setdiff(factors_used, "RF")
   min_window = min(1,min_window)
   max_window = max(-1,max_window)
@@ -706,7 +512,7 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
   
   Row.Date <- as.Date(rownames(returns))
   form  = as.formula(formula_used)
-  Event.Date = paste(str_sub(Event.Date,start=1,end=7), "01", sep="-") # just in case
+  Event.Date = paste(stringr::str_sub(Event.Date,start=1,end=7), "01", sep="-") # just in case
   Risk_Factors_Monthly = Risk_Factors_Monthly[,factors_used]
   if (!("RF" %in% factors_used)){
     Risk_Factors_Monthly = cbind(Risk_Factors_Monthly,matrix(0,nrow=nrow(Risk_Factors_Monthly)))
@@ -782,7 +588,7 @@ calendar_table <- function(returns,Event.Date, Risk_Factors_Monthly,min_window =
 event_study_factor_coeffs <- function(returns,Event.Date, Risk_Factors_Monthly,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA", rolling_window=60, timeperiods_requested = 1:48, min_data = 10){
   # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
   # Keep track also of the risk and stock returns the next month - where we will do the predictions
-  factors_used = setdiff(unlist(str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
+  factors_used = setdiff(unlist(stringr::str_split(gsub("~", ",", gsub("\\-", ",", gsub("\\+", ",", gsub("\\)", "",gsub("\\(", "",formula_used))))), " , ")),"ri")
   if (sum(!(factors_used %in% colnames(Risk_Factors_Monthly))))
     stop(paste("BSC1998_event_study misses the risk factors: ",factors_used[!(factors_used %in% colnames(Risk_Factors_Monthly))]))
   
@@ -797,8 +603,8 @@ event_study_factor_coeffs <- function(returns,Event.Date, Risk_Factors_Monthly,f
   
   
   #Step 1: Build an event matrix, where all the events are aligned by event month as opposed to calendar month
-  returns_month = str_sub(rownames(returns), start=1,end=7)
-  Event.Date = str_sub(Event.Date,start=1,end=7)
+  returns_month = stringr::str_sub(rownames(returns), start=1,end=7)
+  Event.Date = stringr::str_sub(Event.Date,start=1,end=7)
   firstHit = match(Event.Date,returns_month)
   if (sum(is.na(firstHit)) !=0)
     print("\nSOME EVENTS SEEM TO BE OUTISDE THE RANGE OF DATES OF THE RISK FACTORS...\n")
@@ -837,7 +643,7 @@ event_study_factor_coeffs <- function(returns,Event.Date, Risk_Factors_Monthly,f
 # PART II OF BSC1998_event_study
 BSC1998_event_study_coeffs <- function(Estimated_returns,company_features,timeperiods_requested = 1:48,square_features=NULL,nomissing_allowed,  
                                        instrumental_var_endogenous = NULL, instrumental_var_IVs = NULL, company_features_instrumental = NULL, 
-                                       remove_vars_report = function(varname) !str_detect(varname,"dummies")){
+                                       remove_vars_report = function(varname) !stringr::str_detect(varname,"dummies")){
   # assumes returns has one column per event, so number of columns equal to Event.Date. Rows are months
   # Assumes factor_loadings comes from event_study_factor_coeffs using the exact same inputs
   ## Step 1: Estimate Factor Loadings for the requested months (so month 0 is the event month)
@@ -846,13 +652,13 @@ BSC1998_event_study_coeffs <- function(Estimated_returns,company_features,timepe
   ## Step 3: Run Cross-Section Regression in Each Post-Event Month, from 1-48 months
   rownames(company_features) <- rownames(Estimated_returns)
   colnames(company_features) <- sapply(colnames(company_features), function(i){
-    while(str_detect(i, " ")) i = str_replace(i, " ","_")
-    while(str_detect(i, "\\(")) i = str_replace(i, "\\(","_")
-    while(str_detect(i, "\\)")) i = str_replace(i, "\\)","_")
-    while(str_detect(i, "\\+")) i = str_replace(i, "\\+","_")
-    while(str_detect(i, "-")) i = str_replace(i, "-","_")
-    while(str_detect(i, "/")) i = str_replace(i, "/","_")
-    while(str_detect(i, "\\*")) i = str_replace(i, "\\*","_")
+    while(stringr::str_detect(i, " ")) i = stringr::str_replace(i, " ","_")
+    while(stringr::str_detect(i, "\\(")) i = stringr::str_replace(i, "\\(","_")
+    while(stringr::str_detect(i, "\\)")) i = stringr::str_replace(i, "\\)","_")
+    while(stringr::str_detect(i, "\\+")) i = stringr::str_replace(i, "\\+","_")
+    while(stringr::str_detect(i, "-")) i = stringr::str_replace(i, "-","_")
+    while(stringr::str_detect(i, "/")) i = stringr::str_replace(i, "/","_")
+    while(stringr::str_detect(i, "\\*")) i = stringr::str_replace(i, "\\*","_")
     i}) 
   
   
@@ -867,22 +673,22 @@ BSC1998_event_study_coeffs <- function(Estimated_returns,company_features,timepe
   if (!is.null(instrumental_var_endogenous)){
     rownames(company_features_instrumental) <- rownames(Estimated_returns)
     colnames(company_features_instrumental) <- sapply(colnames(company_features_instrumental), function(i){
-      while(str_detect(i, " ")) i = str_replace(i, " ","_")
-      while(str_detect(i, "\\(")) i = str_replace(i, "\\(","_")
-      while(str_detect(i, "\\)")) i = str_replace(i, "\\)","_")
-      while(str_detect(i, "\\+")) i = str_replace(i, "\\+","_")
-      while(str_detect(i, "-")) i = str_replace(i, "-","_")
-      while(str_detect(i, "/")) i = str_replace(i, "/","_")
-      while(str_detect(i, "\\*")) i = str_replace(i, "\\*","_")
+      while(stringr::str_detect(i, " ")) i = stringr::str_replace(i, " ","_")
+      while(stringr::str_detect(i, "\\(")) i = stringr::str_replace(i, "\\(","_")
+      while(stringr::str_detect(i, "\\)")) i = stringr::str_replace(i, "\\)","_")
+      while(stringr::str_detect(i, "\\+")) i = stringr::str_replace(i, "\\+","_")
+      while(stringr::str_detect(i, "-")) i = stringr::str_replace(i, "-","_")
+      while(stringr::str_detect(i, "/")) i = stringr::str_replace(i, "/","_")
+      while(stringr::str_detect(i, "\\*")) i = stringr::str_replace(i, "\\*","_")
       i}) 
     instrumental_var_IVs <- sapply(instrumental_var_IVs,function(i){
-      while(str_detect(i, " ")) i = str_replace(i, " ","_")
-      while(str_detect(i, "\\(")) i = str_replace(i, "\\(","_")
-      while(str_detect(i, "\\)")) i = str_replace(i, "\\)","_")
-      while(str_detect(i, "\\+")) i = str_replace(i, "\\+","_")
-      while(str_detect(i, "-")) i = str_replace(i, "-","_")
-      while(str_detect(i, "/")) i = str_replace(i, "/","_")
-      while(str_detect(i, "\\*")) i = str_replace(i, "\\*","_")
+      while(stringr::str_detect(i, " ")) i = stringr::str_replace(i, " ","_")
+      while(stringr::str_detect(i, "\\(")) i = stringr::str_replace(i, "\\(","_")
+      while(stringr::str_detect(i, "\\)")) i = stringr::str_replace(i, "\\)","_")
+      while(stringr::str_detect(i, "\\+")) i = stringr::str_replace(i, "\\+","_")
+      while(stringr::str_detect(i, "-")) i = stringr::str_replace(i, "-","_")
+      while(stringr::str_detect(i, "/")) i = stringr::str_replace(i, "/","_")
+      while(stringr::str_detect(i, "\\*")) i = stringr::str_replace(i, "\\*","_")
       i})
     
     
@@ -897,7 +703,7 @@ BSC1998_event_study_coeffs <- function(Estimated_returns,company_features,timepe
     tmp = predict(simple.ed.1s)
     
     # keep instrument strength ets
-    cross_setional_form <- str_replace(cross_setional_form," \\+ instrumental_var", "")
+    cross_setional_form <- stringr::str_replace(cross_setional_form," \\+ instrumental_var", "")
     instr.strength.regression <- lm(cross_setional_form, data=company_features_instrumental)
     inst_results =  list(
       inst_strength = c(waldtest(simple.ed.1s, instr.strength.regression)$F[2],
@@ -1050,101 +856,12 @@ Betas <- function(x,y,Dates, EVENT_RETURNS,Riskfactors){
   res
 }
 
-Betas_lm <- function(x,y,Dates, EVENT_RETURNS,Risk_Factors){
-  #data check
-  if (class(Risk_Factors) != "data.frame") {
-    dates <- names(Risk_Factors)
-    Risk_Factors = data.frame(market=Risk_Factors)
-    rownames(Risk_Factors) <- dates
-  }
-  
-  if (sum(sapply(c("Delta" ,"SMB",   "HML",   "RMW",  "CMA",   "RF"), function(i) !(i %in% colnames(Risk_Factors))))!=0)
-    stop("Beta_lm function has wrong risk factors")
-  if (sum(sapply(colnames(Risk_Factors), function(i) !(i %in% c("Delta" ,"SMB",   "HML",   "RMW",  "CMA",   "RF"))))!=0)
-    stop("Beta_lm function has wrong risk factors")
-  
-  #create the right formula for lm
-  RFfield    <- which(colnames(Risk_Factors) == "RF")
-  NotRFfield <- colnames(Risk_Factors)[setdiff(1:ncol(Risk_Factors),RFfield)]
-  if(length(RFfield) == 1) {
-    form <- as.formula(paste("(rj - RF) ~ ",paste(NotRFfield,collapse = "+")))
-  } else {
-    form <- as.formula(paste("rj ~ ",paste(NotRFfield,collapse = "+")))
-  }
-  
-  #Step 1: create the return data
-  Start_Date <- Dates[which(rownames(Dates) == x),]
-  End_Date <- Dates[which(rownames(Dates) == y),]
-  non_zeros <- which(apply(Risk_Factors!=0,1,sum)!=0) 
-  Risk_Factors <- Risk_Factors[non_zeros,,drop=F]
-  tmp_matrix <- EVENT_RETURNS[non_zeros,]
-  
-  #Step 2: estimation of betas uses the following function
-  betafunc <- function(i){
-    stats   = rep(0,length(NotRFfield)+3)
-    rj      = tmp_matrix[rownames(tmp_matrix) >= Start_Date[i] & rownames(tmp_matrix) <= End_Date[i],i]
-    data    = Risk_Factors[rownames(Risk_Factors) >= Start_Date[i] & rownames(Risk_Factors) <= End_Date[i],,drop=F]
-    data$rj = rj
-    
-    model   = fastLm(form,data=data)
-    coeff   = summary(model)$coefficients[,1]
-    stats[1:length(coeff)]  = coeff                     #intercept, betas
-    stats[length(coeff)+1] = ifelse(length(!is.na(model$residuals)) > 2, sd(model$residual[!is.na(model$residuals)]), 0)
-    stats[length(stats)]    = summary(model)$r.squared  #R^2
-    
-    return(stats)
-  }
-  
-  #Step 3: apply the function and format the data nicely
-  res = Reduce(cbind,lapply(1:length(Start_Date), betafunc))
-  rownames(res)<- c("alpha",NotRFfield,"IVOL","Rsq")
-  res
-}
-
-VOL_lm <- function(x,y,Dates, EVENT_RETURNS){
-  Start_Date <- Dates[which(rownames(Dates) == x),]
-  End_Date <- Dates[which(rownames(Dates) == y),]
-  volfunc <- function(i) {
-    tmp = EVENT_RETURNS[rownames(EVENT_RETURNS) >= Start_Date[i] & rownames(EVENT_RETURNS) <= End_Date[i],i]
-    ifelse(sum(tmp!=0) > 3, sd(tmp[tmp!=0]),0) 
-  }
-  sapply(1:length(Start_Date), function(i) volfunc(i))
-}
-
-RET_lm <- function(x,y,Dates, EVENT_RETURNS){
-  Start_Date <- Dates[which(rownames(Dates) == x),]
-  End_Date <- Dates[which(rownames(Dates) == y),]
-  sapply(1:length(Start_Date), function(i) sum(EVENT_RETURNS[rownames(EVENT_RETURNS) >= Start_Date[i] & rownames(EVENT_RETURNS) <= End_Date[i],i]))
-}
-
-create_dates <- function(Event_Date) {
-  Trading.Day = Event_Date + trading_day_after_announce
-  One.Day.Before <- Event_Date - 1
-  Five.Day.Before <- Event_Date - 5
-  One.Month.Before <- One.Day.Before - 30
-  Three.Month.Before <- One.Day.Before - 90
-  Six.Month.Before <- One.Day.Before - 180
-  One.Year.Before <- One.Day.Before - 360
-  Two.Years.Before <- One.Day.Before - 2*360
-  One.Month.After <- 30 + Trading.Day 
-  Three.Month.After <- 90 + Trading.Day 
-  Six.Month.After <- 180 + Trading.Day
-  One.Year.After <- 365 + Trading.Day
-  Two.Years.After <- 2*365 + Trading.Day
-  Three.Years.After <- 3*365 + Trading.Day
-  Four.Years.After <- 4*365 + Trading.Day
-  Dates <- data.frame(Event_Date,One.Day.Before,Five.Day.Before,One.Month.Before,Three.Month.Before,Six.Month.Before,One.Year.Before,Two.Years.Before,Trading.Day,One.Month.After,Three.Month.After,Six.Month.After,One.Year.After,Two.Years.After,Three.Years.After,Four.Years.After)
-  colnames(Dates) <- c("Event.Date","One.Day.Before","Five.Day.Before","One.Month.Before","Three.Month.Before","Six.Month.Before","One.Year.Before","Two.Years.Before","Trading.Day","One.Month.After","Three.Month.After","Six.Month.After","One.Year.After","Two.Years.After","Three.Years.After","Four.Years.After")
-  Dates <- t(Dates)
-  return(Dates)
-}
-
 create_dates_month <- function(Event_Date, allmonths) {
   last_available = tail(allmonths,1)
   last_available = paste(format(AddMonths(as.Date(last_available),1),"%Y-%m"), "01",sep="-") # Just make it a date in the future
   allmonths = sort(allmonths) # just in case
-  allmonths = str_sub(allmonths, start=1,end=7)
-  tmp = match(str_sub(Event_Date, start = 1, end = 7), str_sub(allmonths, start=1,end=7))
+  allmonths = stringr::str_sub(allmonths, start=1,end=7)
+  tmp = match(stringr::str_sub(Event_Date, start = 1, end = 7), stringr::str_sub(allmonths, start=1,end=7))
   
   Trading.Day = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1, length(allmonths))], "01",sep="-"), last_available)
   One.Month.After = ifelse(!is.na(tmp), paste(allmonths[pmin(tmp+1+1, length(allmonths))], "01",sep="-"), last_available)
@@ -1180,297 +897,3 @@ plot_crisis_dates <- function(all_ret_values, monthly = 1){
     }
   }
 }
-
-exit_helper_rnw <- function(event,exit_signal_name,holding_period_pnl = "Four.Years.After",pnl_hedge_factors_used=pnl_hedge_factors){
-  exit_date = event$DATASET$SDC[[which(names(event$DATASET$SDC) == exit_signal_name)]]
-  event_returns_monthly_exit = event$DATASET$returns_by_event_monthly
-  # Set to 0 all returns starting the month after the SEO event: we exit then, hence we don't need these returns
-  exit_events = which(exit_date != "2100-01-01" & exit_date != "1900-01-01")
-  noexit_events = which(exit_date == "2100-01-01" & exit_date != "1900-01-01")
-  all_dates_monthly = as.Date(rownames(event_returns_monthly_exit))
-  first_day_next_month = sapply(exit_date,function(i) AddMonths(as.Date(timeFirstDayInMonth(i)),1))
-  for (i in exit_events)
-    event_returns_monthly_exit[all_dates_monthly >= first_day_next_month[i],i] <- 0  
-  number_events_exit = table(format(event$DATASET$SDC$Event.Date[exit_events], "%Y"))
-  number_events_noexit = table(format(event$DATASET$SDC$Event.Date[noexit_events], "%Y"))
-  years_used = sort(union(names(number_events_exit), names(number_events_noexit)))
-  number_events_noexit_align = structure(rep(0,length(years_used)), .Names = years_used)
-  number_events_exit_align = structure(rep(0,length(years_used)), .Names = years_used)
-  number_events_noexit_align[names(number_events_noexit)] <- number_events_noexit
-  number_events_exit_align[names(number_events_exit)] <- number_events_exit
-  number_events_exit = number_events_exit_align; rm("number_events_exit_align")
-  number_events_noexit = number_events_noexit_align; rm("number_events_noexit_align")
-  number_events = ifelse(number_events_noexit + number_events_exit !=0, 100*(number_events_exit/(number_events_noexit+number_events_exit)), 100) 
-  pnl_Exit =  apply(PNL_matrix_BB(start_date_event,holding_period_pnl, exit_events,  event$DATASET$DatesMonth, event_returns_monthly_exit,event=1),1,non_zero_mean) 
-  pnl_noExit =  apply(PNL_matrix_BB(start_date_event,holding_period_pnl, exit_events,  event$DATASET$DatesMonth, event$DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)   
-  pnl_Exit_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(pnl_Exit,Risk_Factors_Monthly[,pnl_hedge_factors_used],hedge_months, trade =1))),min_date=FirstTrade)
-  pnl_NoExit_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(pnl_noExit,Risk_Factors_Monthly[,pnl_hedge_factors_used],hedge_months, trade =1))),min_date=FirstTrade)
-  
-  return(list(exit_events = exit_events, noexit_events = noexit_events,
-              pnl_Exit_Hedged = pnl_Exit_Hedged, pnl_NoExit_Hedged = pnl_NoExit_Hedged, 
-              number_events = number_events 
-  ))
-}
-
-get_pnl_results_stock_subset <- function(DATASET,High_feature_events,Low_feature_events,Risk_Factors_Monthly,pnl_hedge_factors){
-  High_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  High_feature_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  Low_feature_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
-  High_feature48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  Low_feature48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  High_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  Low_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  
-  list(
-    High_feature_Hedged   = High_feature_Hedged,
-    Low_feature_Hedged    = Low_feature_Hedged,
-    High_feature48m       = High_feature48m,
-    Low_feature48m        = Low_feature48m,
-    High_feature_Hedged48m  = High_feature_Hedged48m,
-    Low_feature_Hedged48m   = Low_feature_Hedged48m
-  ) 
-}
-
-get_feature_results <- function(DATASET,feature_name, company_subset_undervalued,company_subset_overvalued,quantile_feature,featurewindow, value.weights,thefeature, method="Complex", returnall = 0,formula_used="(ri - RF) ~ Delta + SMB + HML + RMW + CMA"){
-  
-  if (method == "Simple"){
-    High_feature_events = which(scrub(thefeature) > quantile(thefeature[!is.na(thefeature)],1-quantile_feature) & !is.na(thefeature))
-    Low_feature_events = which(scrub(thefeature) < quantile(thefeature[!is.na(thefeature)],quantile_feature) & !is.na(thefeature))
-  } else {
-    # Thresholds
-    thetimes = DATASET$SDC$Event.Date
-    thres = Reduce(cbind,lapply(1:length(thetimes), function(i){
-      useonly = thetimes <= thetimes[i] & thetimes >= thetimes[i] - featurewindow & 1:length(thetimes) != i
-      useonly = useonly & !is.na(thefeature)
-      res = c(0,0)
-      if (length(thefeature[useonly]) >= 5)
-        res = c(quantile(thefeature[useonly], quantile_feature),quantile(thefeature[useonly], 1-quantile_feature))
-      res
-    }))
-    feature_down = thres[1,]
-    feature_up = thres[2,]
-    names(feature_down) <- format(DATASET$SDC$Event.Date, "%Y%m")
-    names(feature_up) <- format(DATASET$SDC$Event.Date, "%Y%m")
-    tmp = feature_down
-    feature_thresholds_down = sapply(sort(unique(names(tmp))), function(i) {
-      mean(tmp[(names(tmp) == i)])
-    })
-    names(feature_thresholds_down)<- sort(unique(names(tmp)))
-    tmp = feature_up
-    feature_thresholds_up = sapply(sort(unique(names(tmp))), function(i) {
-      mean(tmp[(names(tmp) == i)])
-    })
-    names(feature_thresholds_up)<- sort(unique(names(tmp)))
-    
-    #################################################################
-    # Classes
-    ## NEED TO DECIDE THE >= or just > here!
-    High_feature_events = which(scrub(thefeature) > feature_up & !is.na(thefeature)  & feature_up != 0 )
-    Low_feature_events = which(scrub(thefeature) <= feature_down & !is.na(thefeature))
-    #################################################################
-  }
-  
-  #Portfolios
-  High_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  Low_feature <- apply(PNL_matrix_BB(start_date_event,"One.Year.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  High_feature_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  Low_feature_Hedged = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)  
-  High_feature48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", High_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  Low_feature48m <- apply(PNL_matrix_BB(start_date_event,"Four.Years.After", Low_feature_events,  DATASET$DatesMonth, DATASET$returns_by_event_monthly,event=1),1,non_zero_mean)
-  High_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(High_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  Low_feature_Hedged48m = remove_initialization_time(suppressWarnings(scrub(alpha_lm(Low_feature48m,Risk_Factors_Monthly[,pnl_hedge_factors],hedge_months,trade=1))),min_date=FirstTrade)
-  #IRATS
-  
-  all_low_irats = car_table(DATASET$returns_by_event_monthly[,Low_feature_events], DATASET$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly,formula_used = formula_used)
-  all_high_irats = car_table(DATASET$returns_by_event_monthly[,High_feature_events], DATASET$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly,formula_used = formula_used)
-  under_low_irats = car_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly,formula_used = formula_used)
-  over_low_irats = car_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly,formula_used = formula_used)
-  under_high_irats = car_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly,formula_used = formula_used)
-  over_high_irats = car_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly,formula_used = formula_used)
-  #calendar
-  all_low_cal = calendar_table(DATASET$returns_by_event_monthly[,Low_feature_events], DATASET$SDC$Event.Date[Low_feature_events], Risk_Factors_Monthly,formula_used = formula_used,value.weights = value.weights[Low_feature_events])
-  all_high_cal = calendar_table(DATASET$returns_by_event_monthly[,High_feature_events], DATASET$SDC$Event.Date[High_feature_events], Risk_Factors_Monthly,formula_used = formula_used,value.weights = value.weights[High_feature_events])
-  under_low_cal = calendar_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly,formula_used = formula_used,value.weights = value.weights[intersect(Low_feature_events, which(company_subset_undervalued))])
-  over_low_cal = calendar_table(DATASET$returns_by_event_monthly[,intersect(Low_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(Low_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly,formula_used = formula_used,value.weights = value.weights[intersect(Low_feature_events, which(company_subset_overvalued))])
-  under_high_cal = calendar_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_undervalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_undervalued))], Risk_Factors_Monthly,formula_used = formula_used,value.weights = value.weights[intersect(High_feature_events, which(company_subset_undervalued))])
-  over_high_cal = calendar_table(DATASET$returns_by_event_monthly[,intersect(High_feature_events, which(company_subset_overvalued))], DATASET$SDC$Event.Date[intersect(High_feature_events, which(company_subset_overvalued))], Risk_Factors_Monthly,formula_used = formula_used,value.weights = value.weights[intersect(High_feature_events, which(company_subset_overvalued))])
-  
-  if (returnall){
-    feature_IRATStable = list(all_low = all_low_irats, all_high = all_high_irats)
-    feature_IRATStable_under = list(under_low = under_low_irats, over_low = over_low_irats, under_high = under_high_irats, over_high = over_high_irats)
-    #calendar
-    feature_IRATStable_cal = list(all_low = all_low_cal, all_high = all_high_cal)
-    feature_IRATStable_under_cal = list(under_low = under_low_cal, over_low = over_low_cal, under_high = under_high_cal, over_high = over_high_cal)
-  } else {
-    feature_IRATStable = round(cbind(all_low_irats$results,all_high_irats$results),3)
-    feature_IRATStable_under = round(cbind(under_low_irats$results,over_low_irats$results,under_high_irats$results,over_high_irats$results),3)
-    #calendar
-    feature_IRATStable_cal = round(cbind(all_low_cal$results,all_high_cal$results),3)
-    feature_IRATStable_under_cal = round(cbind(under_low_cal$results,over_low_cal$results,under_high_cal$results,over_high_cal$results),3)
-  }
-  
-  list(
-    High_feature_events    = High_feature_events,
-    Low_feature_events     = Low_feature_events,
-    High_feature          = High_feature,
-    Low_feature           = Low_feature,
-    High_feature_Hedged   = High_feature_Hedged,
-    Low_feature_Hedged    = Low_feature_Hedged,
-    High_feature48m       = High_feature48m,
-    Low_feature48m        = Low_feature48m,
-    High_feature_Hedged48m  = High_feature_Hedged48m,
-    Low_feature_Hedged48m   = Low_feature_Hedged48m,
-    feature_IRATStable       = feature_IRATStable,
-    feature_IRATStable_cal   = feature_IRATStable_cal,
-    feature_IRATStable_under =feature_IRATStable_under,
-    feature_IRATStable_under_cal = feature_IRATStable_under_cal
-  )
-}
-
-###############################################################################################
-# Shiny interactive plot
-
-pnl_plot_interactive <- function(x,...){
-  mainColor= "#E69F00"
-  secondaryColor = "#333333"
-  x = remove_initialization_time(x)
-  pargs<-as.list(match.call(expand.dots=TRUE))
-  if(!"ylab" %in% names(pargs)) ylab<-"Return" else ylab<-pargs$ylab #deparse(substitute(x)) 
-  if(!"main" %in% names(pargs)) main<-paste(names(pnl_stats(x)),pnl_stats(x),sep=":",collapse=" ") else main<-pargs$main
-  plot_arguments<-c(list(data=cumsum(x*100) ,ylab=ylab, main=main),
-                    pargs[setdiff(names(pargs),c("","x","ylab","main"))])
-  plot_arguments$expand.dots = NULL
-  
-  
-  CustomAxisLabel <- 'function (d, gran) {
-  return Dygraph.zeropad(d.getMonth()+1) + "/"+ Dygraph.zeropad(d.getFullYear());
-}'
-  CustomValueFormat = 'function (ms) {
-  var d = new Date(ms);
-  return Dygraph.zeropad(d.getMonth()+1) + "/"+ Dygraph.zeropad(d.getFullYear());
-  }'
-  
-  do.call(dygraph,plot_arguments)  %>% 
-    dyRangeSelector() %>%
-    dySeries("V1", label = "Cumulative Return (%)",color=mainColor) %>%
-    dyAxis("x",pixelsPerLabel=48,axisLabelFormatter =JS(CustomAxisLabel),valueFormatter=JS(CustomValueFormat),ticker="Dygraph.dateTicker") 
-}
-
-rollingcor_plot_interactive <- function(x,...){
-  mainColor= "#E69F00"
-  secondaryColor = "#333333"
-  x = scrub(x)
-  pargs<-as.list(match.call(expand.dots=TRUE))
-  plot_arguments<-c(list(data=(x) ,ylab="Correlation", main="12-months Rolling Correlation with S&P"),
-                    pargs[setdiff(names(pargs),c("","x","ylab","main"))])
-  plot_arguments$expand.dots = NULL
-  
-  
-  CustomAxisLabel <- 'function (d, gran) {
-  return Dygraph.zeropad(d.getMonth()+1) + "/"+ Dygraph.zeropad(d.getFullYear());
-}'
-  CustomValueFormat = 'function (ms) {
-  var d = new Date(ms);
-  return Dygraph.zeropad(d.getMonth()+1) + "/"+ Dygraph.zeropad(d.getFullYear());
-  }'
-  
-  do.call(dygraph,plot_arguments)  %>% 
-    dyRangeSelector() %>%
-    dySeries("V1", label = "60-days Rolling Correlation",color=mainColor) %>%
-    dyAxis("x",pixelsPerLabel=48,axisLabelFormatter =JS(CustomAxisLabel),valueFormatter=JS(CustomValueFormat),ticker="Dygraph.dateTicker") 
-}
-
-plotComponentBars <- function(Main_Factors,Comparison_Factors,futures_data,comp,threshold=0.3)  {
-  mainColor= "#E69F00"
-  secondaryColor = "#333333"
-  df <- rbind(      Main_Factors[rownames(Comparison_Factors)[!is.na(Comparison_Factors[,comp])],comp],
-                    Comparison_Factors[rownames(Comparison_Factors)[!is.na(Comparison_Factors[,comp])],comp])
-  
-  keep <- apply(abs(df) > threshold,2,sum) > 0
-  df <- df[,keep]
-  
-  colnames(df) <- rownames(Comparison_Factors)[keep]
-  rownames(df) <- c("2001-2016",paste(head(rownames(futures_data),1),"-", tail(rownames(futures_data),1) ,sep=""))
-  
-  #order bars
-  orderedbars = unique(colnames(df)[sort(df[1,],index.return=T,decreasing=T)$ix])
-  df <- melt(t(df))
-  df <- transform( df,X1 = ordered(df$X1, levels = orderedbars))
-  
-  colnames(df) <-c("Component","Period","Value")
-  ggplot(df,aes(x=Component,y=Value,fill=Period)) + 
-    geom_bar(stat="identity",position=position_dodge(width=0.8),width=0.6)+
-    ggtitle(paste("Risk Factor",comp))+
-    ylab("Factor Loading")+
-    scale_fill_manual(values=c(secondaryColor, mainColor))+
-    theme(axis.text.x = element_text(angle = 90, hjust = 1),
-          panel.background=element_rect(colour = NA, fill = "white"),
-          panel.grid.major.y=element_line(colour="#999999"), 
-          panel.grid.minor=element_blank(),
-          legend.position="top",
-          axis.text = element_text(size=14),
-          axis.title= element_text(size=16))
-}
-
-# A helper function for latex tables. 
-create_low_high_table <- function(tmp, featurename,tablename){
-  irats_under_tmp = tmp$feature_IRATStable_under
-  lowstd = irats_under_tmp$over_low$results[,1]/irats_under_tmp$over_low$results[,2]
-  highstd = irats_under_tmp$over_high$results[,1]/irats_under_tmp$over_high$results[,2]
-  HLdiff = -(irats_under_tmp$over_high$results[,1] - irats_under_tmp$over_low$results[,1])
-  tvalHL = HLdiff/sqrt(lowstd*lowstd + highstd*highstd)
-  pvalHL = 1-pt(tvalHL, df = pmin(irats_under_tmp$over_low$dfs-1, irats_under_tmp$over_high$dfs -1))
-  if (length(pvalHL) == 0)
-    pvalHL = rep(1,length(tvalHL))
-  over_high_low = cbind(HLdiff, tvalHL,pvalHL)
-  over_high_low[nrow(over_high_low),] <- 0
-  ##
-  lowstd = irats_under_tmp$under_low$results[,1]/irats_under_tmp$under_low$results[,2]
-  highstd = irats_under_tmp$under_high$results[,1]/irats_under_tmp$under_high$results[,2]
-  HLdiff = -(irats_under_tmp$under_high$results[,1] - irats_under_tmp$under_low$results[,1])
-  tvalHL = HLdiff/sqrt(lowstd*lowstd + highstd*highstd)
-  pvalHL = 1-pt(tvalHL, df = pmin(irats_under_tmp$under_low$dfs-1, irats_under_tmp$under_high$dfs -1))
-  if (length(pvalHL) == 0)
-    pvalHL = rep(1,length(tvalHL))
-  under_high_low = cbind(HLdiff, tvalHL,pvalHL)
-  under_high_low[nrow(under_high_low),] <- 0
-  ##
-  IRATStable_underBB = cbind(
-    irats_under_tmp$over_low$results, irats_under_tmp$over_high$results,over_high_low, 
-    irats_under_tmp$under_low$results, irats_under_tmp$under_high$results,under_high_low
-  )
-  colnames(IRATStable_underBB) <- c(paste("Low ",  featurename, ": Low ", tablename, " CAR", sep=""), "t-stat","p-value",paste("High ", tablename, " CAR", sep=""), "t-stat","p-value", paste("Low-High ", tablename, sep=""),"t-stat","p-value",
-                                    paste("High ", featurename, ": Low ", tablename, " CAR", sep=""), "t-stat","p-value",paste("High ", tablename, " CAR", sep=""), "t-stat","p-value", paste("Low-High ", tablename, sep=""),"t-stat","p-value")
-  ##
-  irats_under_tmp = tmp$feature_IRATStable_under_cal
-  lowstd = irats_under_tmp$over_low$results[,1]/irats_under_tmp$over_low$results[,2]
-  highstd = irats_under_tmp$over_high$results[,1]/irats_under_tmp$over_high$results[,2]
-  HLdiff = -(irats_under_tmp$over_high$results[,1] - irats_under_tmp$over_low$results[,1])
-  tvalHL = HLdiff/sqrt(lowstd*lowstd + highstd*highstd)
-  pvalHL = 1-pt(tvalHL, df = pmin(irats_under_tmp$over_low$dfs-1, irats_under_tmp$over_high$dfs -1))
-  if (length(pvalHL) == 0)
-    pvalHL = rep(1,length(tvalHL))
-  over_high_low = cbind(HLdiff, tvalHL,pvalHL)
-  over_high_low[nrow(over_high_low),] <- 0
-  ##
-  lowstd = irats_under_tmp$under_low$results[,1]/irats_under_tmp$under_low$results[,2]
-  highstd = irats_under_tmp$under_high$results[,1]/irats_under_tmp$under_high$results[,2]
-  HLdiff = -(irats_under_tmp$under_high$results[,1] - irats_under_tmp$under_low$results[,1])
-  tvalHL = HLdiff/sqrt(lowstd*lowstd + highstd*highstd)
-  pvalHL = 1-pt(tvalHL, df = pmin(irats_under_tmp$under_low$dfs-1, irats_under_tmp$under_high$dfs -1))
-  if (length(pvalHL) == 0)
-    pvalHL = rep(1,length(tvalHL))
-  under_high_low = cbind(HLdiff, tvalHL,pvalHL)
-  under_high_low[nrow(under_high_low),] <- 0
-  ##
-  IRATStable_underBB_cal = cbind(
-    irats_under_tmp$over_low$results, irats_under_tmp$over_high$results,over_high_low, 
-    irats_under_tmp$under_low$results, irats_under_tmp$under_high$results,under_high_low
-  )
-  colnames(IRATStable_underBB_cal) <- c(paste("Low ",  featurename, ": Low ", tablename, " AR", sep=""), "t-stat","p-value",paste("High ", tablename, " AR", sep=""), "t-stat","p-value", paste("Low-High ", tablename, sep=""),"t-stat","p-value",
-                                        paste("High ", featurename, ": Low ", tablename, " AR", sep=""), "t-stat","p-value",paste("High ", tablename, " AR", sep=""), "t-stat","p-value", paste("Low-High ", tablename, sep=""),"t-stat","p-value")
-  list(IRATStable_underBB = IRATStable_underBB, IRATStable_underBB_cal = IRATStable_underBB_cal)
-}
-
-
