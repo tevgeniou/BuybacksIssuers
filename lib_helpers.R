@@ -35,7 +35,7 @@ options(stringsAsFactors=FALSE)
 my_summary <- function(x){
   nas = sum(is.na(x))
   x=x[!is.na(x)]
-  res = c(mean(x), median(x),min(x),quantile(x,0.1), quantile(x,0.25), quantile(x,0,95), quantile(x,0.9), max(x), sd(x), length(x))
+  res = c(mean(x), median(x),min(x),quantile(x,0.1), quantile(x,0.25), quantile(x,0,75), quantile(x,0.9), max(x), sd(x), length(x))
   names(res) <- c("mean", "p50", "min", "p10", "p25", "p75","p90","max","sd", "N")
   res
 }
