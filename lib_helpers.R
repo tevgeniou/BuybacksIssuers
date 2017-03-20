@@ -14,10 +14,8 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
       do.call(library,list(thelibrary))
     })
   }
-  libraries_used=c("stringr","gtools","foreign","reshape2","digest","timeDate","devtools","knitr","graphics",
-                   "grDevices","xtable","sqldf","stargazer","data.table","shiny","htmlwidgets","Hmisc","vegan",
-                   "fpc","GPArotation","cluster","dygraphs","psych","googleVis", "png","ggplot2", "gridExtra",
-                   "RcppArmadillo","xts","DescTools")
+  libraries_used=c("stringr","gtools","reshape2","timeDate","devtools","graphics","xtable",
+  	               "data.table","shiny","psych","ggplot2","RcppArmadillo","xts")
   
   get_libraries(libraries_used)
   Rcpp::sourceCpp('lib_helpers.cpp', embeddedR=FALSE)
@@ -41,9 +39,6 @@ remove_initialization_time <- function(x,min_date=NULL) { # Note: Added also min
       res = x
     } else {
       if (sum(x!=0) != 0){
-        #res = tail(res, -head(which(diff(res)!=0),1))
-        #names(res) <- tail(names(res), -head(which(diff(res)!=0),1))
-        
         tmp <- names(x)
         ending <- -head(which(diff(x)!=0),1)
         res = tail(x, ending)
