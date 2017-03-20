@@ -14,7 +14,7 @@ if (ifelse(!exists("run_shiny_tool"), T, run_shiny_tool == 0)) { # When deployin
       do.call(library,list(thelibrary))
     })
   }
-  libraries_used=c("stringr","gtools","reshape2","timeDate","devtools","graphics","xtable",
+  libraries_used=c("stringr","gtools","reshape2","timeDate","graphics","xtable",
   	               "data.table","shiny","psych","ggplot2","RcppArmadillo","xts")
   
   get_libraries(libraries_used)
@@ -208,9 +208,9 @@ rolling_beta<-function(security,hedge,window){
 # aligned with the monthly data. Note the fiscal year use
 # (datadate is the end of the fiscal year)
 create_yearly_data <- function(value_used, template_matrix,all_compustat_data){
-  tmp_data = as.data.frame(dcast(all_compustat_data, datadate ~ LPERMNO,
-                                 fun.aggregate = function(r) ifelse(length(unique(r)) > 1, NA, unique(r)),
-                                 value.var=value_used)) 
+  tmp_data = as.data.frame(data.table::dcast(all_compustat_data, datadate ~ LPERMNO,
+                                             fun.aggregate = function(r) ifelse(length(unique(r)) > 1, NA, unique(r)),
+                                             value.var=value_used)) 
   # Convert tmp_data to matrix with dates as rownames
   tmp = as.character(tmp_data$datadate)
   tmp_data$datadate <- NULL
@@ -310,7 +310,7 @@ alpha_lm <- function(ri,Riskfactors,hedge_days, trade = 0) {
   }
   #names(ri) <- paste(str_sub(names(ri),start=1,end=7),"01",sep="-")
   coeff <- running(ri,fun=runcoeff,width=hedge_days,allow.fewer = T)
-  coeffcorrection <- shift(t(coeff[NotRFfield,]),trade) * Riskfactors[,NotRFfield]
+  coeffcorrection <- data.table::shift(t(coeff[NotRFfield,]),trade) * Riskfactors[,NotRFfield]
   if(dim(coeffcorrection)[1] !=1)
     coeffcorrection <- apply(coeffcorrection,1,sum)
   alpha <- (ri - coeffcorrection)
