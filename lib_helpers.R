@@ -150,6 +150,59 @@ fill_NA_previous <- function(x, lastfill = F){
   x
 }
 
+######
+
+# roll function over multiple matrix rows, in parallel. mapply for matrices.
+multiroll_fun<-function(fun,w,...,MoreArgs=NULL,verbose=identity){
+  data<-list(...)
+  if(length(data)==0)stop("multiroll: data required")
+  if(length(data)!=length(formals(fun)))stop("multiroll: fun arg count differs from data length")
+  if(!all(unlist(lapply(data,class))=="matrix"))stop("multiroll: only matrix")
+  if( length(unique(unlist(lapply(data,nrow))))!=1 )stop("multiroll: all matrices must have same rows")
+  p<-nrow(data[[1]])
+  ndx<-t(matrix(c(0,w-1),nrow=2,ncol=p-w+1)+t(matrix(1:(p-w+1),ncol=2,nrow=p-w+1)))
+  res<-t(simplify2array(apply(ndx,1,function(r){
+    window_res<-do.call(fun,c(lapply(data,function(m)m[r[1]:r[2],,drop=FALSE]),MoreArgs))
+    if(class(verbose)=="function")cat(r[2]," ",verbose(window_res),"\n")
+    window_res
+  })))
+  if(class(res)=="matrix")rownames(res)<-rownames(data[[1]])[ndx[,2]] else names(res)<-rownames(data[[1]])[ndx[,2]]
+  res
+}
+
+# apply function to matrix, matrix result
+row_apply<-function(m,f,...){
+  if(class(m)!="matrix")return(NULL)
+  if(!any(class(f)%in%c("function","standardGeneric")))return(NULL)
+  mcol<-ncol(m)
+  res<-t(apply(m,1,function(r){
+    row_res<-drop(unlist(f(r,...)))
+    if(length(row_res)==1)return(rep(row_res,mcol))
+    if(length(row_res)==mcol)return(row_res)
+    return(rep(0,length(r)))
+  }))
+  dimnames(res)<-dimnames(m)
+  res
+}
+
+# apply function to matrix, matrix result
+col_apply<-function(m,f,...){
+  if(class(m)!="matrix")return(NULL)
+  if(!any(class(f)%in%c("function","standardGeneric")))return(NULL)
+  mrow<-nrow(m)
+  res<-apply(m,2,function(r){
+    row_res<-drop(unlist(f(r,...)))
+    if(length(row_res)==1)return(rep(row_res,mrow))
+    if(length(row_res)==mrow)return(row_res)
+    return(rep(0,length(r)))
+  })
+  dimnames(res)<-dimnames(m)
+  res
+}
+
+"%-%"<-row_apply
+"%|%"<-col_apply
+
 ################################################################################################################
 ################################################################################################################
 
