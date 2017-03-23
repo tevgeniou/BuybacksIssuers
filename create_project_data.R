@@ -44,9 +44,9 @@ if (0){ # If we want to use wrds directly
 ###################################################################################################
 ###################################################################################################
 
-source("library_files/lib_helpers.R", chdir=TRUE)
-source("library_files/latex_code.R")
-source("library_files/ff_industries_sic.R")
+source("helpers/lib_helpers.R", chdir=TRUE)
+source("helpers/latex_code.R")
+source("helpers/ff_industries_sic.R")
 source("Paper_global_parameters.R")
 
 # Some extra universe data variables we need for this project (based on the raw data)

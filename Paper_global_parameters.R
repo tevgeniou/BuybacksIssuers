@@ -107,3 +107,8 @@ BEAR_YEARS_text = list( #http://www.gold-eagle.com/article/history-us-bear-bull-
   dotcom = c("March 2000", "October 2002"),
   financial1 = c("October 2007", "March 2009")
 )
+
+do_Stambaugh_calculation = FALSE
+use_mispricing_factors = TRUE
+use_q_factors = FALSE
+
