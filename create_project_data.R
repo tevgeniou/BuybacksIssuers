@@ -16,7 +16,7 @@ rm(list=ls()) # Clean up the memory, if we want to rerun from scratch
 ##### NOTE: HERE WE NEED TO USE A WRDS USERNAME AND PASSWORD, AND ALSO HAVE OTHER DATA FROM WRDS
 ################################################################################
 # Used to get WRDS data through the API
-source("../FinanceLibraries/wrds_helpers.R", chdir=TRUE)
+source("helpers/wrds_helpers.R", chdir=TRUE)
 source("~/Documents/WRDS_Drivers/startWRDSconnection.R") # This file has the username pasword for WRDS. These lines below. See wrds_config.R in FinanceLibraries
 # wrds_user <- "my_username"
 # wrds_pass <- "{SAS002}DBCC5712369DE1C65B19864C1564FB850F398DCF"
